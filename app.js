@@ -89,7 +89,7 @@ async function loadTape() {
       const chg = c.change_24h;
       const cls = chg > 0 ? 'up' : 'down';
       const sign = chg > 0 ? '+' : '';
-      return `<span class="tape-item"><b>${escapeHtml(c.symbol)}</b>${fmtPrice(c.price)}<span class="${cls}">${sign}${(chg ?? 0).toFixed(1)}%</span></span>`;
+      return `<span class="tape-item" data-ticker-symbol="${escapeHtml(c.symbol)}"><b>${escapeHtml(c.symbol)}</b><span class="ticker-price">${fmtPrice(c.price)}</span><span class="${cls}">${sign}${(chg ?? 0).toFixed(1)}%</span></span>`;
     });
     track.innerHTML = items.join('') + items.join('');
   } catch (e) {
@@ -108,7 +108,7 @@ function updateMarketStatus(stats) {
     elem.textContent = '● Market Data Delayed';
   } else {
     elem.className = 'market-status-indicator';
-    elem.textContent = '● Market Data Live';
+    elem.innerHTML = '<span class="live-pulse"></span> Market Live Stream';
   }
 }
 
@@ -125,7 +125,7 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
     const isSubmitted = t.is_submitted === 1;
 
     return `
-      <tr onclick="location.hash='#/token/${t.id}'">
+      <tr data-token-symbol="${escapeHtml(t.symbol)}" data-token-id="${t.id}" onclick="location.hash='#/token/${t.id}'">
         <td>${t.market_cap_rank || idx + 1}</td>
         <td>
           <div class="token-cell">
@@ -139,9 +139,9 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
             </div>
           </div>
         </td>
-        <td><b>${fmtPrice(t.price)}</b></td>
+        <td class="cell-price"><b>${fmtPrice(t.price)}</b></td>
         <td>${fmtChg(t.change_1h)}</td>
-        <td>${fmtChg(t.change_24h)}</td>
+        <td class="cell-change">${fmtChg(t.change_24h)}</td>
         <td>${fmtChg(t.change_7d)}</td>
         <td>${fmtUsd(t.volume_24h)}</td>
         <td>${fmtUsd(t.market_cap)}</td>
@@ -819,11 +819,105 @@ function route() {
   }
 }
 
+/* ---------------- real-time websocket client ---------------- */
+
+let wsClient = null;
+let wsReconnectTimer = null;
+
+function initWebSocket() {
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${location.host}/ws`;
+
+  try {
+    wsClient = new WebSocket(wsUrl);
+
+    wsClient.onopen = () => {
+      console.log('[WebSocket] Connected to Bulls Traking Real-Time Feed');
+      const statusElem = document.getElementById('marketStatus');
+      if (statusElem) {
+        statusElem.className = 'market-status-indicator';
+        statusElem.innerHTML = '<span class="live-pulse"></span> Market Live Stream';
+      }
+    };
+
+    wsClient.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'PRICE_UPDATE') {
+          handleLivePriceUpdate(msg.data);
+        }
+      } catch (e) {
+        // Non-fatal parse error
+      }
+    };
+
+    wsClient.onclose = () => {
+      const statusElem = document.getElementById('marketStatus');
+      if (statusElem) {
+        statusElem.className = 'market-status-indicator delayed';
+        statusElem.textContent = '● Reconnecting Feed…';
+      }
+      if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+      wsReconnectTimer = setTimeout(initWebSocket, 3000);
+    };
+
+    wsClient.onerror = () => {
+      wsClient.close();
+    };
+  } catch (err) {
+    if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+    wsReconnectTimer = setTimeout(initWebSocket, 4000);
+  }
+}
+
+function handleLivePriceUpdate(data) {
+  const { symbol, price, change24h, direction } = data;
+  if (!symbol) return;
+
+  // 1. Update Table Rows with visual flash
+  const rows = document.querySelectorAll(`tr[data-token-symbol="${symbol}"]`);
+  rows.forEach(row => {
+    const priceCell = row.querySelector('.cell-price');
+    const changeCell = row.querySelector('.cell-change');
+
+    if (priceCell) {
+      priceCell.innerHTML = `<b>${fmtPrice(price)}</b>`;
+      const flashClass = direction === 'up' ? 'flash-up' : 'flash-down';
+      priceCell.classList.remove('flash-up', 'flash-down');
+      void priceCell.offsetWidth; // trigger reflow
+      priceCell.classList.add(flashClass);
+      setTimeout(() => priceCell.classList.remove(flashClass), 1400);
+    }
+
+    if (changeCell && change24h != null) {
+      changeCell.innerHTML = fmtChg(change24h);
+    }
+  });
+
+  // 2. Update Ticker Tape items in real-time
+  const tickers = document.querySelectorAll(`.tape-item[data-ticker-symbol="${symbol}"]`);
+  tickers.forEach(item => {
+    const priceSpan = item.querySelector('.ticker-price');
+    if (priceSpan) {
+      priceSpan.textContent = fmtPrice(price);
+    }
+  });
+
+  // 3. Update Token Detail Page if open
+  const detailPrice = document.querySelector('.detail-price');
+  const headSym = document.querySelector('.detail-head .sym');
+  if (detailPrice && headSym && headSym.textContent.includes(symbol)) {
+    detailPrice.innerHTML = `${fmtPrice(price)} ${fmtChg(change24h)}`;
+  }
+}
+
 /* ---------------- boot ---------------- */
 
 window.addEventListener('hashchange', route);
 window.addEventListener('DOMContentLoaded', () => {
   loadTape();
   initSearch();
+  initWebSocket();
   route();
 });
+

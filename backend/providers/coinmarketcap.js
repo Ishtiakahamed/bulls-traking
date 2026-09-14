@@ -4,27 +4,30 @@ class CoinMarketCapProvider {
   constructor() {
     this.name = 'coinmarketcap';
     this.baseUrl = config.coinmarketcap.baseUrl;
-    this.apiKey = config.coinmarketcap.apiKey;
+    this.apiKey = process.env.COINMARKETCAP_API_KEY || config.coinmarketcap.apiKey;
     this.timeoutMs = config.coinmarketcap.timeoutMs;
   }
 
   getHeaders() {
+    const key = process.env.COINMARKETCAP_API_KEY || this.apiKey;
     const headers = { 'Accept': 'application/json' };
-    if (this.apiKey) {
-      headers['X-CMC_PRO_API_KEY'] = this.apiKey;
+    if (key) {
+      headers['X-CMC_PRO_API_KEY'] = key;
     }
     return headers;
   }
 
   /**
-   * Fetch market data batch and normalize (fallback provider)
+   * Fetch market data batch and normalize
    */
-  async fetchMarkets({ limit = 50, start = 1 } = {}) {
-    if (!this.apiKey) {
+  async fetchMarkets({ perPage = 50, limit = 50, start = 1 } = {}) {
+    const key = process.env.COINMARKETCAP_API_KEY || this.apiKey;
+    if (!key) {
       throw new Error('CoinMarketCap API key not configured.');
     }
 
-    const url = `${this.baseUrl}/cryptocurrency/listings/latest?start=${start}&limit=${limit}&convert=USD`;
+    const count = limit || perPage || 50;
+    const url = `${this.baseUrl}/cryptocurrency/listings/latest?start=${start}&limit=${count}&convert=USD`;
     const res = await fetch(url, {
       headers: this.getHeaders(),
       signal: AbortSignal.timeout(this.timeoutMs)
@@ -43,11 +46,13 @@ class CoinMarketCapProvider {
    */
   normalizeToken(item) {
     const quote = item.quote?.USD || {};
+    const cmcLogo = item.id ? `https://s2.coinmarketcap.com/static/img/coins/64x64/${item.id}.png` : null;
+
     return {
       providerId: String(item.id),
       name: item.name,
       symbol: (item.symbol || '').toUpperCase(),
-      logo: null,
+      logo: cmcLogo,
       price: parseFloat(quote.price || 0),
       marketCap: parseFloat(quote.market_cap || 0),
       volume24h: parseFloat(quote.volume_24h || 0),

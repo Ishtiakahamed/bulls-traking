@@ -1,14 +1,22 @@
+try {
+  process.loadEnvFile();
+} catch (e) {
+  // .env file loaded if present
+}
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const config = require('./config/default');
 const { initDatabase } = require('./database/db');
 const { startSyncWorker } = require('./backend/workers/syncWorker');
+const { initWebSocketServer } = require('./backend/websocket/wsServer');
+const { startLivePriceStreamer } = require('./backend/websocket/livePriceStreamer');
 const apiRoutes = require('./backend/routes');
 const errorHandler = require('./backend/middleware/errorHandler');
 
 const app = express();
-const PORT = config.port;
+const PORT = process.env.PORT || config.port || 5000;
 
 // Initialize Database Schema
 try {
@@ -31,19 +39,21 @@ app.use('/api', apiRoutes);
 // Error handling middleware
 app.use(errorHandler);
 
-// Start background market data synchronization worker
-startSyncWorker();
-
+// Start server
 const server = app.listen(PORT, () => {
   console.log(`\n=============================================================`);
   console.log(`🚀 Bulls Traking Phase 1 Platform Live!`);
   console.log(`🌐 Website:     http://localhost:${PORT}`);
-  console.log(`📊 Aggregator:  http://localhost:${PORT}/api/home`);
-  console.log(`🔥 Top Coins:   http://localhost:${PORT}/api/tokens/top`);
-  console.log(`🆕 New Coins:   http://localhost:${PORT}/api/tokens/new`);
-  console.log(`⚡ Hot Coins:   http://localhost:${PORT}/api/tokens/hot`);
-  console.log(`📈 Gainers:     http://localhost:${PORT}/api/tokens/gainers`);
+  console.log(`⚡ WebSocket:   ws://localhost:${PORT}/ws`);
+  console.log(`📊 CMC Active:  ${process.env.COINMARKETCAP_API_KEY ? 'YES (Pro Key Enabled)' : 'NO'}`);
   console.log(`=============================================================\n`);
 });
+
+// Initialize WebSocket Engine & Live Price Streamer
+initWebSocketServer(server);
+startLivePriceStreamer();
+
+// Start background market data synchronization worker (CMC/CoinGecko)
+startSyncWorker();
 
 module.exports = { app, server };

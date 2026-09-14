@@ -142,10 +142,12 @@ async function runAcceptanceTests() {
     assert(resActive.count > 0, 'Active promotions must be returned');
 
     // Insert an expired promotion to verify it does NOT appear
+    const { queryOne } = require('./database/db');
+    const existingToken = queryOne('SELECT id FROM tokens LIMIT 1');
     execute(`
       INSERT INTO promotions (token_id, promotion_type, package_name, start_at, end_at, is_active)
-      VALUES (1, 'PROMOTED_TOKEN', 'Expired Test', datetime('now', '-5 days'), datetime('now', '-1 day'), 1)
-    `);
+      VALUES (?, 'PROMOTED_TOKEN', 'Expired Test', datetime('now', '-5 days'), datetime('now', '-1 day'), 1)
+    `, [existingToken.id]);
 
     const resCheck = await (await fetch('http://localhost:5000/api/promoted')).json();
     const expiredFound = resCheck.data.find(p => p.package_name === 'Expired Test');

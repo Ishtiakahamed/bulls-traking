@@ -397,3 +397,41 @@ tbody tr:hover{background:var(--panel-hover);}
   .util-nav{order:4;width:100%;justify-content:space-between;}
   .field-row{grid-template-columns:1fr;}
 }
+
+/* ---------- REAL-TIME WEBSOCKET PRICE FLASH ANIMATIONS ---------- */
+@keyframes flash-green {
+  0% { background-color: rgba(0, 230, 118, 0.45); color: #fff; text-shadow: 0 0 10px #00e676; }
+  100% { background-color: transparent; }
+}
+
+@keyframes flash-red {
+  0% { background-color: rgba(255, 61, 113, 0.45); color: #fff; text-shadow: 0 0 10px #ff3d71; }
+  100% { background-color: transparent; }
+}
+
+.flash-up {
+  animation: flash-green 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: 4px;
+}
+
+.flash-down {
+  animation: flash-red 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: 4px;
+}
+
+.live-pulse {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 8px var(--mint);
+  animation: live-pulse-anim 1.8s infinite;
+  margin-right: 5px;
+}
+
+@keyframes live-pulse-anim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+
