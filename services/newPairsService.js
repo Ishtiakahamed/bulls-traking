@@ -163,6 +163,7 @@ function getNewPairs(options = {}) {
     page = 1
   } = options;
 
+  seedInitialPairsIfEmpty();
   const limitNum = parseInt(limit, 10) || 25;
   const pageNum = parseInt(page, 10) || 1;
   const offsetNum = offset != null ? parseInt(offset, 10) : (pageNum - 1) * limitNum;

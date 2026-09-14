@@ -16,6 +16,7 @@ function getSignals(options = {}) {
     isActive = 1
   } = options;
 
+  seedInitialSignalsIfEmpty();
   const limitNum = parseInt(limit, 10) || 20;
   const pageNum = parseInt(page, 10) || 1;
   const offsetNum = (pageNum - 1) * limitNum;
