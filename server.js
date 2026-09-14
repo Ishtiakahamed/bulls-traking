@@ -33,27 +33,33 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static frontend assets
 app.use(express.static(path.join(__dirname)));
 
-// Mount REST API layer
+// Mount REST API layer (mount both /api and / so Vercel rewrites work seamlessly)
 app.use('/api', apiRoutes);
+app.use('/', apiRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
 
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`\n=============================================================`);
-  console.log(`🚀 Bulls Traking Phase 1 Platform Live!`);
-  console.log(`🌐 Website:     http://localhost:${PORT}`);
-  console.log(`⚡ WebSocket:   ws://localhost:${PORT}/ws`);
-  console.log(`📊 CMC Active:  ${process.env.COINMARKETCAP_API_KEY ? 'YES (Pro Key Enabled)' : 'NO'}`);
-  console.log(`=============================================================\n`);
-});
+// Start server only if not running inside a serverless environment (e.g. Vercel)
+let server = null;
+if (!process.env.VERCEL) {
+  server = app.listen(PORT, () => {
+    console.log(`\n=============================================================`);
+    console.log(`🚀 Bulls Traking Platform Live!`);
+    console.log(`🌐 Website:     http://localhost:${PORT}`);
+    console.log(`⚡ WebSocket:   ws://localhost:${PORT}/ws`);
+    console.log(`📊 CMC Active:  ${process.env.COINMARKETCAP_API_KEY ? 'YES (Pro Key Enabled)' : 'NO'}`);
+    console.log(`=============================================================\n`);
+  });
 
-// Initialize WebSocket Engine & Live Price Streamer
-initWebSocketServer(server);
-startLivePriceStreamer();
+  // Initialize WebSocket Engine & Live Price Streamer
+  initWebSocketServer(server);
+  startLivePriceStreamer();
 
-// Start background market data synchronization worker (CMC/CoinGecko)
-startSyncWorker();
+  // Start background market data synchronization worker (CMC/CoinGecko)
+  startSyncWorker();
+}
 
-module.exports = { app, server };
+module.exports = app;
+module.exports.app = app;
+module.exports.server = server;

@@ -1,22 +1,46 @@
-const { DatabaseSync } = require('node:sqlite');
 const path = require('node:path');
 const fs = require('node:fs');
+const os = require('node:os');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+let DatabaseSync;
+try {
+  ({ DatabaseSync } = require('node:sqlite'));
+} catch (e) {
+  console.error('[DB Critical Error] Failed to load node:sqlite. Node.js >= 22.5.0 is required.', e.message);
+  throw e;
+}
+
+// Vercel / Serverless execution has a read-only filesystem except for /tmp
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DATA_DIR = isServerless ? (fs.existsSync('/tmp') ? '/tmp' : os.tmpdir()) : path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'bullstraking.db');
 
 if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (e) {
+    console.warn('[DB Directory Notice]', e.message);
+  }
 }
 
-const db = new DatabaseSync(DB_FILE);
-
+let db;
 try {
-  db.exec('PRAGMA journal_mode = WAL;');
-  db.exec('PRAGMA foreign_keys = ON;');
-} catch (e) {
-  console.warn('[DB] Pragma setting notice:', e.message);
+  db = new DatabaseSync(DB_FILE);
+  try {
+    db.exec('PRAGMA journal_mode = WAL;');
+    db.exec('PRAGMA foreign_keys = ON;');
+  } catch (pe) {
+    // WAL may not be supported on some network mounts/serverless tmp files
+    try {
+      db.exec('PRAGMA journal_mode = DELETE;');
+    } catch (_) {}
+  }
+} catch (err) {
+  console.warn('[DB Warning] File DB initialization failed, falling back to in-memory DB:', err.message);
+  db = new DatabaseSync(':memory:');
 }
+
+let isSeeding = false;
 
 function initDatabase() {
   const schemaPath = path.join(__dirname, 'migrations', '001_phase1_schema.sql');
@@ -105,7 +129,24 @@ function initDatabase() {
     console.warn('[DB Phase 3 Notice]', p3Err.message);
   }
 
-  console.log('[DB] Bulls Traking Phase 1, 2 & 3 schema initialized.');
+  // Auto-seed initial tokens if table is empty (e.g. on clean serverless start)
+  if (!isSeeding) {
+    try {
+      const countRow = db.prepare('SELECT COUNT(*) as count FROM tokens').get();
+      if (!countRow || countRow.count === 0) {
+        console.log('[DB] Fresh database detected. Auto-seeding initial verified tokens...');
+        isSeeding = true;
+        const { runSeed } = require('./seeds/seed');
+        runSeed();
+        isSeeding = false;
+      }
+    } catch (seedErr) {
+      isSeeding = false;
+      console.warn('[DB Auto-seed Notice]', seedErr.message);
+    }
+  }
+
+  console.log('[DB] Bulls Traking schema initialized.');
 }
 
 function query(sql, params = []) {

@@ -216,8 +216,77 @@ function getNewPairs(options = {}) {
   };
 }
 
+function seedInitialPairsIfEmpty() {
+  try {
+    const countRow = queryOne('SELECT COUNT(*) as count FROM new_pairs');
+    if (!countRow || countRow.count === 0) {
+      const demoPairs = [
+        {
+          chain: 'solana-ecosystem',
+          pair_address: '8sLbNZoA1cfnvMJLPfp98D42FLiT3nJXLajL9JKGpump',
+          token_address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+          name: 'Bonk Doge Alpha',
+          symbol: 'BDOGE',
+          logo_url: 'https://assets.coingecko.com/coins/images/28600/standard/bonk.jpg',
+          price: 0.000024,
+          liquidity: 145000,
+          volume_24h: 320000,
+          txn_count_24h: 3450,
+          pair_created_at: new Date(Date.now() - 4 * 3600000).toISOString(),
+          status: 'latest'
+        },
+        {
+          chain: 'base-ecosystem',
+          pair_address: '0x40bc5225d36b2880c5e7ce9a2a9003ff54b4c501',
+          token_address: '0x532f27101965dd16442e59d40670faf5ebb142e4',
+          name: 'Brett Runner 2026',
+          symbol: 'BRETT2',
+          logo_url: 'https://assets.coingecko.com/coins/images/35529/standard/brett.png',
+          price: 0.084,
+          liquidity: 480000,
+          volume_24h: 1250000,
+          txn_count_24h: 8900,
+          pair_created_at: new Date(Date.now() - 18 * 3600000).toISOString(),
+          status: 'trending'
+        },
+        {
+          chain: 'ethereum-ecosystem',
+          pair_address: '0xa43fe16908251ee70ef74718545e4fe6c5ccec9f',
+          token_address: '0x6982508145454ce325ddbe47a25d4ec3d2311933',
+          name: 'Pepe Vault Pool',
+          symbol: 'PEPEV',
+          logo_url: 'https://assets.coingecko.com/coins/images/29850/standard/pepe-token.png',
+          price: 0.0000098,
+          liquidity: 920000,
+          volume_24h: 2100000,
+          txn_count_24h: 14200,
+          pair_created_at: new Date(Date.now() - 12 * 86400000).toISOString(),
+          status: 'matured'
+        }
+      ];
+
+      for (const p of demoPairs) {
+        execute(`
+          INSERT OR IGNORE INTO new_pairs 
+          (chain, pair_address, token_address, name, symbol, logo_url, price, liquidity, volume_24h, txn_count_24h, pair_created_at, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          p.chain, p.pair_address, p.token_address, p.name, p.symbol, p.logo_url,
+          p.price, p.liquidity, p.volume_24h, p.txn_count_24h, p.pair_created_at, p.status
+        ]);
+      }
+      console.log('[NewPairsService] Seeded initial demo pairs for radar view.');
+    }
+  } catch (err) {
+    console.warn('[NewPairsService Seed Notice]', err.message);
+  }
+}
+
+seedInitialPairsIfEmpty();
+
 module.exports = {
   discoverNewPairs,
   classifyPairs,
-  getNewPairs
+  getNewPairs,
+  seedInitialPairsIfEmpty
 };

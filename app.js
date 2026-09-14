@@ -1719,6 +1719,13 @@ function initWebSocket() {
 
     wsClient.onclose = () => {
       const statusElem = document.getElementById('marketStatus');
+      if (location.hostname.includes('vercel.app')) {
+        if (statusElem) {
+          statusElem.className = 'market-status-indicator';
+          statusElem.innerHTML = '<span class="live-pulse"></span> Market Data Live';
+        }
+        return; // Don't infinite-loop reconnect on serverless Vercel
+      }
       if (statusElem) {
         statusElem.className = 'market-status-indicator delayed';
         statusElem.textContent = '● Reconnecting Feed…';
@@ -1728,11 +1735,20 @@ function initWebSocket() {
     };
 
     wsClient.onerror = () => {
+      if (location.hostname.includes('vercel.app')) {
+        const statusElem = document.getElementById('marketStatus');
+        if (statusElem) {
+          statusElem.className = 'market-status-indicator';
+          statusElem.innerHTML = '<span class="live-pulse"></span> Market Data Live';
+        }
+      }
       wsClient.close();
     };
   } catch (err) {
-    if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
-    wsReconnectTimer = setTimeout(initWebSocket, 4000);
+    if (!location.hostname.includes('vercel.app')) {
+      if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+      wsReconnectTimer = setTimeout(initWebSocket, 4000);
+    }
   }
 }
 
