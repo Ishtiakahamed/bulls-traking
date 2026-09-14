@@ -9,12 +9,12 @@ const {
 } = require('../services/adminService');
 const { syncMarketData } = require('../services/marketWorker');
 
-// Simple admin auth middleware check (header or query token)
+// Admin auth middleware check (x-admin-key required)
 router.use((req, res, next) => {
   const adminKey = req.headers['x-admin-key'] || req.query.admin_key;
-  // Defaults to bulladmin for demo/local dashboard access
-  if (adminKey && adminKey !== 'bulladmin' && adminKey !== 'bulltrack2026') {
-    return res.status(401).json({ success: false, error: 'Unauthorized admin key' });
+  const validKey = process.env.ADMIN_API_KEY || 'bulls_admin_secret_key';
+  if (!adminKey || (adminKey !== validKey && adminKey !== 'bulladmin' && adminKey !== 'bulltrack2026')) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: valid x-admin-key header required' });
   }
   next();
 });

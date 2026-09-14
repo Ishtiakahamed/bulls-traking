@@ -522,3 +522,280 @@ tbody tr:hover{background:var(--panel-hover);}
   50% { opacity: 0.35; transform: scale(0.85); }
 }
 
+/* ========================================================
+   Phase 3 Styles (Watchlist, Signals, Radar & Legal)
+   ======================================================== */
+
+/* Watchlist Star Buttons */
+.watch-star {
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s ease, transform 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.watch-star:hover {
+  color: #f5a623;
+  transform: scale(1.18);
+}
+
+.watch-star.is-active {
+  color: #f5a623;
+  text-shadow: 0 0 8px rgba(245, 166, 35, 0.45);
+}
+
+.detail-star {
+  background: var(--card-bg);
+  border: 1px solid var(--line-light);
+  font-size: 18px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.detail-star:hover {
+  border-color: rgba(245, 166, 35, 0.4);
+}
+
+.cell-star {
+  width: 32px;
+  text-align: center;
+  padding-left: 10px !important;
+  padding-right: 4px !important;
+}
+
+/* Empty Watchlist State */
+.watchlist-empty {
+  text-align: center;
+  padding: 4.5rem 1.5rem;
+  background: var(--card-bg);
+  border: 1px dashed var(--line-light);
+  border-radius: 12px;
+  max-width: 580px;
+  margin: 2rem auto;
+}
+
+.watchlist-empty .star-icon {
+  font-size: 3rem;
+  color: #f5a623;
+  margin-bottom: 1rem;
+  opacity: 0.85;
+}
+
+.watchlist-empty h2 {
+  font-family: var(--display);
+  margin: 0 0 0.5rem;
+  font-size: 1.45rem;
+}
+
+.watchlist-empty p {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  margin: 0 0 1.5rem;
+  line-height: 1.55;
+}
+
+/* Radar Disclaimer Banner */
+.radar-disclaimer {
+  background: rgba(20, 184, 166, 0.08);
+  border: 1px solid rgba(20, 184, 166, 0.22);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.radar-disclaimer .icon {
+  color: var(--cyan);
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+/* Telegram & Alpha Signals Page */
+.signals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.signal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--line-light);
+  border-radius: 10px;
+  padding: 1.35rem;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.signal-card:hover {
+  border-color: var(--line-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.signal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.signal-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 9px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.signal-badge.buy {
+  background: rgba(0, 230, 118, 0.14);
+  color: var(--mint);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+.signal-badge.sell {
+  background: rgba(255, 61, 113, 0.14);
+  color: var(--rose);
+  border: 1px solid rgba(255, 61, 113, 0.3);
+}
+
+.signal-badge.watch {
+  background: rgba(245, 166, 35, 0.14);
+  color: #f5a623;
+  border: 1px solid rgba(245, 166, 35, 0.3);
+}
+
+.signal-source-badge {
+  font-size: 11px;
+  color: var(--text-faint);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--line-light);
+}
+
+.signal-title {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.signal-body {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+  flex: 1;
+}
+
+.signal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--line-light);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.signal-token-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cyan);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.signal-token-pill img {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+/* Legal & Info Document Pages */
+.legal-container {
+  max-width: 860px;
+  margin: 0 auto 3rem;
+  background: var(--card-bg);
+  border: 1px solid var(--line-light);
+  border-radius: 12px;
+  padding: 2.75rem 2.25rem;
+  line-height: 1.7;
+}
+
+.legal-container h1 {
+  font-family: var(--display);
+  font-size: 1.85rem;
+  margin: 0 0 0.4rem;
+}
+
+.legal-container .legal-updated {
+  color: var(--text-faint);
+  font-size: 12.5px;
+  margin-bottom: 1.5rem;
+}
+
+.legal-container h2 {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  margin: 1.75rem 0 0.6rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--line-light);
+  padding-bottom: 0.35rem;
+}
+
+.legal-container p {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  margin: 0 0 1rem;
+}
+
+.legal-container ul {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.legal-container li {
+  margin-bottom: 0.4rem;
+}
+
+.legal-disclaimer-box {
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: #f5a623;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+

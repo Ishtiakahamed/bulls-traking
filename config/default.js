@@ -34,6 +34,14 @@ module.exports = {
     minMarketCapUsd: 5000
   },
 
+  // New Pairs Radar Configuration (Phase 3 Task 1)
+  newPairsSyncIntervalMs: parseInt(process.env.NEW_PAIRS_SYNC_INTERVAL_MS, 10) || 120000, // 2 minutes
+  newPairsFilter: {
+    minLiquidityUsd: 1000,
+    trendingTopPercentile: 0.20,
+    maturedAgeDays: 7
+  },
+
   // Cache Time-To-Live in seconds
   cacheTtl: {
     marketListSec: 60,

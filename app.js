@@ -58,6 +58,71 @@ const debounce = (fn, ms) => {
   };
 };
 
+const fmtAge = (d) => {
+  if (!d) return '—';
+  const diffMs = Date.now() - new Date(d).getTime();
+  if (isNaN(diffMs) || diffMs < 0) return 'Just now';
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+};
+
+/* ---------------- Watchlist helpers (Phase 3 Task 2) ---------------- */
+
+const WATCHLIST_KEY = 'bt_watchlist';
+
+function getWatchlist() {
+  try {
+    const raw = localStorage.getItem(WATCHLIST_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function isWatchlisted(id) {
+  if (!id) return false;
+  const list = getWatchlist();
+  return list.some(item => String(item) === String(id));
+}
+
+function toggleWatchlist(id, btnElement) {
+  if (!id) return;
+  let list = getWatchlist();
+  const strId = String(id);
+  const exists = list.some(item => String(item) === strId);
+
+  if (exists) {
+    list = list.filter(item => String(item) !== strId);
+  } else {
+    list.push(strId);
+  }
+
+  try {
+    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
+  } catch (e) {}
+
+  const isNowActive = !exists;
+  document.querySelectorAll(`.watch-star[data-token-id="${strId}"]`).forEach(btn => {
+    btn.classList.toggle('is-active', isNowActive);
+    btn.title = isNowActive ? 'Remove from Watchlist' : 'Add to Watchlist';
+  });
+
+  if (btnElement) {
+    btnElement.classList.toggle('is-active', isNowActive);
+  }
+
+  if (location.hash.startsWith('#/watchlist')) {
+    renderWatchlistPage();
+  }
+}
+window.toggleWatchlist = toggleWatchlist;
+
 function sparklineSvg(prices, positive) {
   if (!prices || prices.length < 2) return '';
   const w = 90, h = 28;
@@ -116,7 +181,7 @@ function updateMarketStatus(stats) {
 
 function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
   if (!tokens || tokens.length === 0) {
-    return `<tr><td colspan="12" class="state-msg">No tokens found matching this view.</td></tr>`;
+    return `<tr><td colspan="13" class="state-msg">No tokens found matching this view.</td></tr>`;
   }
 
   return tokens.map((t, idx) => {
@@ -127,9 +192,13 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
     const txnCount = (t.txn_count_24h != null && t.txn_count_24h > 0) ? Number(t.txn_count_24h).toLocaleString() : '—';
     const lpVal = (t.liquidity != null && t.liquidity > 0) ? fmtUsd(t.liquidity) : '—';
     const chg6h = t.price_change_6h != null ? fmtChg(t.price_change_6h) : '—';
+    const starred = isWatchlisted(t.id);
 
     return `
       <tr data-token-symbol="${escapeHtml(t.symbol)}" data-token-id="${t.id}" onclick="location.hash='#/token/${t.id}'">
+        <td class="cell-star" onclick="event.stopPropagation();">
+          <button class="watch-star ${starred ? 'is-active' : ''}" data-token-id="${t.id}" title="${starred ? 'Remove from Watchlist' : 'Add to Watchlist'}" onclick="event.stopPropagation(); toggleWatchlist('${t.id}', this)">★</button>
+        </td>
         <td>${t.market_cap_rank || idx + 1}</td>
         <td>
           <div class="token-cell">
@@ -241,6 +310,7 @@ async function renderHome() {
         <table>
           <thead>
             <tr>
+              <th style="width:32px;"></th>
               <th>#</th>
               <th>Token</th>
               <th>Price</th>
@@ -319,13 +389,14 @@ async function renderTopCoins() {
       <table>
         <thead>
           <tr>
+            <th style="width:32px;"></th>
             <th>Rank</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="topTableBody">
-          <tr><td colspan="12" class="state-msg">Loading Top Coins…</td></tr>
+          <tr><td colspan="13" class="state-msg">Loading Top Coins…</td></tr>
         </tbody>
       </table>
     </div>
@@ -403,13 +474,14 @@ async function renderNewCoins() {
       <table>
         <thead>
           <tr>
+            <th style="width:32px;"></th>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="newTableBody">
-          <tr><td colspan="12" class="state-msg">Loading New Coins…</td></tr>
+          <tr><td colspan="13" class="state-msg">Loading New Coins…</td></tr>
         </tbody>
       </table>
     </div>
@@ -487,13 +559,14 @@ async function renderHotCoins() {
       <table>
         <thead>
           <tr>
+            <th style="width:32px;"></th>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="hotTableBody">
-          <tr><td colspan="12" class="state-msg">Loading Hot Coins…</td></tr>
+          <tr><td colspan="13" class="state-msg">Loading Hot Coins…</td></tr>
         </tbody>
       </table>
     </div>
@@ -571,13 +644,14 @@ async function renderGainers() {
       <table>
         <thead>
           <tr>
+            <th style="width:32px;"></th>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="gainersTableBody">
-          <tr><td colspan="12" class="state-msg">Loading Top Gainers…</td></tr>
+          <tr><td colspan="13" class="state-msg">Loading Top Gainers…</td></tr>
         </tbody>
       </table>
     </div>
@@ -678,6 +752,7 @@ async function renderPromotedPage() {
       <table>
         <thead>
           <tr>
+            <th style="width:32px;"></th>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
@@ -730,6 +805,18 @@ function renderScanner() {
   const form = document.getElementById('scannerForm');
   const btn = document.getElementById('btnScan');
   const resultContainer = document.getElementById('scanResult');
+
+  // Auto-populate from New Pairs Radar or other views
+  const storedAddr = sessionStorage.getItem('scan_address');
+  const storedChain = sessionStorage.getItem('scan_chain');
+  if (storedAddr) {
+    const inputAddr = document.getElementById('scanAddress');
+    const selectChain = document.getElementById('scanChain');
+    if (inputAddr) inputAddr.value = storedAddr;
+    if (selectChain && storedChain) selectChain.value = storedChain;
+    sessionStorage.removeItem('scan_address');
+    sessionStorage.removeItem('scan_chain');
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -961,7 +1048,10 @@ async function renderTokenDetail(idOrAddress) {
       <div class="detail-head">
         <img src="${escapeHtml(t.logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(t.symbol)}" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
         <div>
-          <h1>${escapeHtml(t.name)} <span class="sym">$${escapeHtml(t.symbol)}</span></h1>
+          <h1>
+            ${escapeHtml(t.name)} <span class="sym">$${escapeHtml(t.symbol)}</span>
+            <button class="watch-star detail-star ${isWatchlisted(t.id) ? 'is-active' : ''}" data-token-id="${t.id}" title="${isWatchlisted(t.id) ? 'Remove from Watchlist' : 'Add to Watchlist'}" onclick="toggleWatchlist('${t.id}', this)">★</button>
+          </h1>
           <div style="font-size:12px;color:var(--text-faint);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span>Contract: <code style="color:var(--cyan);">${escapeHtml(t.contract_address)}</code></span>
             <button onclick="navigator.clipboard.writeText('${escapeHtml(t.contract_address)}'); alert('Contract address copied!');" style="background:transparent;border:1px solid var(--line-light);color:var(--text-muted);font-size:11px;padding:2px 6px;border-radius:3px;">Copy</button>
@@ -1057,6 +1147,479 @@ function initSearch() {
   });
 }
 
+/* ---------------- 3b. NEW PAIRS RADAR VIEW (/new-pairs) (Phase 3 Task 1) ---------------- */
+
+let newPairsState = {
+  tab: 'latest', // 'latest' | 'trending' | 'matured'
+  chain: 'all',
+  page: 1,
+  limit: 25
+};
+
+async function renderNewPairs() {
+  document.title = 'New Pairs Radar | Bulls Traking';
+  app.innerHTML = `
+    <div class="page-head">
+      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">New Pairs Radar</h1>
+      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Real-time on-chain pair discovery, profiling telemetry, and newly minted pool tracking across leading DEXs.</p>
+    </div>
+
+    <!-- RADAR DISCLAIMER BANNER -->
+    <div class="radar-disclaimer">
+      <span class="icon">ℹ</span>
+      <div>
+        <b>Real-time discovery feed:</b> Sourced via DexScreener's public token profile stream across Solana, Ethereum, BNB Chain, and Base. Pairs are indexed upon profile submission. Trading newly created pairs carries extreme volatility and high capital risk. Always verify contract security before interacting.
+      </div>
+    </div>
+
+    <!-- TABS & CHAIN CONTROLS -->
+    <div class="controls-bar">
+      <div class="subtabs" id="radarTabs">
+        <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">⚡ Latest (< 24h)</span>
+        <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">🔥 Trending Pools</span>
+        <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">🛡 Matured (> 7d)</span>
+      </div>
+
+      <div class="chains" id="radarChains">
+        ${Object.keys(CHAINS).map(k => `
+          <button class="chain-pill ${newPairsState.chain === k ? 'is-active' : ''}" data-chain="${k}">
+            ${CHAINS[k].label}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- PAIRS TABLE -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Token / Pool</th>
+            <th>Price</th>
+            <th>Liquidity</th>
+            <th>24h Volume</th>
+            <th>24h TXN</th>
+            <th>Pair Age</th>
+            <th>Ecosystem</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="radarTableBody">
+          <tr><td colspan="9" class="state-msg">Scanning on-chain pairs radar…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-wrap" id="radarPagination" style="text-align:center;margin:1.75rem 0;">
+      <button id="btnLoadMoreRadar" class="btn-ghost">Load More</button>
+    </div>
+  `;
+
+  document.getElementById('radarTabs').addEventListener('click', (e) => {
+    const tabEl = e.target.closest('.subtab');
+    if (!tabEl) return;
+    newPairsState.tab = tabEl.dataset.tab;
+    newPairsState.page = 1;
+    renderNewPairs();
+  });
+
+  document.getElementById('radarChains').addEventListener('click', (e) => {
+    const pill = e.target.closest('.chain-pill');
+    if (!pill) return;
+    newPairsState.chain = pill.dataset.chain;
+    newPairsState.page = 1;
+    renderNewPairs();
+  });
+
+  loadRadarPairs();
+}
+
+function renderRadarRows(pairs, startIdx = 0) {
+  if (!pairs || pairs.length === 0) {
+    return `<tr><td colspan="9" class="state-msg">No newly discovered pairs in this classification.</td></tr>`;
+  }
+
+  return pairs.map((p, idx) => {
+    const chainLabel = (p.chain || '').replace('-ecosystem', '').toUpperCase();
+    const age = fmtAge(p.pair_created_at);
+    const txns = p.txn_count_24h != null && p.txn_count_24h > 0 ? Number(p.txn_count_24h).toLocaleString() : '—';
+    const shortAddress = p.pair_address ? `${p.pair_address.slice(0, 4)}...${p.pair_address.slice(-4)}` : '';
+    
+    const dsChain = p.chain === 'solana-ecosystem' ? 'solana' : p.chain === 'binance-smart-chain' ? 'bsc' : p.chain === 'ethereum-ecosystem' ? 'ethereum' : 'base';
+    const dsUrl = `https://dexscreener.com/${dsChain}/${p.pair_address}`;
+
+    return `
+      <tr>
+        <td>${startIdx + idx + 1}</td>
+        <td>
+          <div class="token-cell">
+            <img src="${escapeHtml(p.logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(p.symbol)}" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
+            <div>
+              <span class="token-name">${escapeHtml(p.name)}</span>
+              <span class="token-sym">${escapeHtml(p.symbol)}</span>
+              <div style="font-size:11px;color:var(--text-faint);margin-top:2px;">
+                Pool: <code>${shortAddress}</code>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td class="cell-price"><b>${fmtPrice(p.price)}</b></td>
+        <td>${fmtUsd(p.liquidity)}</td>
+        <td>${fmtUsd(p.volume_24h)}</td>
+        <td>${txns}</td>
+        <td><span class="badge-age">${age}</span></td>
+        <td><span class="badge-age" style="background:rgba(255,255,255,0.06);color:var(--text-faint);">${chainLabel}</span></td>
+        <td>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost" style="padding:2px 8px;font-size:11px;">Scan</a>
+            <a href="${dsUrl}" target="_blank" rel="noopener" style="font-size:11px;color:var(--cyan);">Pool ↗</a>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function loadRadarPairs() {
+  const tbody = document.getElementById('radarTableBody');
+  const btnMore = document.getElementById('btnLoadMoreRadar');
+
+  try {
+    const res = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}&page=${newPairsState.page}&limit=${newPairsState.limit}`);
+    const pairs = res.pairs || [];
+    tbody.innerHTML = renderRadarRows(pairs, 0);
+
+    if (pairs.length < newPairsState.limit) {
+      if (btnMore) btnMore.style.display = 'none';
+    } else {
+      if (btnMore) {
+        btnMore.style.display = 'inline-block';
+        btnMore.onclick = async () => {
+          btnMore.disabled = true;
+          btnMore.textContent = 'Loading more pairs…';
+          try {
+            newPairsState.page++;
+            const nextRes = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}&page=${newPairsState.page}&limit=${newPairsState.limit}`);
+            const nextPairs = nextRes.pairs || [];
+            if (nextPairs.length > 0) {
+              const startIdx = (newPairsState.page - 1) * newPairsState.limit;
+              tbody.insertAdjacentHTML('beforeend', renderRadarRows(nextPairs, startIdx));
+            }
+            if (nextPairs.length < newPairsState.limit) {
+              btnMore.style.display = 'none';
+            } else {
+              btnMore.disabled = false;
+              btnMore.textContent = 'Load More';
+            }
+          } catch (e) {
+            btnMore.style.display = 'none';
+          }
+        };
+      }
+    }
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="9" class="state-msg">Radar telemetry temporarily unavailable: ${escapeHtml(err.message)}</td></tr>`;
+    if (btnMore) btnMore.style.display = 'none';
+  }
+}
+
+/* ---------------- 3c. LOCAL WATCHLIST VIEW (/watchlist) (Phase 3 Task 2) ---------------- */
+
+async function renderWatchlistPage() {
+  document.title = 'My Watchlist | Bulls Traking';
+  const ids = getWatchlist();
+
+  app.innerHTML = `
+    <div class="page-head">
+      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">My Watchlist</h1>
+      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Real-time token watchlist stored locally in your browser. Track price moves, liquidity, and 24h volumes.</p>
+    </div>
+    <div id="watchlistContainer"></div>
+  `;
+
+  const container = document.getElementById('watchlistContainer');
+
+  if (!ids || ids.length === 0) {
+    container.innerHTML = `
+      <div class="watchlist-empty">
+        <div class="star-icon">★</div>
+        <h2>Your Watchlist is Empty</h2>
+        <p>
+          You haven't starred any tokens yet.<br>
+          Click the star icon (★) on any token row or token page to monitor it here.
+        </p>
+        <a href="#/top-coins" class="btn-solid" style="padding:.7rem 1.75rem;display:inline-block;">Explore Top Coins</a>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32px;"></th>
+            <th>Rank</th>
+            <th>Token</th>
+            <th>Price</th>
+            <th>1h</th>
+            <th>24h</th>
+            <th>7d</th>
+            <th>6h</th>
+            <th>TXN</th>
+            <th>LP</th>
+            <th>24h Volume</th>
+            <th>Market Cap</th>
+            <th>Last 7 Days</th>
+          </tr>
+        </thead>
+        <tbody id="watchlistTableBody">
+          <tr><td colspan="13" class="state-msg">Loading watchlisted tokens…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  try {
+    const res = await fetchApi(`/tokens/by-ids?ids=${ids.join(',')}`);
+    const tokens = res.tokens || [];
+    if (tokens.length === 0) {
+      container.innerHTML = `
+        <div class="watchlist-empty">
+          <div class="star-icon">★</div>
+          <h2>No Active Tokens in Watchlist</h2>
+          <p>The tokens in your watchlist could not be retrieved or have been archived.</p>
+          <a href="#/top-coins" class="btn-solid">Explore Top Coins</a>
+        </div>
+      `;
+      return;
+    }
+
+    document.getElementById('watchlistTableBody').innerHTML = renderTokenRows(tokens);
+  } catch (err) {
+    document.getElementById('watchlistTableBody').innerHTML = `
+      <tr><td colspan="13" class="state-msg">Failed to load watchlist: ${escapeHtml(err.message)}</td></tr>
+    `;
+  }
+}
+
+/* ---------------- 3d. TELEGRAM SIGNALS VIEW (/signals) (Phase 3 Task 3) ---------------- */
+
+let signalsState = {
+  direction: 'all',
+  page: 1,
+  limit: 20
+};
+
+async function renderSignalsPage() {
+  document.title = 'Telegram & Market Alpha Signals | Bulls Traking';
+  app.innerHTML = `
+    <div class="page-head">
+      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Telegram & Market Alpha Signals</h1>
+      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Curated on-chain trade setups, breakout telemetry, and risk warnings aggregated from verified Telegram alpha channels.</p>
+    </div>
+
+    <!-- DIRECTION FILTER TABS -->
+    <div class="controls-bar">
+      <div class="subtabs" id="signalsTabs">
+        <span class="subtab ${signalsState.direction === 'all' ? 'is-active' : ''}" data-dir="all">All Signals</span>
+        <span class="subtab ${signalsState.direction === 'buy' ? 'is-active' : ''}" data-dir="buy">🟢 Buy / Long</span>
+        <span class="subtab ${signalsState.direction === 'sell' ? 'is-active' : ''}" data-dir="sell">🔴 Sell / Take Profit</span>
+        <span class="subtab ${signalsState.direction === 'watch' ? 'is-active' : ''}" data-dir="watch">🟡 Watchlist / Alert</span>
+      </div>
+    </div>
+
+    <div id="signalsList"><div class="state-msg">Loading alpha signals…</div></div>
+  `;
+
+  document.getElementById('signalsTabs').addEventListener('click', (e) => {
+    const tab = e.target.closest('.subtab');
+    if (!tab) return;
+    signalsState.direction = tab.dataset.dir;
+    signalsState.page = 1;
+    renderSignalsPage();
+  });
+
+  loadSignals();
+}
+
+async function loadSignals() {
+  const container = document.getElementById('signalsList');
+  try {
+    const queryDir = signalsState.direction === 'all' ? '' : `&direction=${signalsState.direction}`;
+    const res = await fetchApi(`/signals?page=${signalsState.page}&limit=${signalsState.limit}${queryDir}`);
+    const signals = res.signals || [];
+
+    if (signals.length === 0) {
+      container.innerHTML = `<div class="state-msg">No active signals found in this category.</div>`;
+      return;
+    }
+
+    const cards = signals.map(s => {
+      const dirCls = s.direction === 'buy' ? 'buy' : s.direction === 'sell' ? 'sell' : 'watch';
+      const dirIcon = s.direction === 'buy' ? '▲ BUY' : s.direction === 'sell' ? '▼ SELL' : '● WATCH';
+      const timeAgo = fmtAge(s.posted_at);
+
+      let tokenPill = '';
+      if (s.token_symbol) {
+        tokenPill = `
+          <div class="signal-token-pill" onclick="location.hash='#/token/${s.token_id}'">
+            <img src="${escapeHtml(s.token_logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(s.token_symbol)}">
+            <span>$${escapeHtml(s.token_symbol)} (${fmtPrice(s.token_price)})</span>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="signal-card">
+          <div>
+            <div class="signal-header">
+              <span class="signal-badge ${dirCls}">${dirIcon}</span>
+              <span class="signal-source-badge">${escapeHtml((s.source || 'telegram').replace(/_/g, ' ').toUpperCase())}</span>
+            </div>
+            <h3 class="signal-title">${escapeHtml(s.title)}</h3>
+            <div class="signal-body">${escapeHtml(s.message)}</div>
+          </div>
+          <div class="signal-footer">
+            <div>${tokenPill || '<span style="color:var(--text-faint);">Market-wide Setup</span>'}</div>
+            <span>${timeAgo}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = `<div class="signals-grid">${cards}</div>`;
+  } catch (err) {
+    container.innerHTML = `<div class="state-msg">Failed to load signals: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+/* ---------------- 10. LEGAL & INFO PAGES (Phase 3 Task 4) ---------------- */
+
+const LEGAL_DISCLAIMER_NOTICE = `
+  <div class="legal-disclaimer-box">
+    ⚠️ <b>Legal Review Disclaimer:</b> This document is an initial operational placeholder provided for platform structure demonstration. Prior to production launch in regulated jurisdictions, this agreement must undergo formal review by qualified digital asset and securities legal counsel.
+  </div>
+`;
+
+function renderAbout() {
+  document.title = 'About Us | Bulls Traking';
+  app.innerHTML = `
+    <div class="legal-container">
+      ${LEGAL_DISCLAIMER_NOTICE}
+      <h1>About Bulls Traking</h1>
+      <div class="legal-updated">Last Updated: September 2026</div>
+
+      <h2>1. Platform Mission</h2>
+      <p>Bulls Traking is an independent, high-performance crypto token discovery, real-time analytics, trending and listing platform. Our mission is to provide cryptocurrency traders, liquidity providers, and web3 enthusiasts with transparent, unbiased market intelligence across Solana, Ethereum, BNB Chain, and Base.</p>
+
+      <h2>2. What We Provide</h2>
+      <ul>
+        <li><b>Real-Time Market Telemetry:</b> Sub-second streaming prices, market capitalizations, 24h volumes, and liquidity metrics via CoinMarketCap, CoinGecko, and decentralized automated market makers (AMMs).</li>
+        <li><b>New Pairs Radar:</b> Comprehensive profiling radar tracking newly created liquidity pools and fair launches across decentralized exchanges.</li>
+        <li><b>Automated Security Auditing:</b> Deep contract analysis powered by GoPlus, identifying honeypots, malicious mint functions, excessive taxes, and blacklist mechanisms.</li>
+        <li><b>Alpha & Telegram Signals:</b> Curated market intelligence and sentiment setups aggregated from vetted decentralized communities.</li>
+      </ul>
+
+      <h2>3. Independent Operation</h2>
+      <p>Bulls Traking is built from the ground up with proprietary indexing and database structures. We do not copy proprietary assets from any existing website and remain committed to fostering an open, transparent decentralized ecosystem.</p>
+    </div>
+  `;
+}
+
+function renderTerms() {
+  document.title = 'Terms of Service | Bulls Traking';
+  app.innerHTML = `
+    <div class="legal-container">
+      ${LEGAL_DISCLAIMER_NOTICE}
+      <h1>Terms of Service</h1>
+      <div class="legal-updated">Last Updated: September 2026</div>
+
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing or using the Bulls Traking platform ("Bulls Traking", "we", "us", or "our"), you acknowledge that you have read, understood, and agree to be bound by these Terms of Service. If you do not agree, you must immediately cease accessing the platform.</p>
+
+      <h2>2. Description of Services</h2>
+      <p>Bulls Traking provides digital asset information, price tracking, community token submissions, security audits, and promotional placements. Bulls Traking is not a broker, exchange, custodian, investment adviser, or financial planner.</p>
+
+      <h2>3. Token Submissions & Listing Rules</h2>
+      <p>Users submitting tokens represent and warrant that the information provided is accurate, non-infringing, and does not promote illegal schemes, rug pulls, or fraudulent solicitations. Bulls Traking reserves the right to unlist, flag, or restrict any token or submission at its sole discretion without notice.</p>
+
+      <h2>4. Limitation of Liability</h2>
+      <p>To the maximum extent permitted by applicable law, Bulls Traking and its operators shall not be liable for any indirect, incidental, punitive, or consequential damages resulting from your use of the platform, loss of capital, smart contract vulnerabilities, or trading decisions.</p>
+    </div>
+  `;
+}
+
+function renderPrivacy() {
+  document.title = 'Privacy Policy | Bulls Traking';
+  app.innerHTML = `
+    <div class="legal-container">
+      ${LEGAL_DISCLAIMER_NOTICE}
+      <h1>Privacy Policy</h1>
+      <div class="legal-updated">Last Updated: September 2026</div>
+
+      <h2>1. Information We Collect</h2>
+      <p>Bulls Traking prioritizes user privacy. We do not require account registration or collect personal identity documents for browsing our public market feeds.</p>
+      <ul>
+        <li><b>Submission Contact Information:</b> Project owners submitting tokens may provide an optional contact email and social handles.</li>
+        <li><b>Technical Analytics:</b> Standard web server logs, IP addresses, and user-agent strings for security mitigation and rate limiting.</li>
+        <li><b>Local Device Storage:</b> Client-side data such as your token Watchlist and theme preferences stored strictly on your local browser.</li>
+      </ul>
+
+      <h2>2. Third-Party Services</h2>
+      <p>Our platform interfaces with reputable public market data providers (e.g. CoinMarketCap, CoinGecko, DexScreener, GoPlus Security). Your interactions with external websites or third-party DEX links are subject to their respective privacy terms.</p>
+
+      <h2>3. Data Retention & Security</h2>
+      <p>We maintain industry-standard administrative and cryptographic safeguards to protect submitted metadata from unauthorized access or modification.</p>
+    </div>
+  `;
+}
+
+function renderCookies() {
+  document.title = 'Cookie Statement | Bulls Traking';
+  app.innerHTML = `
+    <div class="legal-container">
+      ${LEGAL_DISCLAIMER_NOTICE}
+      <h1>Cookie & Local Storage Statement</h1>
+      <div class="legal-updated">Last Updated: September 2026</div>
+
+      <h2>1. How We Use Cookies and Local Storage</h2>
+      <p>Bulls Traking uses browser <code>localStorage</code> and lightweight session cookies solely to enable core platform features and user preferences.</p>
+
+      <h2>2. Specific Client Storage Items</h2>
+      <ul>
+        <li><b>bt_watchlist:</b> Stores an array of token IDs you have starred for your personal Watchlist. This information never leaves your device and is not sold or shared with any third party.</li>
+        <li><b>scan_address / scan_chain:</b> Temporarily stores contract addresses when navigating between the New Pairs Radar and Contract Scanner.</li>
+      </ul>
+
+      <h2>3. Managing Your Storage</h2>
+      <p>You can clear your watchlist and local application storage at any time via your browser's Developer Tools or "Clear Browsing Data" settings.</p>
+    </div>
+  `;
+}
+
+function renderDisclaimer() {
+  document.title = 'Risk Disclaimer | Bulls Traking';
+  app.innerHTML = `
+    <div class="legal-container">
+      ${LEGAL_DISCLAIMER_NOTICE}
+      <h1>Risk & Financial Disclaimer</h1>
+      <div class="legal-updated">Last Updated: September 2026</div>
+
+      <h2>1. No Financial Advice</h2>
+      <p>None of the content, price data, market rankings, security risk scores, or Telegram signals provided on Bulls Traking constitutes financial, legal, investment, or trading advice. All information is provided for general informational and educational purposes only.</p>
+
+      <h2>2. High Volatility & Capital Loss Warning</h2>
+      <p>Digital assets, decentralized liquidity pools, and newly minted tokens are subject to extreme market volatility, low liquidity, slippage, and high risk of total loss. You should never invest funds that you cannot afford to lose.</p>
+
+      <h2>3. Independent Due Diligence</h2>
+      <p>Prior to interacting with any decentralized smart contract, liquidity pool, or token presale, you must conduct your own independent investigation and verify the underlying contract code on on-chain block explorers.</p>
+    </div>
+  `;
+}
+
 /* ---------------- router ---------------- */
 
 function parseHash() {
@@ -1084,12 +1647,18 @@ function route() {
     renderHome();
   } else if (path === '/top-coins') {
     renderTopCoins();
+  } else if (path === '/new-pairs') {
+    renderNewPairs();
   } else if (path === '/new-coins') {
     renderNewCoins();
   } else if (path === '/hot') {
     renderHotCoins();
   } else if (path === '/gainers') {
     renderGainers();
+  } else if (path === '/watchlist') {
+    renderWatchlistPage();
+  } else if (path === '/signals') {
+    renderSignalsPage();
   } else if (path === '/scan') {
     renderScanner();
   } else if (path === '/promoted') {
@@ -1098,6 +1667,16 @@ function route() {
     renderPresales();
   } else if (path === '/submit') {
     renderSubmit();
+  } else if (path === '/about') {
+    renderAbout();
+  } else if (path === '/terms-of-service' || path === '/terms') {
+    renderTerms();
+  } else if (path === '/privacy-policy' || path === '/privacy') {
+    renderPrivacy();
+  } else if (path === '/cookie-statement' || path === '/cookies') {
+    renderCookies();
+  } else if (path === '/disclaimer') {
+    renderDisclaimer();
   } else if (path.startsWith('/token/')) {
     const id = path.replace('/token/', '');
     renderTokenDetail(id);

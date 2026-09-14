@@ -7,7 +7,8 @@ const {
   handleGetTopGainers,
   handleGetTrendingCoins,
   handleGetTokenDetail,
-  handleSearchTokens
+  handleSearchTokens,
+  handleGetTokensByIds
 } = require('../controllers/tokenController');
 
 // Token Categories (Section 26)
@@ -17,6 +18,9 @@ router.get('/tokens/new', handleGetNewCoins);
 router.get('/tokens/hot', handleGetHotCoins);
 router.get('/tokens/gainers', handleGetTopGainers);
 router.get('/tokens/trending', handleGetTrendingCoins);
+
+// Watchlist batch fetch by IDs
+router.get('/tokens/by-ids', handleGetTokensByIds);
 
 // Search endpoint
 router.get('/search', handleSearchTokens);

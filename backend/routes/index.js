@@ -5,6 +5,9 @@ const tokenRoutes = require('./tokenRoutes');
 const submissionRoutes = require('./submissionRoutes');
 const promotionRoutes = require('./promotionRoutes');
 const securityRoutes = require('../../routes/securityRoutes');
+const newPairsRoutes = require('../../routes/newPairsRoutes');
+const signalsRoutes = require('../../routes/signalsRoutes');
+const adminRoutes = require('../../routes/adminRoutes');
 const { handleGetHomeData } = require('../controllers/homeController');
 const { getSyncStatus } = require('../workers/syncWorker');
 
@@ -29,5 +32,8 @@ router.use('/', tokenRoutes);
 router.use('/', submissionRoutes);
 router.use('/', promotionRoutes);
 router.use('/', securityRoutes);
+router.use('/', newPairsRoutes);
+router.use('/', signalsRoutes);
+router.use('/', adminRoutes);
 
 module.exports = router;

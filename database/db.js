@@ -62,7 +62,50 @@ function initDatabase() {
     console.warn('[DB Migration Notice]', migErr.message);
   }
 
-  console.log('[DB] Bulls Traking Phase 1 & 2 schema initialized.');
+  // Phase 3 migrations: new_pairs & signals
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS new_pairs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chain VARCHAR(50) NOT NULL,
+        pair_address VARCHAR(255) NOT NULL,
+        token_address VARCHAR(255) NOT NULL,
+        name VARCHAR(150) NOT NULL,
+        symbol VARCHAR(50) NOT NULL,
+        logo_url TEXT,
+        price REAL DEFAULT 0,
+        liquidity REAL DEFAULT 0,
+        volume_24h REAL DEFAULT 0,
+        txn_count_24h INTEGER DEFAULT 0,
+        pair_created_at DATETIME,
+        status VARCHAR(20) DEFAULT 'latest',
+        first_discovered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT uq_new_pairs_chain_pair UNIQUE (chain, pair_address)
+      );
+      CREATE INDEX IF NOT EXISTS idx_new_pairs_status ON new_pairs(status);
+      CREATE INDEX IF NOT EXISTS idx_new_pairs_chain ON new_pairs(chain);
+      CREATE INDEX IF NOT EXISTS idx_new_pairs_created ON new_pairs(pair_created_at);
+
+      CREATE TABLE IF NOT EXISTS signals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        token_id INTEGER,
+        title VARCHAR(200) NOT NULL,
+        message TEXT NOT NULL,
+        direction VARCHAR(10) NOT NULL,
+        source VARCHAR(50) DEFAULT 'manual',
+        posted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        is_active INTEGER DEFAULT 1,
+        FOREIGN KEY (token_id) REFERENCES tokens(id) ON DELETE SET NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_signals_posted ON signals(posted_at);
+      CREATE INDEX IF NOT EXISTS idx_signals_direction ON signals(direction);
+    `);
+  } catch (p3Err) {
+    console.warn('[DB Phase 3 Notice]', p3Err.message);
+  }
+
+  console.log('[DB] Bulls Traking Phase 1, 2 & 3 schema initialized.');
 }
 
 function query(sql, params = []) {

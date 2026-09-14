@@ -138,11 +138,24 @@ function getSyncStatus() {
   return lastSyncStatus;
 }
 
+const { discoverNewPairs } = require('../../services/newPairsService');
+
 function startSyncWorker() {
   console.log(`[SyncWorker] Registered with ${config.syncIntervalMs / 1000}s interval.`);
   // Run initial sync after 2 seconds
   setTimeout(syncMarketData, 2000);
-  return setInterval(syncMarketData, config.syncIntervalMs);
+  const marketInterval = setInterval(syncMarketData, config.syncIntervalMs);
+
+  // Phase 3: Start New Pairs on-chain discovery feed (DexScreener profile polling)
+  console.log(`[NewPairsWorker] Registered with ${config.newPairsSyncIntervalMs / 1000}s interval.`);
+  setTimeout(discoverNewPairs, 4000);
+  const newPairsInterval = setInterval(discoverNewPairs, config.newPairsSyncIntervalMs);
+
+  // Phase 3: Telegram Ingestion Worker
+  const { startTelegramWorker } = require('./telegramIngestWorker');
+  startTelegramWorker();
+
+  return { marketInterval, newPairsInterval };
 }
 
 module.exports = {

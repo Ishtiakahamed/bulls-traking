@@ -83,6 +83,19 @@ function handleSearchTokens(req, res, next) {
   }
 }
 
+function handleGetTokensByIds(req, res, next) {
+  try {
+    const rawIds = req.query.ids;
+    if (!rawIds) return res.json({ success: true, tokens: [] });
+    const ids = rawIds.toString().split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id) && id > 0);
+    const { getTokensByIds } = require('../services/tokenService');
+    const tokens = getTokensByIds(ids);
+    res.json({ success: true, count: tokens.length, tokens });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   handleGetTopCoins,
   handleGetNewCoins,
@@ -90,5 +103,6 @@ module.exports = {
   handleGetTopGainers,
   handleGetTrendingCoins,
   handleGetTokenDetail,
-  handleSearchTokens
+  handleSearchTokens,
+  handleGetTokensByIds
 };

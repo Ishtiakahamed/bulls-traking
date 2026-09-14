@@ -228,6 +228,24 @@ function searchTokens(searchQuery, limit = 10) {
   return query(sql, [q, q, q, q, parseInt(limit, 10)]);
 }
 
+/**
+ * Get Tokens By ID List (for local Watchlist batch fetching)
+ */
+function getTokensByIds(ids = []) {
+  if (!ids || ids.length === 0) return [];
+  const validIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+  if (validIds.length === 0) return [];
+
+  const placeholders = validIds.map(() => '?').join(',');
+  const sql = `
+    SELECT * FROM tokens
+    WHERE id IN (${placeholders})
+    ORDER BY market_cap DESC
+  `;
+  const tokens = query(sql, validIds);
+  return attachSparklines(tokens);
+}
+
 module.exports = {
   getTopCoins,
   getNewCoins,
@@ -235,5 +253,6 @@ module.exports = {
   getTopGainers,
   getTrendingCoins,
   getTokenDetail,
-  searchTokens
+  searchTokens,
+  getTokensByIds
 };
