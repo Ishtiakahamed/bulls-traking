@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const DB_FILE = path.join(DATA_DIR, 'bulltrack.db');
+const DB_FILE = path.join(DATA_DIR, 'bullstraking.db');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });

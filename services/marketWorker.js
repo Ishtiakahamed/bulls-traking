@@ -38,6 +38,33 @@ async function syncMarketData() {
       console.warn('[MarketWorker] External API reach notice (using fallback normalization):', e.message);
     }
 
+    // Fetch DexScreener on-chain metrics (TXN count, LP / liquidity, 6h price change)
+    const dexMetricsMap = new Map();
+    await Promise.allSettled(
+      tokens
+        .filter(t => t.contract_address && !t.contract_address.startsWith('0x0000000000000000000000000000000000000000') && t.contract_address.length > 8)
+        .map(async (tok) => {
+          try {
+            const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tok.contract_address}`, {
+              signal: AbortSignal.timeout(5000)
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const pair = json.pairs?.[0];
+              if (pair) {
+                const buys = parseInt(pair.txns?.h24?.buys || 0, 10);
+                const sells = parseInt(pair.txns?.h24?.sells || 0, 10);
+                dexMetricsMap.set(tok.id, {
+                  txn_count_24h: buys + sells,
+                  liquidity: parseFloat(pair.liquidity?.usd || 0),
+                  price_change_6h: parseFloat(pair.priceChange?.h6 || 0)
+                });
+              }
+            }
+          } catch (e) {}
+        })
+    );
+
     transaction(() => {
       for (const tok of tokens) {
         const live = marketDataMap.get(tok.symbol.toLowerCase());
@@ -58,13 +85,19 @@ async function syncMarketData() {
           chg24 = ((newPrice - tok.price) / tok.price) * 100;
         }
 
+        const dex = dexMetricsMap.get(tok.id);
+        const txnCount = dex ? dex.txn_count_24h : 0;
+        const liquidity = dex ? dex.liquidity : 0;
+        const chg6h = dex ? dex.price_change_6h : 0;
+
         // Update token record
         execute(`
           UPDATE tokens SET 
             price = ?, market_cap = ?, volume_24h = ?, price_change_24h = ?,
+            txn_count_24h = ?, liquidity = ?, price_change_6h = ?,
             last_data_sync = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
-        `, [newPrice, newCap, newVol, chg24, tok.id]);
+        `, [newPrice, newCap, newVol, chg24, txnCount, liquidity, chg6h, tok.id]);
 
         // Insert historical snapshot (throttle to 1 per hour per token in production, or keep latest 30)
         execute(`

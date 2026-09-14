@@ -4,8 +4,10 @@ const { getTokens, getTokenDetail, getTickerMovers } = require('../services/toke
 
 router.get('/tokens', (req, res) => {
   try {
-    const { chain, tab, search, limit, offset } = req.query;
-    const tokens = getTokens({ chain, tab, search, limit, offset });
+    const { chain, tab, search, limit = 25, offset, page } = req.query;
+    const limitNum = parseInt(limit, 10) || 25;
+    const computedOffset = offset != null ? parseInt(offset, 10) : (page ? (Math.max(1, parseInt(page, 10)) - 1) * limitNum : 0);
+    const tokens = getTokens({ chain, tab, search, limit: limitNum, offset: computedOffset });
     res.json({ success: true, count: tokens.length, data: tokens });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

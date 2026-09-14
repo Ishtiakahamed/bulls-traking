@@ -49,7 +49,8 @@ function getTokens(options = {}) {
     SELECT 
       id, chain, contract_address, name, symbol, logo_url, description,
       website_url, x_url, telegram_url, decimals, total_supply, circulating_supply,
-      price, market_cap, volume_24h, liquidity, price_change_1h, price_change_24h, price_change_7d,
+      price, market_cap, volume_24h, liquidity, txn_count_24h, price_change_6h,
+      price_change_1h, price_change_24h, price_change_7d,
       ath, atl, rank, status, listing_status, verification_status
     FROM tokens
     ${whereSql}

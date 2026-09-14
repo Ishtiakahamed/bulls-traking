@@ -28,6 +28,35 @@ async function syncMarketData() {
     const currentTokens = query(`SELECT * FROM tokens WHERE is_active = 1`);
     const nowSec = Math.floor(Date.now() / 1000);
 
+    // Fetch DexScreener on-chain metrics (TXN count, LP / liquidity, 6h price change)
+    const dexMetricsMap = new Map();
+    await Promise.allSettled(
+      currentTokens
+        .filter(t => t.contract_address && !t.contract_address.startsWith('0x0000000000000000000000000000000000000000') && t.contract_address.length > 8)
+        .map(async (tok) => {
+          try {
+            const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tok.contract_address}`, {
+              signal: AbortSignal.timeout(5000)
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const pair = json.pairs?.[0];
+              if (pair) {
+                const buys = parseInt(pair.txns?.h24?.buys || 0, 10);
+                const sells = parseInt(pair.txns?.h24?.sells || 0, 10);
+                dexMetricsMap.set(tok.id, {
+                  txn_count_24h: buys + sells,
+                  liquidity: parseFloat(pair.liquidity?.usd || 0),
+                  price_change_6h: parseFloat(pair.priceChange?.h6 || 0)
+                });
+              }
+            }
+          } catch (dexErr) {
+            // Non-fatal DexScreener fallback to 0/null
+          }
+        })
+    );
+
     transaction(() => {
       for (const tok of currentTokens) {
         const live = marketMap.get(tok.symbol.toLowerCase());
@@ -54,14 +83,20 @@ async function syncMarketData() {
           market_cap: newCap
         });
 
+        const dex = dexMetricsMap.get(tok.id);
+        const txnCount = dex ? dex.txn_count_24h : (tok.txn_count_24h || 0);
+        const liquidity = dex ? dex.liquidity : (tok.liquidity || 0);
+        const chg6h = dex ? dex.price_change_6h : (tok.price_change_6h || 0);
+
         execute(`
           UPDATE tokens SET 
             price = ?, market_cap = ?, volume_24h = ?,
             change_1h = ?, change_24h = ?, change_7d = ?,
-            hot_score = ?, last_data_sync = CURRENT_TIMESTAMP,
+            hot_score = ?, txn_count_24h = ?, liquidity = ?, price_change_6h = ?,
+            last_data_sync = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
-        `, [newPrice, newCap, newVol, chg1h, chg24, chg7d, hotScore, tok.id]);
+        `, [newPrice, newCap, newVol, chg1h, chg24, chg7d, hotScore, txnCount, liquidity, chg6h, tok.id]);
 
         // Historical snapshot for 7-day chart (sample)
         execute(`

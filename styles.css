@@ -168,6 +168,13 @@ input,select,textarea{font-family:inherit;}
   transition:all .15s;
 }
 .btn-solid:hover{background:#33ebff;transform:translateY(-1px);}
+.btn-ghost{
+  background:transparent;color:var(--text-muted);border:1px solid var(--line-light);
+  padding:.65rem 1.75rem;border-radius:var(--radius);font-family:var(--mono);font-size:13px;font-weight:600;
+  transition:all .15s ease;cursor:pointer;
+}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);background:var(--panel-raised);}
+.btn-ghost:disabled{opacity:0.5;cursor:not-allowed;}
 
 /* ---------- app main container ---------- */
 .app{max-width:1380px;margin:0 auto;padding:1.5rem 1.5rem 3.5rem;min-height:75vh;}
@@ -374,6 +381,86 @@ tbody tr:hover{background:var(--panel-hover);}
 
 /* State messages */
 .state-msg{padding:3rem 1rem;text-align:center;color:var(--text-faint);font-size:13px;}
+
+/* ---------- CONTRACT SCANNER (Phase 2 Task 1) ---------- */
+.risk-summary {
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-lg);
+  margin-top: 1.5rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--line-light);
+  background: var(--panel-raised);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.risk-summary.safe {
+  border-color: var(--mint);
+  background: radial-gradient(circle at 10% 50%, var(--mint-glow) 0%, var(--panel) 100%);
+}
+.risk-summary.warn {
+  border-color: var(--gold);
+  background: radial-gradient(circle at 10% 50%, var(--gold-glow) 0%, var(--panel) 100%);
+}
+.risk-summary.danger {
+  border-color: var(--rose);
+  background: radial-gradient(circle at 10% 50%, var(--rose-glow) 0%, var(--panel) 100%);
+}
+.risk-badge-title {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.risk-summary.safe .risk-badge-title { color: var(--mint); }
+.risk-summary.warn .risk-badge-title { color: var(--gold); }
+.risk-summary.danger .risk-badge-title { color: var(--rose); }
+
+.risk-score-pill {
+  font-family: var(--mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+}
+.risk-summary.safe .risk-score-pill { color: var(--mint); border-color: var(--mint); }
+.risk-summary.warn .risk-score-pill { color: var(--gold); border-color: var(--gold); }
+.risk-summary.danger .risk-score-pill { color: var(--rose); border-color: var(--rose); }
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+.check-item {
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+}
+.check-item .label {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
+}
+.check-item .val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.check-item.pass .val { color: var(--mint); }
+.check-item.warn .val { color: var(--gold); }
+.check-item.fail .val { color: var(--rose); }
 
 /* ---------- FOOTER ---------- */
 .footer{border-top:1px solid var(--line);margin-top:4rem;background:var(--ink);}

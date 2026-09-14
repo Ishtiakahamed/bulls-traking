@@ -4,6 +4,7 @@ const router = express.Router();
 const tokenRoutes = require('./tokenRoutes');
 const submissionRoutes = require('./submissionRoutes');
 const promotionRoutes = require('./promotionRoutes');
+const securityRoutes = require('../../routes/securityRoutes');
 const { handleGetHomeData } = require('../controllers/homeController');
 const { getSyncStatus } = require('../workers/syncWorker');
 
@@ -27,5 +28,6 @@ router.get('/home', handleGetHomeData);
 router.use('/', tokenRoutes);
 router.use('/', submissionRoutes);
 router.use('/', promotionRoutes);
+router.use('/', securityRoutes);
 
 module.exports = router;

@@ -116,13 +116,17 @@ function updateMarketStatus(stats) {
 
 function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
   if (!tokens || tokens.length === 0) {
-    return `<tr><td colspan="10" class="state-msg">No tokens found matching this view.</td></tr>`;
+    return `<tr><td colspan="12" class="state-msg">No tokens found matching this view.</td></tr>`;
   }
 
   return tokens.map((t, idx) => {
     const isPositive = (t.change_24h ?? 0) >= 0;
     const spark = sparklineSvg(t.sparkline, isPositive);
     const isSubmitted = t.is_submitted === 1;
+
+    const txnCount = (t.txn_count_24h != null && t.txn_count_24h > 0) ? Number(t.txn_count_24h).toLocaleString() : '—';
+    const lpVal = (t.liquidity != null && t.liquidity > 0) ? fmtUsd(t.liquidity) : '—';
+    const chg6h = t.price_change_6h != null ? fmtChg(t.price_change_6h) : '—';
 
     return `
       <tr data-token-symbol="${escapeHtml(t.symbol)}" data-token-id="${t.id}" onclick="location.hash='#/token/${t.id}'">
@@ -143,6 +147,9 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
         <td>${fmtChg(t.change_1h)}</td>
         <td class="cell-change">${fmtChg(t.change_24h)}</td>
         <td>${fmtChg(t.change_7d)}</td>
+        <td>${chg6h}</td>
+        <td>${txnCount}</td>
+        <td>${lpVal}</td>
         <td>${fmtUsd(t.volume_24h)}</td>
         <td>${fmtUsd(t.market_cap)}</td>
         <td>${spark}</td>
@@ -240,6 +247,9 @@ async function renderHome() {
               <th>1h</th>
               <th>24h</th>
               <th>7d</th>
+              <th>6h</th>
+              <th>TXN</th>
+              <th>LP</th>
               <th>24h Volume</th>
               <th>Market Cap</th>
               <th>Last 7 Days</th>
@@ -287,6 +297,8 @@ async function renderHome() {
 /* ---------------- 2. TOP COINS VIEW (/top-coins) ---------------- */
 
 async function renderTopCoins() {
+  state.page = 1;
+
   app.innerHTML = `
     <div class="page-head">
       <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Top Coins by Market Cap</h1>
@@ -308,13 +320,18 @@ async function renderTopCoins() {
         <thead>
           <tr>
             <th>Rank</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
+            <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="topTableBody">
-          <tr><td colspan="9" class="state-msg">Loading Top Coins…</td></tr>
+          <tr><td colspan="12" class="state-msg">Loading Top Coins…</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination-wrap" id="topPagination" style="text-align:center;margin:1.75rem 0;">
+      <button id="btnLoadMoreTop" class="btn-ghost">Load More</button>
     </div>
   `;
 
@@ -322,20 +339,50 @@ async function renderTopCoins() {
     const pill = e.target.closest('.chain-pill');
     if (!pill) return;
     state.chain = pill.dataset.chain;
+    state.page = 1;
     renderTopCoins();
   });
 
   try {
-    const res = await fetchApi(`/tokens/top?chain=${state.chain}&limit=50`);
+    const res = await fetchApi(`/tokens/top?chain=${state.chain}&page=1&limit=${state.limit}`);
     document.getElementById('topTableBody').innerHTML = renderTokenRows(res.tokens);
+
+    const btnMore = document.getElementById('btnLoadMoreTop');
+    if (!res.tokens || res.tokens.length < state.limit) {
+      if (btnMore) btnMore.style.display = 'none';
+    }
+    if (btnMore) {
+      btnMore.onclick = async () => {
+        btnMore.disabled = true;
+        btnMore.textContent = 'Loading more…';
+        try {
+          state.page++;
+          const nextRes = await fetchApi(`/tokens/top?chain=${state.chain}&page=${state.page}&limit=${state.limit}`);
+          const newTokens = nextRes.tokens || [];
+          if (newTokens.length > 0) {
+            document.getElementById('topTableBody').insertAdjacentHTML('beforeend', renderTokenRows(newTokens));
+          }
+          if (newTokens.length < state.limit) {
+            btnMore.style.display = 'none';
+          } else {
+            btnMore.disabled = false;
+            btnMore.textContent = 'Load More';
+          }
+        } catch (e) {
+          btnMore.style.display = 'none';
+        }
+      };
+    }
   } catch (err) {
-    document.getElementById('topTableBody').innerHTML = `<tr><td colspan="9" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
+    document.getElementById('topTableBody').innerHTML = `<tr><td colspan="12" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
 /* ---------------- 3. NEW COINS VIEW (/new-coins) ---------------- */
 
 async function renderNewCoins() {
+  state.page = 1;
+
   app.innerHTML = `
     <div class="page-head">
       <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">New Coins & Recent Listings</h1>
@@ -357,13 +404,18 @@ async function renderNewCoins() {
         <thead>
           <tr>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
+            <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="newTableBody">
-          <tr><td colspan="9" class="state-msg">Loading New Coins…</td></tr>
+          <tr><td colspan="12" class="state-msg">Loading New Coins…</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination-wrap" id="newPagination" style="text-align:center;margin:1.75rem 0;">
+      <button id="btnLoadMoreNew" class="btn-ghost">Load More</button>
     </div>
   `;
 
@@ -371,20 +423,50 @@ async function renderNewCoins() {
     const pill = e.target.closest('.chain-pill');
     if (!pill) return;
     state.chain = pill.dataset.chain;
+    state.page = 1;
     renderNewCoins();
   });
 
   try {
-    const res = await fetchApi(`/tokens/new?chain=${state.chain}&limit=50`);
+    const res = await fetchApi(`/tokens/new?chain=${state.chain}&page=1&limit=${state.limit}`);
     document.getElementById('newTableBody').innerHTML = renderTokenRows(res.tokens, { showAge: true });
+
+    const btnMore = document.getElementById('btnLoadMoreNew');
+    if (!res.tokens || res.tokens.length < state.limit) {
+      if (btnMore) btnMore.style.display = 'none';
+    }
+    if (btnMore) {
+      btnMore.onclick = async () => {
+        btnMore.disabled = true;
+        btnMore.textContent = 'Loading more…';
+        try {
+          state.page++;
+          const nextRes = await fetchApi(`/tokens/new?chain=${state.chain}&page=${state.page}&limit=${state.limit}`);
+          const newTokens = nextRes.tokens || [];
+          if (newTokens.length > 0) {
+            document.getElementById('newTableBody').insertAdjacentHTML('beforeend', renderTokenRows(newTokens, { showAge: true }));
+          }
+          if (newTokens.length < state.limit) {
+            btnMore.style.display = 'none';
+          } else {
+            btnMore.disabled = false;
+            btnMore.textContent = 'Load More';
+          }
+        } catch (e) {
+          btnMore.style.display = 'none';
+        }
+      };
+    }
   } catch (err) {
-    document.getElementById('newTableBody').innerHTML = `<tr><td colspan="9" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
+    document.getElementById('newTableBody').innerHTML = `<tr><td colspan="12" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
 /* ---------------- 4. HOT COINS VIEW (/hot) ---------------- */
 
 async function renderHotCoins() {
+  state.page = 1;
+
   app.innerHTML = `
     <div class="page-head">
       <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Hot Coins Radar</h1>
@@ -406,13 +488,18 @@ async function renderHotCoins() {
         <thead>
           <tr>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
+            <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="hotTableBody">
-          <tr><td colspan="9" class="state-msg">Loading Hot Coins…</td></tr>
+          <tr><td colspan="12" class="state-msg">Loading Hot Coins…</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination-wrap" id="hotPagination" style="text-align:center;margin:1.75rem 0;">
+      <button id="btnLoadMoreHot" class="btn-ghost">Load More</button>
     </div>
   `;
 
@@ -420,20 +507,50 @@ async function renderHotCoins() {
     const pill = e.target.closest('.chain-pill');
     if (!pill) return;
     state.chain = pill.dataset.chain;
+    state.page = 1;
     renderHotCoins();
   });
 
   try {
-    const res = await fetchApi(`/tokens/hot?chain=${state.chain}&limit=50`);
+    const res = await fetchApi(`/tokens/hot?chain=${state.chain}&page=1&limit=${state.limit}`);
     document.getElementById('hotTableBody').innerHTML = renderTokenRows(res.tokens, { showHot: true });
+
+    const btnMore = document.getElementById('btnLoadMoreHot');
+    if (!res.tokens || res.tokens.length < state.limit) {
+      if (btnMore) btnMore.style.display = 'none';
+    }
+    if (btnMore) {
+      btnMore.onclick = async () => {
+        btnMore.disabled = true;
+        btnMore.textContent = 'Loading more…';
+        try {
+          state.page++;
+          const nextRes = await fetchApi(`/tokens/hot?chain=${state.chain}&page=${state.page}&limit=${state.limit}`);
+          const newTokens = nextRes.tokens || [];
+          if (newTokens.length > 0) {
+            document.getElementById('hotTableBody').insertAdjacentHTML('beforeend', renderTokenRows(newTokens, { showHot: true }));
+          }
+          if (newTokens.length < state.limit) {
+            btnMore.style.display = 'none';
+          } else {
+            btnMore.disabled = false;
+            btnMore.textContent = 'Load More';
+          }
+        } catch (e) {
+          btnMore.style.display = 'none';
+        }
+      };
+    }
   } catch (err) {
-    document.getElementById('hotTableBody').innerHTML = `<tr><td colspan="9" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
+    document.getElementById('hotTableBody').innerHTML = `<tr><td colspan="12" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
 /* ---------------- 5. GAINERS VIEW (/gainers) ---------------- */
 
 async function renderGainers() {
+  state.page = 1;
+
   app.innerHTML = `
     <div class="page-head">
       <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Top Gainers (24h)</h1>
@@ -455,13 +572,18 @@ async function renderGainers() {
         <thead>
           <tr>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
+            <th>6h</th><th>TXN</th><th>LP</th>
             <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="gainersTableBody">
-          <tr><td colspan="9" class="state-msg">Loading Top Gainers…</td></tr>
+          <tr><td colspan="12" class="state-msg">Loading Top Gainers…</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination-wrap" id="gainersPagination" style="text-align:center;margin:1.75rem 0;">
+      <button id="btnLoadMoreGainers" class="btn-ghost">Load More</button>
     </div>
   `;
 
@@ -469,14 +591,42 @@ async function renderGainers() {
     const pill = e.target.closest('.chain-pill');
     if (!pill) return;
     state.chain = pill.dataset.chain;
+    state.page = 1;
     renderGainers();
   });
 
   try {
-    const res = await fetchApi(`/tokens/gainers?chain=${state.chain}&limit=50`);
+    const res = await fetchApi(`/tokens/gainers?chain=${state.chain}&page=1&limit=${state.limit}`);
     document.getElementById('gainersTableBody').innerHTML = renderTokenRows(res.tokens);
+
+    const btnMore = document.getElementById('btnLoadMoreGainers');
+    if (!res.tokens || res.tokens.length < state.limit) {
+      if (btnMore) btnMore.style.display = 'none';
+    }
+    if (btnMore) {
+      btnMore.onclick = async () => {
+        btnMore.disabled = true;
+        btnMore.textContent = 'Loading more…';
+        try {
+          state.page++;
+          const nextRes = await fetchApi(`/tokens/gainers?chain=${state.chain}&page=${state.page}&limit=${state.limit}`);
+          const newTokens = nextRes.tokens || [];
+          if (newTokens.length > 0) {
+            document.getElementById('gainersTableBody').insertAdjacentHTML('beforeend', renderTokenRows(newTokens));
+          }
+          if (newTokens.length < state.limit) {
+            btnMore.style.display = 'none';
+          } else {
+            btnMore.disabled = false;
+            btnMore.textContent = 'Load More';
+          }
+        } catch (e) {
+          btnMore.style.display = 'none';
+        }
+      };
+    }
   } catch (err) {
-    document.getElementById('gainersTableBody').innerHTML = `<tr><td colspan="9" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
+    document.getElementById('gainersTableBody').innerHTML = `<tr><td colspan="12" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
@@ -519,9 +669,144 @@ async function renderPromotedPage() {
         </div>
       </div>
     `).join('');
+
+    // Promoted Tokens Table (Task 2d)
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'table-wrap';
+    tableWrap.style.marginTop = '2rem';
+    tableWrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
+            <th>6h</th><th>TXN</th><th>LP</th>
+            <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
+          </tr>
+        </thead>
+        <tbody id="promotedTableBody">
+          ${renderTokenRows(res.data)}
+        </tbody>
+      </table>
+    `;
+    app.appendChild(tableWrap);
   } catch (err) {
     document.getElementById('promotedGrid').innerHTML = `<div class="state-msg">Error: ${escapeHtml(err.message)}</div>`;
   }
+}
+
+/* ---------------- 7a. CONTRACT SCANNER VIEW (/scan) (Phase 2 Task 1) ---------------- */
+
+function renderScanner() {
+  app.innerHTML = `
+    <div class="form-card" id="scannerCard">
+      <div class="page-head" style="text-align:center;margin-bottom:1.5rem;">
+        <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.6rem;">Contract Security Scanner</h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:0;">Instant on-chain security audit, honeypot detection, tax analysis, and risk scoring powered by GoPlus.</p>
+      </div>
+
+      <form id="scannerForm">
+        <div class="field">
+          <label>Blockchain Network *</label>
+          <select id="scanChain" name="chain" required>
+            <option value="binance-smart-chain" selected>BNB Smart Chain (BSC)</option>
+            <option value="ethereum-ecosystem">Ethereum (ETH)</option>
+            <option value="base-ecosystem">Base</option>
+            <option value="solana-ecosystem">Solana (SOL)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Token Contract Address *</label>
+          <input type="text" id="scanAddress" name="address" placeholder="0x... or Solana Mint Address" required>
+        </div>
+
+        <button type="submit" class="submit-btn" id="btnScan">Scan Contract</button>
+      </form>
+
+      <div id="scanResult"></div>
+    </div>
+  `;
+
+  const form = document.getElementById('scannerForm');
+  const btn = document.getElementById('btnScan');
+  const resultContainer = document.getElementById('scanResult');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const chain = document.getElementById('scanChain').value;
+    const address = document.getElementById('scanAddress').value.trim();
+    if (!address) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Scanning on-chain…';
+    resultContainer.innerHTML = `<div class="state-msg"><span class="live-pulse"></span> Performing deep contract audit…</div>`;
+
+    try {
+      const res = await fetchApi('/security/scan?chain=' + chain + '&address=' + encodeURIComponent(address));
+      const scan = res.data;
+
+      const isCritical = scan.honeypot === 1 || scan.risk_level === 'CRITICAL' || scan.risk_level === 'HIGH';
+      const isWarn = !isCritical && (scan.risk_level === 'MEDIUM' || scan.mintable === 1 || (scan.buy_tax || 0) > 10 || (scan.sell_tax || 0) > 10 || scan.blacklist === 1);
+      
+      const summaryClass = isCritical ? 'danger' : isWarn ? 'warn' : 'safe';
+      const summaryIcon = isCritical ? '🚨' : isWarn ? '⚠️' : '🛡️';
+      const summaryTitle = isCritical ? 'High / Critical Risk' : isWarn ? 'Medium Risk / Warning' : 'Safe / Low Risk';
+
+      resultContainer.innerHTML = `
+        <div class="risk-summary ${summaryClass}">
+          <div>
+            <div class="risk-badge-title">${summaryIcon} ${summaryTitle}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
+              ${isCritical ? 'Critical security vulnerabilities detected. Exercise extreme caution.' : isWarn ? 'Minor risk flags identified. Check taxes and ownership permissions.' : 'No critical contract risks or malicious routines detected.'}
+            </div>
+          </div>
+          <div class="risk-score-pill">
+            Score: ${scan.risk_score != null ? scan.risk_score : 95}/100
+          </div>
+        </div>
+
+        <div class="check-grid">
+          <div class="check-item ${scan.honeypot ? 'fail' : 'pass'}">
+            <div class="label">Honeypot</div>
+            <div class="val">${scan.honeypot ? 'FAIL (Honeypot)' : 'PASS (Safe)'}</div>
+          </div>
+          <div class="check-item ${(scan.buy_tax || 0) > 10 ? 'warn' : 'pass'}">
+            <div class="label">Buy Tax</div>
+            <div class="val">${(scan.buy_tax ?? 0).toFixed(1)}%</div>
+          </div>
+          <div class="check-item ${(scan.sell_tax || 0) > 10 ? 'warn' : 'pass'}">
+            <div class="label">Sell Tax</div>
+            <div class="val">${(scan.sell_tax ?? 0).toFixed(1)}%</div>
+          </div>
+          <div class="check-item ${scan.mintable ? 'warn' : 'pass'}">
+            <div class="label">Mintable</div>
+            <div class="val">${scan.mintable ? 'Yes (Can Mint)' : 'No (Capped)'}</div>
+          </div>
+          <div class="check-item ${scan.ownership === 'renounced' ? 'pass' : 'warn'}">
+            <div class="label">Ownership</div>
+            <div class="val">${scan.ownership === 'renounced' ? 'Renounced' : 'Active Owner'}</div>
+          </div>
+          <div class="check-item ${scan.blacklist ? 'fail' : 'pass'}">
+            <div class="label">Blacklist</div>
+            <div class="val">${scan.blacklist ? 'Yes (Blacklistable)' : 'No (Unrestricted)'}</div>
+          </div>
+          <div class="check-item ${scan.proxy ? 'warn' : 'pass'}">
+            <div class="label">Proxy</div>
+            <div class="val">${scan.proxy ? 'Yes (Upgradeable)' : 'No (Immutable)'}</div>
+          </div>
+          <div class="check-item pass">
+            <div class="label">Audit Status</div>
+            <div class="val">${scan.fromCache ? 'Cached (24h)' : 'Live Scan'}</div>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      resultContainer.innerHTML = `<div class="state-msg" style="color:var(--rose);">Scan Failed: ${escapeHtml(err.message)}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Scan Contract';
+    }
+  });
 }
 
 /* ---------------- 7. PRESALES VIEW (Section 3 Placeholder) ---------------- */
@@ -805,6 +1090,8 @@ function route() {
     renderHotCoins();
   } else if (path === '/gainers') {
     renderGainers();
+  } else if (path === '/scan') {
+    renderScanner();
   } else if (path === '/promoted') {
     renderPromotedPage();
   } else if (path === '/presales') {

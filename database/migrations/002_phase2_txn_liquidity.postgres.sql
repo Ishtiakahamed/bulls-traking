@@ -1,0 +1,5 @@
+-- Bulls Traking Phase 2 Migration: PostgreSQL
+
+ALTER TABLE tokens ADD COLUMN IF NOT EXISTS txn_count_24h INTEGER DEFAULT 0;
+ALTER TABLE tokens ADD COLUMN IF NOT EXISTS price_change_6h REAL DEFAULT 0;
+ALTER TABLE tokens ADD COLUMN IF NOT EXISTS liquidity REAL DEFAULT 0;
