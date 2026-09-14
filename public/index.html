@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulls Traking — Modern Crypto Token Discovery & Tracking Platform</title>
+<meta name="description" content="Bulls Traking is a modern Web3 token discovery, real-time analytics, trending and listing platform across Solana, Ethereum, BNB Chain and Base.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/logo-transparent.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- TOP TICKER TAPE -->
+<div class="tape" id="tape" aria-label="Market Ticker">
+  <div class="tape-track" id="tapeTrack"></div>
+</div>
+
+<!-- TOPBAR NAVIGATION -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="#/" class="wordmark">
+      <img src="assets/logo-transparent.png" alt="Bulls Traking Logo" class="brand-logo">
+      <span>BULLS <span class="accent">TRAKING</span></span>
+    </a>
+
+    <!-- MAIN NAVIGATION (Section 3 & Phase 3) -->
+    <nav class="nav-links" id="mainNav">
+      <a href="#/" class="nav-item" data-route="home">Home</a>
+      <a href="#/top-coins" class="nav-item" data-route="top-coins">Top Coins</a>
+      <a href="#/new-pairs" class="nav-item" data-route="new-pairs">New Pairs</a>
+      <a href="#/new-coins" class="nav-item" data-route="new-coins">New Coins</a>
+      <a href="#/hot" class="nav-item" data-route="hot">Hot Coins</a>
+      <a href="#/gainers" class="nav-item" data-route="gainers">Gainers</a>
+      <a href="#/watchlist" class="nav-item" data-route="watchlist">Watchlist</a>
+      <a href="#/signals" class="nav-item" data-route="signals">Signals</a>
+      <a href="#/scan" class="nav-item" data-route="scan">Scanner</a>
+      <a href="#/promoted" class="nav-item" data-route="promoted">Promoted</a>
+      <a href="#/presales" class="nav-item" data-route="presales">Presales</a>
+    </nav>
+
+    <!-- SEARCH WRAPPER -->
+    <div class="search-wrap">
+      <input id="searchInput" class="search-input" type="text" placeholder="Search tokens or CA…" autocomplete="off">
+      <div id="searchResults" class="search-results hidden"></div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="util-nav">
+      <div class="market-status-indicator" id="marketStatus">● Market Data Live</div>
+      <a href="#/submit" class="btn-solid">Submit Token</a>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN CONTENT WRAPPER -->
+<main id="app" class="app"></main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="wordmark">
+        <img src="assets/logo-transparent.png" alt="Bulls Traking Logo" class="brand-logo">
+        <span>BULLS <span class="accent">TRAKING</span></span>
+      </div>
+      <p>Independent, high-performance crypto token discovery and tracking platform across Solana, Ethereum, BNB Chain, and Base.</p>
+    </div>
+    <div class="footer-cols">
+      <div>
+        <h4>Discovery</h4>
+        <a href="#/top-coins">Top Coins</a>
+        <a href="#/new-pairs">New Pairs Radar</a>
+        <a href="#/new-coins">New Coins</a>
+        <a href="#/hot">Hot Coins</a>
+        <a href="#/gainers">Top Gainers</a>
+        <a href="#/scan">Contract Scanner</a>
+        <a href="#/signals">Alpha Signals</a>
+      </div>
+      <div>
+        <h4>Tokens & Tools</h4>
+        <a href="#/watchlist">Watchlist</a>
+        <a href="#/submit">Submit Token</a>
+        <a href="#/promoted">Promoted Tokens</a>
+        <a href="#/presales">Presale Radar</a>
+      </div>
+      <div>
+        <h4>Ecosystem Chains</h4>
+        <a href="#/?chain=solana-ecosystem">Solana Ecosystem</a>
+        <a href="#/?chain=ethereum-ecosystem">Ethereum Ecosystem</a>
+        <a href="#/?chain=binance-smart-chain">BNB Chain</a>
+        <a href="#/?chain=base-ecosystem">Base Layer-2</a>
+      </div>
+      <div>
+        <h4>Legal & Info</h4>
+        <a href="#/about">About Us</a>
+        <a href="#/terms-of-service">Terms of Service</a>
+        <a href="#/privacy-policy">Privacy Policy</a>
+        <a href="#/cookie-statement">Cookie Statement</a>
+        <a href="#/disclaimer">Disclaimer</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-legal">
+    © 2026 Bulls Traking. Real-time market metrics powered by verified provider pipelines. Verify token contracts before trading.
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

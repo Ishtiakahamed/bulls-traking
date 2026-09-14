@@ -1,21 +1,13 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "index.html"
-    }
-  },
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/api(?:/(.*))?$",
-      "dest": "/api/index.js"
+      "source": "/api/:path*",
+      "destination": "/api"
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!api|assets|.*\\..*).*)",
+      "destination": "/index.html"
     }
   ]
 }
