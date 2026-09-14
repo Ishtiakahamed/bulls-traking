@@ -1,0 +1,117 @@
+const { query, execute, transaction } = require('../../database/db');
+const { marketDataProvider } = require('../providers');
+const { calculateHotScore } = require('../services/hotScoreService');
+const config = require('../../config/default');
+
+let isRunning = false;
+let lastSyncStatus = {
+  lastSyncAt: new Date().toISOString(),
+  providerStatus: 'live',
+  tokensSynced: 0
+};
+
+/**
+ * Scheduled Market Sync Worker (Section 27)
+ */
+async function syncMarketData() {
+  if (isRunning) return;
+  isRunning = true;
+  console.log('[SyncWorker] Initiating market data synchronization...');
+
+  try {
+    const marketList = await marketDataProvider.fetchMarketList({ perPage: 50, page: 1 });
+    const marketMap = new Map();
+    for (const item of marketList) {
+      marketMap.set(item.symbol.toLowerCase(), item);
+    }
+
+    const currentTokens = query(`SELECT * FROM tokens WHERE is_active = 1`);
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    transaction(() => {
+      for (const tok of currentTokens) {
+        const live = marketMap.get(tok.symbol.toLowerCase());
+        let newPrice = tok.price;
+        let newCap = tok.market_cap;
+        let newVol = tok.volume_24h;
+        let chg1h = tok.change_1h;
+        let chg24 = tok.change_24h;
+        let chg7d = tok.change_7d;
+
+        if (live) {
+          newPrice = live.price;
+          newCap = live.marketCap;
+          newVol = live.volume24h;
+          chg1h = live.change1h;
+          chg24 = live.change24h;
+          chg7d = live.change7d;
+        }
+
+        const hotScore = calculateHotScore({
+          volume_24h: newVol,
+          change_24h: chg24,
+          change_1h: chg1h,
+          market_cap: newCap
+        });
+
+        execute(`
+          UPDATE tokens SET 
+            price = ?, market_cap = ?, volume_24h = ?,
+            change_1h = ?, change_24h = ?, change_7d = ?,
+            hot_score = ?, last_data_sync = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `, [newPrice, newCap, newVol, chg1h, chg24, chg7d, hotScore, tok.id]);
+
+        // Historical snapshot for 7-day chart (sample)
+        execute(`
+          INSERT INTO token_price_history (token_id, price, market_cap, volume_24h, timestamp)
+          VALUES (?, ?, ?, ?, ?)
+        `, [tok.id, newPrice, newCap, newVol, nowSec]);
+
+        // Retain last 30 historical snapshots per token
+        execute(`
+          DELETE FROM token_price_history 
+          WHERE token_id = ? AND id NOT IN (
+            SELECT id FROM token_price_history WHERE token_id = ? ORDER BY timestamp DESC LIMIT 30
+          )
+        `, [tok.id, tok.id]);
+      }
+
+      // Recalculate market cap ranks
+      const rankedTokens = query(`SELECT id FROM tokens WHERE is_active = 1 ORDER BY market_cap DESC`);
+      rankedTokens.forEach((t, idx) => {
+        execute(`UPDATE tokens SET market_cap_rank = ? WHERE id = ?`, [idx + 1, t.id]);
+      });
+    });
+
+    lastSyncStatus = {
+      lastSyncAt: new Date().toISOString(),
+      providerStatus: 'live',
+      tokensSynced: currentTokens.length
+    };
+    console.log(`[SyncWorker] Market synchronization completed successfully for ${currentTokens.length} tokens.`);
+  } catch (err) {
+    console.warn('[SyncWorker Notice] Provider reach limitation (cached telemetry preserved):', err.message);
+    lastSyncStatus.providerStatus = 'delayed';
+  } finally {
+    isRunning = false;
+  }
+}
+
+function getSyncStatus() {
+  return lastSyncStatus;
+}
+
+function startSyncWorker() {
+  console.log(`[SyncWorker] Registered with ${config.syncIntervalMs / 1000}s interval.`);
+  // Run initial sync after 2 seconds
+  setTimeout(syncMarketData, 2000);
+  return setInterval(syncMarketData, config.syncIntervalMs);
+}
+
+module.exports = {
+  syncMarketData,
+  startSyncWorker,
+  getSyncStatus
+};

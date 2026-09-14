@@ -1,0 +1,26 @@
+{
+  "name": "bulls-traking",
+  "version": "1.0.0",
+  "description": "Bulls Traking - Modern Web3 crypto token discovery, real-time analytics, trending and listing platform",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node database/seeds/seed.js",
+    "dev": "node --watch server.js",
+    "test": "node test_phase1.js"
+  },
+  "keywords": [
+    "crypto",
+    "token-tracker",
+    "bulls-traking",
+    "web3",
+    "coingecko"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

@@ -1,0 +1,43 @@
+module.exports = {
+  port: process.env.PORT || 5000,
+  environment: process.env.NODE_ENV || 'development',
+  brandName: 'Bulls Traking',
+  
+  // Market Data Ingestion
+  syncIntervalMs: parseInt(process.env.SYNC_INTERVAL_MS, 10) || 60000, // 60 seconds
+  primaryProvider: process.env.PRIMARY_PROVIDER || 'coingecko',
+  
+  // CoinGecko & CMC API Configuration (optional API keys for paid plans)
+  coingecko: {
+    baseUrl: 'https://api.coingecko.com/api/v3',
+    apiKey: process.env.COINGECKO_API_KEY || null,
+    timeoutMs: 8000
+  },
+  coinmarketcap: {
+    baseUrl: 'https://pro-api.coinmarketcap.com/v1',
+    apiKey: process.env.COINMARKETCAP_API_KEY || null,
+    timeoutMs: 8000
+  },
+  
+  // Algorithmic Hot Score Weights (Configurable per Section 13)
+  hotScoreWeights: {
+    volumeWeight: 0.35,
+    momentumWeight: 0.25,
+    priceChangeWeight: 0.20,
+    activityWeight: 0.10,
+    liquidityWeight: 0.10
+  },
+
+  // Top Gainers Quality Filters (Configurable per Section 14)
+  gainersFilter: {
+    minVolume24hUsd: 1000, // Minimum $1,000 volume to exclude illiquid honeypots/glitches
+    minMarketCapUsd: 5000
+  },
+
+  // Cache Time-To-Live in seconds
+  cacheTtl: {
+    marketListSec: 60,
+    tokenDetailSec: 60,
+    searchSec: 120
+  }
+};
