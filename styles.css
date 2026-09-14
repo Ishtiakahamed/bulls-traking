@@ -90,9 +90,22 @@ input,select,textarea{font-family:inherit;}
   font-weight:700;
   font-size:1.18rem;
   letter-spacing:.04em;
-  display:flex;align-items:center;gap:.4rem;
+  display:flex;align-items:center;gap:.6rem;
   flex-shrink:0;
   color:#fff;
+  text-decoration:none;
+}
+.brand-logo{
+  width:30px;
+  height:30px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 10px rgba(251,159,0,0.5));
+  transition:transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display:inline-block;
+  vertical-align:middle;
+}
+.wordmark:hover .brand-logo{
+  transform:scale(1.12) rotate(-3deg);
 }
 .wordmark-glyph{
   color:var(--cyan);
@@ -469,6 +482,7 @@ tbody tr:hover{background:var(--panel-hover);}
   display:flex;justify-content:space-between;gap:3rem;flex-wrap:wrap;
 }
 .footer-brand{max-width:360px;}
+.footer-brand .brand-logo{width:36px;height:36px;}
 .footer-brand p{color:var(--text-faint);font-size:12px;margin-top:.8rem;line-height:1.6;}
 .footer-cols{display:flex;gap:3.5rem;flex-wrap:wrap;}
 .footer-cols h4{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;margin:0 0 .8rem;}
