@@ -33,9 +33,14 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static frontend assets
 app.use(express.static(path.join(__dirname)));
 
-// Mount REST API layer (mount both /api and / so Vercel rewrites work seamlessly)
+// Mount REST API layer
 app.use('/api', apiRoutes);
-app.use('/', apiRoutes);
+
+// SPA fallback for non-API routes
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Error handling middleware
 app.use(errorHandler);

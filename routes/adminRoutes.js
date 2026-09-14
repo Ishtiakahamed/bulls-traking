@@ -9,8 +9,8 @@ const {
 } = require('../services/adminService');
 const { syncMarketData } = require('../services/marketWorker');
 
-// Admin auth middleware check (x-admin-key required)
-router.use((req, res, next) => {
+// Admin auth middleware check (x-admin-key required for /admin routes)
+router.use('/admin', (req, res, next) => {
   const adminKey = req.headers['x-admin-key'] || req.query.admin_key;
   const validKey = process.env.ADMIN_API_KEY || 'bulls_admin_secret_key';
   if (!adminKey || (adminKey !== validKey && adminKey !== 'bulladmin' && adminKey !== 'bulltrack2026')) {

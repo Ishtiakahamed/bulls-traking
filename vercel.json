@@ -1,9 +1,21 @@
 {
   "version": 2,
-  "rewrites": [
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "index.html"
+    }
+  },
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "/api"
+      "src": "^/api(?:/(.*))?$",
+      "dest": "/api/index.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
