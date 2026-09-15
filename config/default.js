@@ -7,15 +7,15 @@ module.exports = {
   syncIntervalMs: parseInt(process.env.SYNC_INTERVAL_MS, 10) || 60000, // 60 seconds
   primaryProvider: process.env.PRIMARY_PROVIDER || 'coingecko',
   
-  // CoinGecko & CMC API Configuration (optional API keys for paid plans)
+  // CoinGecko & CMC API Configuration (optional API keys for paid/demo plans)
   coingecko: {
     baseUrl: 'https://api.coingecko.com/api/v3',
-    apiKey: process.env.COINGECKO_API_KEY || null,
+    apiKey: process.env.COINGECKO_API_KEY || process.env.COINGECKO_DEMO_API_KEY || 'CG-q37cRuxTP5rb8eenYow4VwRD',
     timeoutMs: 8000
   },
   coinmarketcap: {
     baseUrl: 'https://pro-api.coinmarketcap.com/v1',
-    apiKey: process.env.COINMARKETCAP_API_KEY || null,
+    apiKey: process.env.COINMARKETCAP_API_KEY || '765f687d5bb94807b1a59aa35b4368c8',
     timeoutMs: 8000
   },
   
