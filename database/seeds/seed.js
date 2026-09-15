@@ -350,8 +350,43 @@ function runSeed() {
     if (bullToken) {
       execute(insertPromo, [bullToken.id, 'PROMOTED_TOKEN', 'Alpha Spotlight Tier', 10]);
     }
-    if (wifToken) {
-      execute(insertPromo, [wifToken.id, 'PROMOTED_TOKEN', 'Featured Meme Tier', 5]);
+    // Load pre-discovered tokens pool if available (essential for serverless/Vercel fresh container boot)
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const discoveredPath = path.join(__dirname, 'discovered_tokens.json');
+    if (fs.existsSync(discoveredPath)) {
+      try {
+        const discovered = JSON.parse(fs.readFileSync(discoveredPath, 'utf-8'));
+        const insertDiscoveredStmt = `
+          INSERT INTO tokens (
+            chain, contract_address, coingecko_id, provider_id, name, symbol, logo_url,
+            price, market_cap, volume_24h, change_1h, change_24h, change_7d,
+            circulating_supply, total_supply, ath, ath_date, atl, atl_date,
+            market_cap_rank, hot_score, txn_count_24h, price_change_6h, liquidity,
+            is_submitted, is_promoted, is_active, listing_status, verification_status,
+            first_seen_at, last_data_sync
+          ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            0, 0, 1, 'LIVE', 'verified',
+            ?, CURRENT_TIMESTAMP
+          )
+        `;
+        for (const dt of discovered) {
+          execute(insertDiscoveredStmt, [
+            dt.chain, dt.contract_address, dt.coingecko_id, dt.provider_id, dt.name, dt.symbol, dt.logo_url,
+            dt.price, dt.market_cap, dt.volume_24h, dt.change_1h, dt.change_24h, dt.change_7d,
+            dt.circulating_supply, dt.total_supply, dt.ath, dt.ath_date, dt.atl, dt.atl_date,
+            dt.market_cap_rank, dt.hot_score, dt.txn_count_24h || 0, dt.price_change_6h || 0, dt.liquidity || 0,
+            dt.first_seen_at || new Date().toISOString()
+          ]);
+        }
+        console.log(`[Seed] Successfully seeded ${discovered.length} pre-discovered tokens.`);
+      } catch (err) {
+        console.warn('[Seed Warning] Failed loading discovered_tokens.json:', err.message);
+      }
     }
   });
 

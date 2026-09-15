@@ -78,4 +78,16 @@ router.post('/admin/sync-market', async (req, res) => {
   }
 });
 
+const { discoverTokens, resolveContractAddresses } = require('../services/tokenDiscoveryService');
+
+router.post('/admin/discover-tokens', async (req, res) => {
+  try {
+    await discoverTokens();
+    await resolveContractAddresses();
+    res.json({ success: true, message: 'Token discovery cycle completed successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
