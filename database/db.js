@@ -28,11 +28,13 @@ try {
   db = new DatabaseSync(DB_FILE);
   try {
     db.exec('PRAGMA journal_mode = WAL;');
+    db.exec('PRAGMA busy_timeout = 5000;');
     db.exec('PRAGMA foreign_keys = ON;');
   } catch (pe) {
     // WAL may not be supported on some network mounts/serverless tmp files
     try {
       db.exec('PRAGMA journal_mode = DELETE;');
+      db.exec('PRAGMA busy_timeout = 5000;');
     } catch (_) {}
   }
 } catch (err) {
@@ -82,6 +84,10 @@ function initDatabase() {
     if (!columns.includes('liquidity')) {
       db.exec('ALTER TABLE tokens ADD COLUMN liquidity REAL DEFAULT 0;');
     }
+    if (!columns.includes('coingecko_id')) {
+      db.exec('ALTER TABLE tokens ADD COLUMN coingecko_id VARCHAR(100);');
+    }
+    db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_tokens_chain_coingecko_id ON tokens(chain, coingecko_id) WHERE coingecko_id IS NOT NULL;');
   } catch (migErr) {
     console.warn('[DB Migration Notice]', migErr.message);
   }

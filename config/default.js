@@ -42,6 +42,9 @@ module.exports = {
     maturedAgeDays: 7
   },
 
+  // Token Discovery Configuration (Bug Fix & Pool Expansion)
+  tokenDiscoveryIntervalMs: parseInt(process.env.TOKEN_DISCOVERY_INTERVAL_MS, 10) || 1800000, // 30 minutes
+
   // Cache Time-To-Live in seconds
   cacheTtl: {
     marketListSec: 60,

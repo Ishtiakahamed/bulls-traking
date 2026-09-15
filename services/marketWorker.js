@@ -13,7 +13,7 @@ async function syncMarketData() {
   console.log('[MarketWorker] Starting scheduled data ingestion cycle...');
 
   try {
-    const tokens = query(`SELECT id, chain, contract_address, symbol, price, market_cap, volume_24h FROM tokens WHERE status = 'active'`);
+    const tokens = query(`SELECT id, chain, contract_address, symbol, coingecko_id, price, market_cap, volume_24h FROM tokens WHERE status = 'active' OR is_active = 1`);
     if (!tokens || tokens.length === 0) {
       isSyncing = false;
       return;
@@ -31,7 +31,8 @@ async function syncMarketData() {
       if (res.ok) {
         const list = await res.json();
         for (const item of list) {
-          marketDataMap.set(item.symbol.toLowerCase(), item);
+          if (item.id) marketDataMap.set(item.id, item);
+          if (item.symbol) marketDataMap.set(item.symbol.toLowerCase(), item);
         }
       }
     } catch (e) {
@@ -67,7 +68,8 @@ async function syncMarketData() {
 
     transaction(() => {
       for (const tok of tokens) {
-        const live = marketDataMap.get(tok.symbol.toLowerCase());
+        // Look up by CoinGecko stable ID first; fall back to symbol only if coingecko_id is null
+        const live = (tok.coingecko_id && marketDataMap.get(tok.coingecko_id)) || marketDataMap.get(tok.symbol.toLowerCase());
         let newPrice = tok.price;
         let newCap = tok.market_cap;
         let newVol = tok.volume_24h;

@@ -22,7 +22,15 @@ async function syncMarketData() {
     const marketList = await marketDataProvider.fetchMarketList({ perPage: 50, page: 1 });
     const marketMap = new Map();
     for (const item of marketList) {
-      marketMap.set(item.symbol.toLowerCase(), item);
+      if (item.providerId) {
+        marketMap.set(item.providerId.toLowerCase(), item);
+      }
+      if (item.id) {
+        marketMap.set(item.id.toLowerCase(), item);
+      }
+      if (item.symbol) {
+        marketMap.set(item.symbol.toLowerCase(), item);
+      }
     }
 
     const currentTokens = query(`SELECT * FROM tokens WHERE is_active = 1`);
@@ -59,7 +67,15 @@ async function syncMarketData() {
 
     transaction(() => {
       for (const tok of currentTokens) {
-        const live = marketMap.get(tok.symbol.toLowerCase());
+        // Look up by CoinGecko stable ID first; fall back to symbol only if coingecko_id is null
+        let live = null;
+        if (tok.coingecko_id) {
+          live = marketMap.get(tok.coingecko_id.toLowerCase());
+        }
+        if (!live && tok.symbol) {
+          live = marketMap.get(tok.symbol.toLowerCase());
+        }
+
         let newPrice = tok.price;
         let newCap = tok.market_cap;
         let newVol = tok.volume_24h;
@@ -139,6 +155,7 @@ function getSyncStatus() {
 }
 
 const { discoverNewPairs } = require('../../services/newPairsService');
+const { discoverTokens, resolveContractAddresses } = require('../../services/tokenDiscoveryService');
 
 function startSyncWorker() {
   console.log(`[SyncWorker] Registered with ${config.syncIntervalMs / 1000}s interval.`);
@@ -151,11 +168,30 @@ function startSyncWorker() {
   setTimeout(discoverNewPairs, 4000);
   const newPairsInterval = setInterval(discoverNewPairs, config.newPairsSyncIntervalMs);
 
+  // Token Discovery Worker: Expand token pool across chains via CoinGecko
+  console.log(`[TokenDiscovery] Registered with ${config.tokenDiscoveryIntervalMs / 1000}s interval.`);
+  setTimeout(async () => {
+    try {
+      await discoverTokens();
+      await resolveContractAddresses();
+    } catch (err) {
+      console.warn('[TokenDiscovery Startup Error]', err.message);
+    }
+  }, 6000);
+  const discoveryInterval = setInterval(async () => {
+    try {
+      await discoverTokens();
+      await resolveContractAddresses();
+    } catch (err) {
+      console.warn('[TokenDiscovery Interval Error]', err.message);
+    }
+  }, config.tokenDiscoveryIntervalMs);
+
   // Phase 3: Telegram Ingestion Worker
   const { startTelegramWorker } = require('./telegramIngestWorker');
   startTelegramWorker();
 
-  return { marketInterval, newPairsInterval };
+  return { marketInterval, newPairsInterval, discoveryInterval };
 }
 
 module.exports = {

@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS tokens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   chain VARCHAR(50) NOT NULL,
-  contract_address VARCHAR(255) NOT NULL,
+  contract_address VARCHAR(255),
   provider_id VARCHAR(100),
   name VARCHAR(150) NOT NULL,
   symbol VARCHAR(50) NOT NULL,
