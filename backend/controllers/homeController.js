@@ -30,7 +30,12 @@ function handleGetHomeData(req, res, next) {
         SUM(market_cap) as totalMarketCap,
         SUM(volume_24h) as total24hVolume,
         COUNT(*) as totalActiveTokens
-      FROM tokens WHERE is_active = 1
+      FROM (
+        SELECT market_cap, volume_24h, symbol
+        FROM tokens
+        WHERE is_active = 1
+        GROUP BY UPPER(TRIM(symbol))
+      )
     `);
 
     const syncStatus = getSyncStatus();
@@ -47,7 +52,7 @@ function handleGetHomeData(req, res, next) {
         pagination: {
           page,
           limit,
-          total: stats?.totalActiveTokens || 0,
+          total: topCoinsRes.pagination?.total || stats?.totalActiveTokens || 0,
           trendingTotal: trendingRes.pagination?.total || 0,
           newTotal: newCoinsRes.pagination?.total || 0,
           hotTotal: hotRes.pagination?.total || 0,

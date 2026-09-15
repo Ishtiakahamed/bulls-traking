@@ -846,8 +846,11 @@ tbody tr:hover{background:var(--panel-hover);}
   height: 12px;
   object-fit: contain;
   border-radius: 2px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 .source-logo-inline {
   width: 14px;
@@ -855,6 +858,7 @@ tbody tr:hover{background:var(--panel-hover);}
   object-fit: contain;
   vertical-align: -2px;
   margin: 0 2px;
+  display: inline-block;
 }
 
 /* ---------- TOKEN CELL AVATAR & METADATA ---------- */

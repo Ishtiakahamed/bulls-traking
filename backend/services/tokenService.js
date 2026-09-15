@@ -20,154 +20,213 @@ function attachSparklines(tokens) {
 }
 
 /**
- * Top Coins (Section 9): Sorted by Market Cap DESC
+ * Top Coins (Section 9): Sorted by Market Cap DESC, deduplicated by symbol
  */
 function getTopCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
-  const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
-  let where = "WHERE is_active = 1";
+  const p = Math.max(1, parseInt(page, 10));
+  const lim = parseInt(limit, 10);
+  const offset = (p - 1) * lim;
+  let chainFilter = "";
   const params = [];
 
   if (chain && chain !== 'all') {
-    where += " AND chain = ?";
+    chainFilter = " AND chain = ?";
     params.push(chain);
   }
 
   const sql = `
-    SELECT * FROM tokens
-    ${where}
+    SELECT * FROM (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY UPPER(TRIM(symbol)) 
+        ORDER BY market_cap DESC, volume_24h DESC
+      ) as rn
+      FROM tokens
+      WHERE is_active = 1 ${chainFilter}
+    )
+    WHERE rn = 1
     ORDER BY market_cap DESC
     LIMIT ? OFFSET ?
   `;
-  params.push(parseInt(limit, 10), offset);
+  params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const total = queryOne(`SELECT COUNT(*) as count FROM tokens ${where}`, params.slice(0, -2))?.count || 0;
+  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
+  const countParams = chain && chain !== 'all' ? [chain] : [];
+  const total = queryOne(countSql, countParams)?.count || 0;
 
   return {
     tokens: attachSparklines(tokens),
-    pagination: { page: parseInt(page, 10), limit: parseInt(limit, 10), total }
+    pagination: { page: p, limit: lim, total }
   };
 }
 
 /**
  * New Coins (Section 10): Source A (API) + Source B (User Submitted)
- * Sorted by first_seen_at DESC
+ * Sorted by first_seen_at DESC, deduplicated by symbol
  */
 function getNewCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
-  const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
-  let where = "WHERE is_active = 1";
+  const p = Math.max(1, parseInt(page, 10));
+  const lim = parseInt(limit, 10);
+  const offset = (p - 1) * lim;
+  let chainFilter = "";
   const params = [];
 
   if (chain && chain !== 'all') {
-    where += " AND chain = ?";
+    chainFilter = " AND chain = ?";
     params.push(chain);
   }
 
   const sql = `
-    SELECT * FROM tokens
-    ${where}
+    SELECT * FROM (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY UPPER(TRIM(symbol)) 
+        ORDER BY first_seen_at DESC, id DESC
+      ) as rn
+      FROM tokens
+      WHERE is_active = 1 ${chainFilter}
+    )
+    WHERE rn = 1
     ORDER BY first_seen_at DESC, id DESC
     LIMIT ? OFFSET ?
   `;
-  params.push(parseInt(limit, 10), offset);
+  params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const total = queryOne(`SELECT COUNT(*) as count FROM tokens ${where}`, params.slice(0, -2))?.count || 0;
+  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
+  const countParams = chain && chain !== 'all' ? [chain] : [];
+  const total = queryOne(countSql, countParams)?.count || 0;
 
   return {
     tokens: attachSparklines(tokens),
-    pagination: { page: parseInt(page, 10), limit: parseInt(limit, 10), total }
+    pagination: { page: p, limit: lim, total }
   };
 }
 
 /**
- * Hot Coins (Section 13): Algorithmic Hot Score DESC
+ * Hot Coins (Section 13): Algorithmic Hot Score DESC, deduplicated by symbol
  */
 function getHotCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
-  const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
-  let where = "WHERE is_active = 1";
+  const p = Math.max(1, parseInt(page, 10));
+  const lim = parseInt(limit, 10);
+  const offset = (p - 1) * lim;
+  let chainFilter = "";
   const params = [];
 
   if (chain && chain !== 'all') {
-    where += " AND chain = ?";
+    chainFilter = " AND chain = ?";
     params.push(chain);
   }
 
   const sql = `
-    SELECT * FROM tokens
-    ${where}
+    SELECT * FROM (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY UPPER(TRIM(symbol)) 
+        ORDER BY hot_score DESC, volume_24h DESC
+      ) as rn
+      FROM tokens
+      WHERE is_active = 1 ${chainFilter}
+    )
+    WHERE rn = 1
     ORDER BY hot_score DESC, volume_24h DESC
     LIMIT ? OFFSET ?
   `;
-  params.push(parseInt(limit, 10), offset);
+  params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const total = queryOne(`SELECT COUNT(*) as count FROM tokens ${where}`, params.slice(0, -2))?.count || 0;
+  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
+  const countParams = chain && chain !== 'all' ? [chain] : [];
+  const total = queryOne(countSql, countParams)?.count || 0;
 
   return {
     tokens: attachSparklines(tokens),
-    pagination: { page: parseInt(page, 10), limit: parseInt(limit, 10), total }
+    pagination: { page: p, limit: lim, total }
   };
 }
 
 /**
- * Top Gainers (Section 14): 24h percentage gain DESC with minimum quality filter
+ * Top Gainers (Section 14): 24h percentage gain DESC with minimum quality filter, deduplicated by symbol
  */
 function getTopGainers({ chain = 'all', limit = 50, page = 1 } = {}) {
-  const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
+  const p = Math.max(1, parseInt(page, 10));
+  const lim = parseInt(limit, 10);
+  const offset = (p - 1) * lim;
   const minVol = config.gainersFilter.minVolume24hUsd;
-  let where = "WHERE is_active = 1 AND volume_24h >= ? AND change_24h > 0";
+  let chainFilter = "";
   const params = [minVol];
 
   if (chain && chain !== 'all') {
-    where += " AND chain = ?";
+    chainFilter = " AND chain = ?";
     params.push(chain);
   }
 
   const sql = `
-    SELECT * FROM tokens
-    ${where}
+    SELECT * FROM (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY UPPER(TRIM(symbol)) 
+        ORDER BY change_24h DESC, volume_24h DESC
+      ) as rn
+      FROM tokens
+      WHERE is_active = 1 AND volume_24h >= ? AND change_24h > 0 ${chainFilter}
+    )
+    WHERE rn = 1
     ORDER BY change_24h DESC
     LIMIT ? OFFSET ?
   `;
-  params.push(parseInt(limit, 10), offset);
+  params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const total = queryOne(`SELECT COUNT(*) as count FROM tokens ${where}`, params.slice(0, -2))?.count || 0;
+  const countSql = `
+    SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count 
+    FROM tokens 
+    WHERE is_active = 1 AND volume_24h >= ? AND change_24h > 0 ${chainFilter}
+  `;
+  const countParams = chain && chain !== 'all' ? [minVol, chain] : [minVol];
+  const total = queryOne(countSql, countParams)?.count || 0;
 
   return {
     tokens: attachSparklines(tokens),
-    pagination: { page: parseInt(page, 10), limit: parseInt(limit, 10), total }
+    pagination: { page: p, limit: lim, total }
   };
 }
 
 /**
- * Trending Coins (Section 39): Internal ranking
+ * Trending Coins (Section 39): Internal ranking, deduplicated by symbol
  */
 function getTrendingCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
-  const offset = (Math.max(1, parseInt(page, 10)) - 1) * parseInt(limit, 10);
-  let where = "WHERE is_active = 1";
+  const p = Math.max(1, parseInt(page, 10));
+  const lim = parseInt(limit, 10);
+  const offset = (p - 1) * lim;
+  let chainFilter = "";
   const params = [];
 
   if (chain && chain !== 'all') {
-    where += " AND chain = ?";
+    chainFilter = " AND chain = ?";
     params.push(chain);
   }
 
   const sql = `
-    SELECT * FROM tokens
-    ${where}
+    SELECT * FROM (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY UPPER(TRIM(symbol)) 
+        ORDER BY (volume_24h * 0.4 + market_cap * 0.3 + ABS(change_24h) * 100000) DESC
+      ) as rn
+      FROM tokens
+      WHERE is_active = 1 ${chainFilter}
+    )
+    WHERE rn = 1
     ORDER BY (volume_24h * 0.4 + market_cap * 0.3 + ABS(change_24h) * 100000) DESC
     LIMIT ? OFFSET ?
   `;
-  params.push(parseInt(limit, 10), offset);
+  params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const total = queryOne(`SELECT COUNT(*) as count FROM tokens ${where}`, params.slice(0, -2))?.count || 0;
+  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
+  const countParams = chain && chain !== 'all' ? [chain] : [];
+  const total = queryOne(countSql, countParams)?.count || 0;
 
   return {
     tokens: attachSparklines(tokens),
-    pagination: { page: parseInt(page, 10), limit: parseInt(limit, 10), total }
+    pagination: { page: p, limit: lim, total }
   };
 }
 
@@ -214,14 +273,21 @@ function searchTokens(searchQuery, limit = 10) {
   const q = `%${searchQuery.trim().toLowerCase()}%`;
   
   const sql = `
-    SELECT id, name, symbol, logo_url, price, change_24h, chain, contract_address, provider_id
-    FROM tokens
-    WHERE is_active = 1 AND (
-      LOWER(name) LIKE ? OR 
-      LOWER(symbol) LIKE ? OR 
-      LOWER(contract_address) LIKE ? OR
-      LOWER(provider_id) LIKE ?
+    SELECT * FROM (
+      SELECT id, name, symbol, logo_url, price, change_24h, chain, contract_address, provider_id, market_cap, volume_24h,
+             ROW_NUMBER() OVER (
+               PARTITION BY UPPER(TRIM(symbol))
+               ORDER BY market_cap DESC, volume_24h DESC
+             ) as rn
+      FROM tokens
+      WHERE is_active = 1 AND (
+        LOWER(name) LIKE ? OR 
+        LOWER(symbol) LIKE ? OR 
+        LOWER(contract_address) LIKE ? OR 
+        LOWER(provider_id) LIKE ?
+      )
     )
+    WHERE rn = 1
     ORDER BY market_cap DESC
     LIMIT ?
   `;

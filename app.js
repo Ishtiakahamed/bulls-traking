@@ -183,7 +183,7 @@ function renderSourceBadge(t) {
   if (t.coingecko_id) {
     return `
       <span class="source-tag cg" title="Verified market telemetry via CoinGecko API">
-        <img src="https://static.coingecko.com/s/thumbnail-00594e90d05d034269f82b1633e382b292b45d38007341fae0b64e1017389b53.png" class="source-mini-logo" alt="CG">
+        <svg class="source-mini-logo" viewBox="0 0 32 32" width="12" height="12" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#8DC63F"/><path d="M16.5 8C12 8 9 11 9 15.5C9 18 10.2 20.3 12 21.5C11.6 22.4 11.3 23.5 11.5 24.5C11.7 25.1 12.3 25.5 13 25.2C13.9 24.7 14.7 24 15.4 23.1C15.8 23.2 16.1 23.2 16.5 23.2C21 23.2 25 19.7 25 15.5C25 11 21 8 16.5 8ZM13.5 14.2C12.6 14.2 11.9 13.5 11.9 12.6C11.9 11.7 12.6 11 13.5 11C14.4 11 15.1 11.7 15.1 12.6C15.1 13.5 14.4 14.2 13.5 14.2ZM20 19C18.7 20 16.5 20.3 15 19.5C14.6 19.3 14.7 18.6 15.2 18.6C16.4 18.7 18.1 18.5 19.2 17.7C19.7 17.3 20.3 18.5 20 19Z" fill="#1B222C"/><circle cx="13.5" cy="12.6" r="1" fill="#FFFFFF"/></svg>
         <span>CG</span>
       </span>
     `;
@@ -191,7 +191,7 @@ function renderSourceBadge(t) {
   if (t.liquidity > 0 || (t.contract_address && t.contract_address.length > 20)) {
     return `
       <span class="source-tag dex" title="On-chain LP & metrics via DexScreener">
-        <img src="https://dexscreener.com/favicon.ico" class="source-mini-logo" alt="DEX">
+        <svg class="source-mini-logo" viewBox="0 0 32 32" width="12" height="12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="16" fill="#131722"/><path d="M7 23.5L15 8.5L18.5 17L24.5 8.5" stroke="#00E5FF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
         <span>DEX</span>
       </span>
     `;
@@ -477,8 +477,8 @@ async function renderHome() {
             Showing <b>${start.toLocaleString()}–${end.toLocaleString()}</b> of <b>${total.toLocaleString()}</b> tokens
             <span class="source-verified-note">
               • Verified live data via 
-              <img src="https://static.coingecko.com/s/thumbnail-00594e90d05d034269f82b1633e382b292b45d38007341fae0b64e1017389b53.png" class="source-logo-inline" alt="CG"> CoinGecko 
-              &amp; <img src="https://dexscreener.com/favicon.ico" class="source-logo-inline" alt="DEX"> DexScreener
+              <svg class="source-logo-inline" viewBox="0 0 32 32" width="14" height="14" fill="none" style="vertical-align:-2px;margin:0 2px;"><circle cx="16" cy="16" r="16" fill="#8DC63F"/><path d="M16.5 8C12 8 9 11 9 15.5C9 18 10.2 20.3 12 21.5C11.6 22.4 11.3 23.5 11.5 24.5C11.7 25.1 12.3 25.5 13 25.2C13.9 24.7 14.7 24 15.4 23.1C15.8 23.2 16.1 23.2 16.5 23.2C21 23.2 25 19.7 25 15.5C25 11 21 8 16.5 8ZM13.5 14.2C12.6 14.2 11.9 13.5 11.9 12.6C11.9 11.7 12.6 11 13.5 11C14.4 11 15.1 11.7 15.1 12.6C15.1 13.5 14.4 14.2 13.5 14.2Z" fill="#1B222C"/><circle cx="13.5" cy="12.6" r="1" fill="#FFFFFF"/></svg> CoinGecko 
+              &amp; <svg class="source-logo-inline" viewBox="0 0 32 32" width="14" height="14" fill="none" style="vertical-align:-2px;margin:0 2px;"><rect width="32" height="32" rx="16" fill="#131722"/><path d="M7 23.5L15 8.5L18.5 17L24.5 8.5" stroke="#00E5FF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> DexScreener
             </span>
           </div>
           <div class="pagination-actions">

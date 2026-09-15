@@ -375,6 +375,8 @@ function runSeed() {
           )
         `;
         for (const dt of discovered) {
+          const exists = queryOne('SELECT id FROM tokens WHERE chain = ? AND (coingecko_id = ? OR UPPER(TRIM(symbol)) = UPPER(TRIM(?))) LIMIT 1', [dt.chain, dt.coingecko_id, dt.symbol]);
+          if (exists) continue;
           execute(insertDiscoveredStmt, [
             dt.chain, dt.contract_address, dt.coingecko_id, dt.provider_id, dt.name, dt.symbol, dt.logo_url,
             dt.price, dt.market_cap, dt.volume_24h, dt.change_1h, dt.change_24h, dt.change_7d,
