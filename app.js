@@ -177,11 +177,56 @@ function updateMarketStatus(stats) {
   }
 }
 
-/* ---------------- render table rows helper ---------------- */
+/* ---------------- render table rows helper & badges ---------------- */
+
+function renderSourceBadge(t) {
+  if (t.coingecko_id) {
+    return `
+      <span class="source-tag cg" title="Verified market telemetry via CoinGecko API">
+        <img src="https://static.coingecko.com/s/thumbnail-00594e90d05d034269f82b1633e382b292b45d38007341fae0b64e1017389b53.png" class="source-mini-logo" alt="CG">
+        <span>CG</span>
+      </span>
+    `;
+  }
+  if (t.liquidity > 0 || (t.contract_address && t.contract_address.length > 20)) {
+    return `
+      <span class="source-tag dex" title="On-chain LP & metrics via DexScreener">
+        <img src="https://dexscreener.com/favicon.ico" class="source-mini-logo" alt="DEX">
+        <span>DEX</span>
+      </span>
+    `;
+  }
+  return `
+    <span class="source-tag onchain" title="Verified Bulls Traking Listing">
+      <span class="source-mini-logo" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f5a623;"></span>
+      <span>Verified</span>
+    </span>
+  `;
+}
+
+function renderSocialLinks(t) {
+  const webUrl = t.website_url || (t.coingecko_id ? `https://www.coingecko.com/en/coins/${t.coingecko_id}` : (t.contract_address ? `https://dexscreener.com/search?q=${t.contract_address}` : `#/token/${t.id}`));
+  const xUrl = t.x_url || `https://x.com/search?q=${encodeURIComponent('$' + t.symbol)}`;
+  const tgUrl = t.telegram_url || `https://t.me/s/${encodeURIComponent(t.symbol.toLowerCase())}`;
+
+  return `
+    <div class="social-links-cell" onclick="event.stopPropagation();">
+      <a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener noreferrer" class="social-btn web" title="Website / Explorer" onclick="event.stopPropagation();">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </a>
+      <a href="${escapeHtml(xUrl)}" target="_blank" rel="noopener noreferrer" class="social-btn x" title="X / Twitter ($${escapeHtml(t.symbol)})" onclick="event.stopPropagation();">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a href="${escapeHtml(tgUrl)}" target="_blank" rel="noopener noreferrer" class="social-btn tg" title="Telegram Community" onclick="event.stopPropagation();">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+      </a>
+    </div>
+  `;
+}
 
 function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
   if (!tokens || tokens.length === 0) {
-    return `<tr><td colspan="13" class="state-msg">No tokens found matching this view.</td></tr>`;
+    return `<tr><td colspan="14" class="state-msg">No tokens found matching this view.</td></tr>`;
   }
 
   return tokens.map((t, idx) => {
@@ -202,13 +247,19 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
         <td>${t.market_cap_rank || idx + 1}</td>
         <td>
           <div class="token-cell">
-            <img src="${escapeHtml(t.logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(t.symbol)}" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
-            <div>
-              <span class="token-name">${escapeHtml(t.name)}</span>
-              <span class="token-sym">${escapeHtml(t.symbol)}</span>
-              ${isSubmitted ? '<span class="badge-new">NEW</span>' : ''}
-              ${showAge && t.age ? `<span class="badge-age">${escapeHtml(t.age)}</span>` : ''}
-              ${showHot ? `<span class="badge-hot">🔥 ${t.hot_score}</span>` : ''}
+            <img src="${escapeHtml(t.logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(t.symbol)}" class="token-avatar" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
+            <div class="token-meta">
+              <div class="token-title-row">
+                <span class="token-name">${escapeHtml(t.name)}</span>
+                <span class="token-sym">${escapeHtml(t.symbol)}</span>
+                ${renderSourceBadge(t)}
+                ${isSubmitted ? '<span class="badge-new">NEW</span>' : ''}
+                ${showAge && t.age ? `<span class="badge-age">${escapeHtml(t.age)}</span>` : ''}
+                ${showHot ? `<span class="badge-hot">🔥 ${t.hot_score}</span>` : ''}
+              </div>
+              <div class="token-chain-row">
+                <span class="chain-tag">${escapeHtml(t.chain ? t.chain.replace('-ecosystem', '') : '')}</span>
+              </div>
             </div>
           </div>
         </td>
@@ -221,6 +272,9 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
         <td>${lpVal}</td>
         <td>${fmtUsd(t.volume_24h)}</td>
         <td>${fmtUsd(t.market_cap)}</td>
+        <td class="cell-socials" onclick="event.stopPropagation();">
+          ${renderSocialLinks(t)}
+        </td>
         <td>${spark}</td>
       </tr>
     `;
@@ -229,11 +283,24 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
 
 /* ---------------- 1. HOME VIEW ---------------- */
 
+let homeState = {
+  tab: 'trending',
+  page: 1,
+  limit: 20,
+  chain: 'all',
+  total: 0
+};
+
 async function renderHome() {
   app.innerHTML = `<div class="state-msg">Loading Bulls Traking market data…</div>`;
 
   try {
-    const res = await fetchApi(`/home?chain=${state.chain}`);
+    homeState.page = 1;
+    homeState.chain = state.chain || 'all';
+    homeState.tab = state.tab || 'trending';
+
+    // Fetch initial home aggregator with 20 items per tab and market stats
+    const res = await fetchApi(`/home?chain=${homeState.chain}&limit=20&page=1`);
     const data = res.data;
     state.homeData = data;
 
@@ -257,11 +324,6 @@ async function renderHome() {
       </div>
     `).join('');
 
-    let currentTabTokens = data.trending;
-    if (state.tab === 'new') currentTabTokens = data.new;
-    if (state.tab === 'hot') currentTabTokens = data.hot;
-    if (state.tab === 'gainers') currentTabTokens = data.gainers;
-
     app.innerHTML = `
       <!-- MARKET STATS -->
       <div class="hero-overview">
@@ -274,7 +336,7 @@ async function renderHome() {
           <div class="val">${fmtUsd(data.marketStats?.total24hVolume)}</div>
         </div>
         <div class="hero-stat-card">
-          <div class="label">Tracked Assets</div>
+          <div class="label">Tracked Assets (500+ Pool)</div>
           <div class="val">${data.marketStats?.totalTokens || 0}</div>
         </div>
       </div>
@@ -290,15 +352,16 @@ async function renderHome() {
       <!-- TABS & CHAIN CONTROLS -->
       <div class="controls-bar">
         <div class="subtabs" id="homeTabs">
-          <span class="subtab ${state.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">🔥 Trending</span>
-          <span class="subtab ${state.tab === 'new' ? 'is-active' : ''}" data-tab="new">🆕 New Coins</span>
-          <span class="subtab ${state.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">⚡ Hot Coins</span>
-          <span class="subtab ${state.tab === 'gainers' ? 'is-active' : ''}" data-tab="gainers">📈 Top Gainers</span>
+          <span class="subtab ${homeState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">🔥 Trending</span>
+          <span class="subtab ${homeState.tab === 'top' ? 'is-active' : ''}" data-tab="top">🏆 Top Coins</span>
+          <span class="subtab ${homeState.tab === 'new' ? 'is-active' : ''}" data-tab="new">🆕 New Coins</span>
+          <span class="subtab ${homeState.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">⚡ Hot Coins</span>
+          <span class="subtab ${homeState.tab === 'gainers' ? 'is-active' : ''}" data-tab="gainers">📈 Top Gainers</span>
         </div>
 
         <div class="chains" id="homeChains">
           ${Object.keys(CHAINS).map(k => `
-            <button class="chain-pill ${state.chain === k ? 'is-active' : ''}" data-chain="${k}">
+            <button class="chain-pill ${homeState.chain === k ? 'is-active' : ''}" data-chain="${k}">
               ${CHAINS[k].label}
             </button>
           `).join('')}
@@ -322,42 +385,163 @@ async function renderHome() {
               <th>LP</th>
               <th>24h Volume</th>
               <th>Market Cap</th>
+              <th>Socials</th>
               <th>Last 7 Days</th>
             </tr>
           </thead>
           <tbody id="homeTableBody">
-            ${renderTokenRows(currentTabTokens, { showAge: state.tab === 'new', showHot: state.tab === 'hot' })}
+            <tr><td colspan="14" class="state-msg">Loading tokens…</td></tr>
           </tbody>
         </table>
       </div>
+
+      <!-- PAGINATION CONTROLS (20 TOKENS PER PAGE ACROSS 500+ POOL) -->
+      <div id="homePaginationWrap" class="home-pagination-wrap"></div>
     `;
+
+    // Function to load tab data with pagination
+    async function loadHomeTab(tabName, page = 1, append = false) {
+      homeState.tab = tabName;
+      homeState.page = page;
+      const tbody = document.getElementById('homeTableBody');
+      const pagWrap = document.getElementById('homePaginationWrap');
+
+      if (!append) {
+        tbody.innerHTML = `<tr><td colspan="14" class="state-msg">Loading ${tabName} tokens (Page ${page})…</td></tr>`;
+      }
+
+      try {
+        let endpoint = `/tokens/${tabName}?chain=${homeState.chain}&page=${page}&limit=${homeState.limit}`;
+        if (tabName === 'top') endpoint = `/tokens/top?chain=${homeState.chain}&page=${page}&limit=${homeState.limit}`;
+
+        const res = await fetchApi(endpoint);
+        const tokens = res.tokens || [];
+        const total = res.pagination?.total || data.marketStats?.totalTokens || 1009;
+        homeState.total = total;
+        const totalPages = Math.max(1, Math.ceil(total / homeState.limit));
+
+        if (append) {
+          tbody.insertAdjacentHTML('beforeend', renderTokenRows(tokens, {
+            showAge: tabName === 'new',
+            showHot: tabName === 'hot'
+          }));
+        } else {
+          tbody.innerHTML = renderTokenRows(tokens, {
+            showAge: tabName === 'new',
+            showHot: tabName === 'hot'
+          });
+        }
+
+        renderHomePagination(pagWrap, {
+          tabName,
+          page,
+          limit: homeState.limit,
+          total,
+          totalPages,
+          loadedCount: append ? (tbody.querySelectorAll('tr[data-token-id]').length) : tokens.length
+        });
+      } catch (e) {
+        if (!append) {
+          tbody.innerHTML = `<tr><td colspan="14" class="state-msg">Unable to load tokens: ${escapeHtml(e.message)}</td></tr>`;
+        }
+      }
+    }
+
+    function renderHomePagination(container, meta) {
+      if (!container) return;
+      const { tabName, page, limit, total, totalPages, loadedCount } = meta;
+      const start = ((page - 1) * limit) + 1;
+      const end = Math.min(total, start + loadedCount - 1);
+
+      // Compute page numbers to display
+      const pagesToShow = [];
+      pagesToShow.push(1);
+      for (let p = Math.max(2, page - 2); p <= Math.min(totalPages - 1, page + 2); p++) {
+        if (!pagesToShow.includes(p)) pagesToShow.push(p);
+      }
+      if (totalPages > 1 && !pagesToShow.includes(totalPages)) {
+        pagesToShow.push(totalPages);
+      }
+
+      let pageBtnsHtml = '';
+      pagesToShow.forEach((p, idx, arr) => {
+        if (idx > 0 && p - arr[idx - 1] > 1) {
+          pageBtnsHtml += `<span class="page-ellipsis">…</span>`;
+        }
+        pageBtnsHtml += `<button class="page-btn ${p === page ? 'is-active' : ''}" data-page="${p}">${p}</button>`;
+      });
+
+      container.innerHTML = `
+        <div class="pagination-bar">
+          <div class="pagination-info">
+            Showing <b>${start.toLocaleString()}–${end.toLocaleString()}</b> of <b>${total.toLocaleString()}</b> tokens
+            <span class="source-verified-note">
+              • Verified live data via 
+              <img src="https://static.coingecko.com/s/thumbnail-00594e90d05d034269f82b1633e382b292b45d38007341fae0b64e1017389b53.png" class="source-logo-inline" alt="CG"> CoinGecko 
+              &amp; <img src="https://dexscreener.com/favicon.ico" class="source-logo-inline" alt="DEX"> DexScreener
+            </span>
+          </div>
+          <div class="pagination-actions">
+            <button class="btn-ghost btn-prev" ${page <= 1 ? 'disabled' : ''}>‹ Previous</button>
+            <div class="page-numbers">${pageBtnsHtml}</div>
+            <button class="btn-ghost btn-next" ${page >= totalPages ? 'disabled' : ''}>Next ›</button>
+            <button class="btn-ghost btn-load-more" ${page >= totalPages ? 'style="display:none;"' : ''}>Load More (+20)</button>
+          </div>
+        </div>
+      `;
+
+      container.querySelector('.btn-prev')?.addEventListener('click', () => {
+        if (page > 1) {
+          loadHomeTab(homeState.tab, page - 1, false);
+          document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+      container.querySelector('.btn-next')?.addEventListener('click', () => {
+        if (page < totalPages) {
+          loadHomeTab(homeState.tab, page + 1, false);
+          document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+      container.querySelectorAll('.page-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetPage = parseInt(btn.dataset.page, 10);
+          if (targetPage !== page) {
+            loadHomeTab(homeState.tab, targetPage, false);
+            document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+      container.querySelector('.btn-load-more')?.addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        btn.textContent = 'Loading…';
+        loadHomeTab(homeState.tab, page + 1, true);
+      });
+    }
 
     // Bind Home tabs
     document.getElementById('homeTabs').addEventListener('click', (e) => {
       const tab = e.target.closest('.subtab');
       if (!tab) return;
-      state.tab = tab.dataset.tab;
+      const targetTab = tab.dataset.tab;
       document.querySelectorAll('#homeTabs .subtab').forEach(el => el.classList.remove('is-active'));
       tab.classList.add('is-active');
-
-      let tokens = data.trending;
-      if (state.tab === 'new') tokens = data.new;
-      if (state.tab === 'hot') tokens = data.hot;
-      if (state.tab === 'gainers') tokens = data.gainers;
-
-      document.getElementById('homeTableBody').innerHTML = renderTokenRows(tokens, {
-        showAge: state.tab === 'new',
-        showHot: state.tab === 'hot'
-      });
+      loadHomeTab(targetTab, 1, false);
     });
 
     // Bind Home chains
     document.getElementById('homeChains').addEventListener('click', (e) => {
       const pill = e.target.closest('.chain-pill');
       if (!pill) return;
+      homeState.chain = pill.dataset.chain;
       state.chain = pill.dataset.chain;
-      renderHome();
+      document.querySelectorAll('#homeChains .chain-pill').forEach(el => el.classList.remove('is-active'));
+      pill.classList.add('is-active');
+      loadHomeTab(homeState.tab, 1, false);
     });
+
+    // Initial load of first 20 tokens
+    loadHomeTab(homeState.tab, 1, false);
 
   } catch (err) {
     app.innerHTML = `<div class="state-msg">Unable to load market data: ${escapeHtml(err.message)}</div>`;
@@ -392,11 +576,11 @@ async function renderTopCoins() {
             <th style="width:32px;"></th>
             <th>Rank</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
+            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="topTableBody">
-          <tr><td colspan="13" class="state-msg">Loading Top Coins…</td></tr>
+          <tr><td colspan="14" class="state-msg">Loading Top Coins…</td></tr>
         </tbody>
       </table>
     </div>
@@ -477,11 +661,11 @@ async function renderNewCoins() {
             <th style="width:32px;"></th>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
+            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="newTableBody">
-          <tr><td colspan="13" class="state-msg">Loading New Coins…</td></tr>
+          <tr><td colspan="14" class="state-msg">Loading New Coins…</td></tr>
         </tbody>
       </table>
     </div>
@@ -562,11 +746,11 @@ async function renderHotCoins() {
             <th style="width:32px;"></th>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
+            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="hotTableBody">
-          <tr><td colspan="13" class="state-msg">Loading Hot Coins…</td></tr>
+          <tr><td colspan="14" class="state-msg">Loading Hot Coins…</td></tr>
         </tbody>
       </table>
     </div>
@@ -647,11 +831,11 @@ async function renderGainers() {
             <th style="width:32px;"></th>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
+            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="gainersTableBody">
-          <tr><td colspan="13" class="state-msg">Loading Top Gainers…</td></tr>
+          <tr><td colspan="14" class="state-msg">Loading Top Gainers…</td></tr>
         </tbody>
       </table>
     </div>
@@ -755,7 +939,7 @@ async function renderPromotedPage() {
             <th style="width:32px;"></th>
             <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
             <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Last 7 Days</th>
+            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="promotedTableBody">
@@ -1372,11 +1556,12 @@ async function renderWatchlistPage() {
             <th>LP</th>
             <th>24h Volume</th>
             <th>Market Cap</th>
+            <th>Socials</th>
             <th>Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="watchlistTableBody">
-          <tr><td colspan="13" class="state-msg">Loading watchlisted tokens…</td></tr>
+          <tr><td colspan="14" class="state-msg">Loading watchlisted tokens…</td></tr>
         </tbody>
       </table>
     </div>

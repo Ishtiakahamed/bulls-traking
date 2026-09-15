@@ -15,12 +15,14 @@ const { queryOne } = require('../../database/db');
 function handleGetHomeData(req, res, next) {
   try {
     const chain = req.query.chain || 'all';
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
 
-    const trending = getTrendingCoins({ chain, limit: 10, page: 1 }).tokens;
-    const newCoins = getNewCoins({ chain, limit: 10, page: 1 }).tokens;
-    const hot = getHotCoins({ chain, limit: 10, page: 1 }).tokens;
-    const gainers = getTopGainers({ chain, limit: 10, page: 1 }).tokens;
-    const topCoins = getTopCoins({ chain, limit: 10, page: 1 }).tokens;
+    const trendingRes = getTrendingCoins({ chain, limit, page });
+    const newCoinsRes = getNewCoins({ chain, limit, page });
+    const hotRes = getHotCoins({ chain, limit, page });
+    const gainersRes = getTopGainers({ chain, limit, page });
+    const topCoinsRes = getTopCoins({ chain, limit, page });
     const promoted = getActivePromotions().slice(0, 6);
 
     const stats = queryOne(`
@@ -36,12 +38,22 @@ function handleGetHomeData(req, res, next) {
     res.json({
       success: true,
       data: {
-        trending,
-        new: newCoins,
-        hot,
-        gainers,
-        topCoins,
+        trending: trendingRes.tokens,
+        new: newCoinsRes.tokens,
+        hot: hotRes.tokens,
+        gainers: gainersRes.tokens,
+        topCoins: topCoinsRes.tokens,
         promoted,
+        pagination: {
+          page,
+          limit,
+          total: stats?.totalActiveTokens || 0,
+          trendingTotal: trendingRes.pagination?.total || 0,
+          newTotal: newCoinsRes.pagination?.total || 0,
+          hotTotal: hotRes.pagination?.total || 0,
+          gainersTotal: gainersRes.pagination?.total || 0,
+          topTotal: topCoinsRes.pagination?.total || 0
+        },
         marketStats: {
           totalMarketCap: stats?.totalMarketCap || 0,
           total24hVolume: stats?.total24hVolume || 0,

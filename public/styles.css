@@ -812,4 +812,205 @@ tbody tr:hover{background:var(--panel-hover);}
   line-height: 1.5;
 }
 
+/* ---------- DATA SOURCE MINI LOGOS & BADGES ---------- */
+.source-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.source-tag.cg {
+  background: rgba(142, 198, 63, 0.12);
+  color: #8dc63f;
+  border: 1px solid rgba(142, 198, 63, 0.35);
+}
+.source-tag.dex {
+  background: rgba(0, 229, 255, 0.1);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 229, 255, 0.28);
+}
+.source-tag.onchain {
+  background: rgba(245, 166, 35, 0.1);
+  color: #f5a623;
+  border: 1px solid rgba(245, 166, 35, 0.25);
+}
+.source-mini-logo {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  border-radius: 2px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.source-logo-inline {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: -2px;
+  margin: 0 2px;
+}
+
+/* ---------- TOKEN CELL AVATAR & METADATA ---------- */
+.token-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--panel-raised);
+  object-fit: cover;
+  border: 1px solid var(--line-light);
+  flex-shrink: 0;
+}
+.token-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.token-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.token-chain-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chain-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+
+/* ---------- SOCIALS COLUMN & BUTTONS ---------- */
+.cell-socials {
+  text-align: center;
+  white-space: nowrap;
+}
+.social-links-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.social-btn:hover {
+  background: var(--panel-hover);
+  transform: translateY(-1px);
+}
+.social-btn.web:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+}
+.social-btn.x:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.social-btn.tg:hover {
+  color: #229ed9;
+  border-color: #229ed9;
+}
+
+/* ---------- HOME PAGINATION CONTROLS ---------- */
+.home-pagination-wrap {
+  margin: 1.5rem 0 2rem;
+}
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 1.25rem;
+}
+.pagination-info {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.pagination-info b {
+  color: var(--text);
+  font-family: var(--mono);
+}
+.source-verified-note {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  margin-left: 8px;
+}
+.pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.page-btn {
+  background: var(--panel-raised);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--mono);
+  transition: all 0.15s ease;
+  min-width: 30px;
+  text-align: center;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--panel-hover);
+  color: var(--text);
+  border-color: var(--line-light);
+}
+.page-btn.is-active {
+  background: var(--cyan-glow);
+  color: var(--cyan);
+  border-color: var(--cyan);
+  font-weight: 700;
+}
+.page-ellipsis {
+  color: var(--text-faint);
+  padding: 0 4px;
+  font-size: 12px;
+}
+.btn-prev, .btn-next, .btn-load-more {
+  padding: 0.35rem 0.8rem;
+  font-size: 12px;
+  border-radius: 4px;
+}
+.btn-load-more {
+  margin-left: 0.5rem;
+  background: rgba(0, 229, 255, 0.08);
+  border-color: rgba(0, 229, 255, 0.28);
+  color: var(--cyan);
+}
+.btn-load-more:hover {
+  background: var(--cyan-glow);
+  border-color: var(--cyan);
+}
+
 
