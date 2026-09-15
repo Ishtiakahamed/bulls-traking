@@ -139,8 +139,8 @@ function initDatabase() {
   if (!isSeeding) {
     try {
       const countRow = db.prepare('SELECT COUNT(*) as count FROM tokens').get();
-      if (!countRow || countRow.count === 0) {
-        console.log('[DB] Fresh database detected. Auto-seeding initial verified tokens...');
+      if (!countRow || countRow.count < 100) {
+        console.log('[DB] Under-populated or fresh database detected. Auto-seeding full verified tokens pool...');
         isSeeding = true;
         const { runSeed } = require('./seeds/seed');
         runSeed();
