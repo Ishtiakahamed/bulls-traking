@@ -125,7 +125,7 @@ window.toggleWatchlist = toggleWatchlist;
 
 function sparklineSvg(prices, positive) {
   if (!prices || prices.length < 2) return '';
-  const w = 90, h = 28;
+  const w = 70, h = 22;
   const min = Math.min(...prices), max = Math.max(...prices);
   const range = (max - min) || 1;
   const pts = prices.map((p, i) => `${(i / (prices.length - 1)) * w},${h - ((p - min) / range) * h}`).join(' ');
