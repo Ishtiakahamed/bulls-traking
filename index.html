@@ -7,7 +7,7 @@
 <meta name="description" content="Bulls Traking is a modern Web3 token discovery, real-time analytics, trending and listing platform across Solana, Ethereum, BNB Chain and Base.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="assets/logo-transparent.png">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -28,16 +28,46 @@
 
     <!-- MAIN NAVIGATION (Section 3 & Phase 3) -->
     <nav class="nav-links" id="mainNav">
-      <a href="#/" class="nav-item" data-route="home">Home</a>
-      <a href="#/top-coins" class="nav-item" data-route="top-coins">Top Coins</a>
-      <a href="#/new-pairs" class="nav-item" data-route="new-pairs">New Pairs</a>
-      <a href="#/new-coins" class="nav-item" data-route="new-coins">New Coins</a>
-      <a href="#/hot" class="nav-item" data-route="hot">Hot Coins</a>
-      <a href="#/gainers" class="nav-item" data-route="gainers">Gainers</a>
-      <a href="#/watchlist" class="nav-item" data-route="watchlist">Watchlist</a>
-      <a href="#/scan" class="nav-item" data-route="scan">Scanner</a>
-      <a href="#/promoted" class="nav-item" data-route="promoted">Promoted</a>
-      <a href="#/presales" class="nav-item" data-route="presales">Presales</a>
+      <a href="#/" class="nav-item" data-route="home" title="Home">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="#/top-coins" class="nav-item" data-route="top-coins" title="Top Coins">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="nav-label">Top Coins</span>
+      </a>
+      <a href="#/new-pairs" class="nav-item" data-route="new-pairs" title="New Pairs Radar">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        <span class="nav-label">New Pairs</span>
+      </a>
+      <a href="#/new-coins" class="nav-item" data-route="new-coins" title="New Coins">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span class="nav-label">New Coins</span>
+      </a>
+      <a href="#/hot" class="nav-item" data-route="hot" title="Hot Coins">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>
+        <span class="nav-label">Hot Coins</span>
+      </a>
+      <a href="#/gainers" class="nav-item" data-route="gainers" title="Gainers">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <span class="nav-label">Gainers</span>
+      </a>
+      <a href="#/watchlist" class="nav-item" data-route="watchlist" title="Watchlist">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span class="nav-label">Watchlist</span>
+      </a>
+      <a href="#/scan" class="nav-item" data-route="scan" title="Contract Scanner">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span class="nav-label">Scanner</span>
+      </a>
+      <a href="#/promoted" class="nav-item" data-route="promoted" title="Promoted">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="nav-label">Promoted</span>
+      </a>
+      <a href="#/presales" class="nav-item" data-route="presales" title="Presales">
+        <svg class="nav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 12l-4-4-4 4M12 8v8"/></svg>
+        <span class="nav-label">Presales</span>
+      </a>
     </nav>
 
     <!-- SEARCH WRAPPER -->
