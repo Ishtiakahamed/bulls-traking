@@ -342,14 +342,6 @@ async function renderHome() {
           <span class="subtab ${homeState.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">Hot Coins</span>
           <span class="subtab ${homeState.tab === 'gainers' ? 'is-active' : ''}" data-tab="gainers">Top Gainers</span>
         </div>
-
-        <div class="chains" id="homeChains">
-          ${Object.keys(CHAINS).map(k => `
-            <button class="chain-pill ${homeState.chain === k ? 'is-active' : ''}" data-chain="${k}">
-              ${CHAINS[k].label}
-            </button>
-          `).join('')}
-        </div>
       </div>
 
       <!-- TOKEN TABLE -->
@@ -514,16 +506,7 @@ async function renderHome() {
       loadHomeTab(targetTab, 1, false);
     });
 
-    // Bind Home chains
-    document.getElementById('homeChains').addEventListener('click', (e) => {
-      const pill = e.target.closest('.chain-pill');
-      if (!pill) return;
-      homeState.chain = pill.dataset.chain;
-      state.chain = pill.dataset.chain;
-      document.querySelectorAll('#homeChains .chain-pill').forEach(el => el.classList.remove('is-active'));
-      pill.classList.add('is-active');
-      loadHomeTab(homeState.tab, 1, false);
-    });
+
 
     // Initial load of first 20 tokens
     loadHomeTab(homeState.tab, 1, false);
@@ -542,16 +525,6 @@ async function renderTopCoins() {
     <div class="page-head">
       <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Top Coins by Market Cap</h1>
       <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Explore top cryptocurrencies ranked strictly by market capitalization across verified chains.</p>
-    </div>
-
-    <div class="controls-bar">
-      <div class="chains" id="topChains">
-        ${Object.keys(CHAINS).map(k => `
-          <button class="chain-pill ${state.chain === k ? 'is-active' : ''}" data-chain="${k}">
-            ${CHAINS[k].label}
-          </button>
-        `).join('')}
-      </div>
     </div>
 
     <div class="table-wrap">
@@ -575,13 +548,7 @@ async function renderTopCoins() {
     </div>
   `;
 
-  document.getElementById('topChains').addEventListener('click', (e) => {
-    const pill = e.target.closest('.chain-pill');
-    if (!pill) return;
-    state.chain = pill.dataset.chain;
-    state.page = 1;
-    renderTopCoins();
-  });
+
 
   try {
     const res = await fetchApi(`/tokens/top?chain=${state.chain}&page=1&limit=${state.limit}`);
@@ -629,16 +596,6 @@ async function renderNewCoins() {
       <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Discover recently listed and newly submitted verified tokens ordered by listing timestamp.</p>
     </div>
 
-    <div class="controls-bar">
-      <div class="chains" id="newChains">
-        ${Object.keys(CHAINS).map(k => `
-          <button class="chain-pill ${state.chain === k ? 'is-active' : ''}" data-chain="${k}">
-            ${CHAINS[k].label}
-          </button>
-        `).join('')}
-      </div>
-    </div>
-
     <div class="table-wrap">
       <table>
         <thead>
@@ -660,13 +617,7 @@ async function renderNewCoins() {
     </div>
   `;
 
-  document.getElementById('newChains').addEventListener('click', (e) => {
-    const pill = e.target.closest('.chain-pill');
-    if (!pill) return;
-    state.chain = pill.dataset.chain;
-    state.page = 1;
-    renderNewCoins();
-  });
+
 
   try {
     const res = await fetchApi(`/tokens/new?chain=${state.chain}&page=1&limit=${state.limit}`);
@@ -714,16 +665,6 @@ async function renderHotCoins() {
       <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Ranked algorithmically by the Bulls Traking Hot Score (combining volume, momentum, velocity, and liquidity turnover).</p>
     </div>
 
-    <div class="controls-bar">
-      <div class="chains" id="hotChains">
-        ${Object.keys(CHAINS).map(k => `
-          <button class="chain-pill ${state.chain === k ? 'is-active' : ''}" data-chain="${k}">
-            ${CHAINS[k].label}
-          </button>
-        `).join('')}
-      </div>
-    </div>
-
     <div class="table-wrap">
       <table>
         <thead>
@@ -745,13 +686,7 @@ async function renderHotCoins() {
     </div>
   `;
 
-  document.getElementById('hotChains').addEventListener('click', (e) => {
-    const pill = e.target.closest('.chain-pill');
-    if (!pill) return;
-    state.chain = pill.dataset.chain;
-    state.page = 1;
-    renderHotCoins();
-  });
+
 
   try {
     const res = await fetchApi(`/tokens/hot?chain=${state.chain}&page=1&limit=${state.limit}`);
@@ -799,16 +734,6 @@ async function renderGainers() {
       <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Assets with highest 24-hour percentage growth, screened through liquidity and volume quality thresholds.</p>
     </div>
 
-    <div class="controls-bar">
-      <div class="chains" id="gainersChains">
-        ${Object.keys(CHAINS).map(k => `
-          <button class="chain-pill ${state.chain === k ? 'is-active' : ''}" data-chain="${k}">
-            ${CHAINS[k].label}
-          </button>
-        `).join('')}
-      </div>
-    </div>
-
     <div class="table-wrap">
       <table>
         <thead>
@@ -830,13 +755,7 @@ async function renderGainers() {
     </div>
   `;
 
-  document.getElementById('gainersChains').addEventListener('click', (e) => {
-    const pill = e.target.closest('.chain-pill');
-    if (!pill) return;
-    state.chain = pill.dataset.chain;
-    state.page = 1;
-    renderGainers();
-  });
+
 
   try {
     const res = await fetchApi(`/tokens/gainers?chain=${state.chain}&page=1&limit=${state.limit}`);
@@ -1346,14 +1265,6 @@ async function renderNewPairs() {
         <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending Pools</span>
         <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">Matured (> 7d)</span>
       </div>
-
-      <div class="chains" id="radarChains">
-        ${Object.keys(CHAINS).map(k => `
-          <button class="chain-pill ${newPairsState.chain === k ? 'is-active' : ''}" data-chain="${k}">
-            ${CHAINS[k].label}
-          </button>
-        `).join('')}
-      </div>
     </div>
 
     <!-- PAIRS TABLE -->
@@ -1391,13 +1302,7 @@ async function renderNewPairs() {
     renderNewPairs();
   });
 
-  document.getElementById('radarChains').addEventListener('click', (e) => {
-    const pill = e.target.closest('.chain-pill');
-    if (!pill) return;
-    newPairsState.chain = pill.dataset.chain;
-    newPairsState.page = 1;
-    renderNewPairs();
-  });
+
 
   loadRadarPairs();
 }
