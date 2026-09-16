@@ -325,22 +325,6 @@ async function renderHome() {
     `).join('');
 
     app.innerHTML = `
-      <!-- MARKET STATS -->
-      <div class="hero-overview">
-        <div class="hero-stat-card">
-          <div class="label">Total Market Cap</div>
-          <div class="val">${fmtUsd(data.marketStats?.totalMarketCap)}</div>
-        </div>
-        <div class="hero-stat-card">
-          <div class="label">24h Trading Volume</div>
-          <div class="val">${fmtUsd(data.marketStats?.total24hVolume)}</div>
-        </div>
-        <div class="hero-stat-card">
-          <div class="label">Tracked Assets (500+ Pool)</div>
-          <div class="val">${data.marketStats?.totalTokens || 0}</div>
-        </div>
-      </div>
-
       <!-- PROMOTED TOKENS SECTION -->
       ${data.promoted && data.promoted.length > 0 ? `
         <section class="promoted-section">
