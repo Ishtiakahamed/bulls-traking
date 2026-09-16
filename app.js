@@ -1573,96 +1573,6 @@ async function renderWatchlistPage() {
   }
 }
 
-/* ---------------- 3d. TELEGRAM SIGNALS VIEW (/signals) (Phase 3 Task 3) ---------------- */
-
-let signalsState = {
-  direction: 'all',
-  page: 1,
-  limit: 20
-};
-
-async function renderSignalsPage() {
-  document.title = 'Telegram & Market Alpha Signals | Bulls Traking';
-  app.innerHTML = `
-    <div class="page-head">
-      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Telegram & Market Alpha Signals</h1>
-      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Curated on-chain trade setups, breakout telemetry, and risk warnings aggregated from verified Telegram alpha channels.</p>
-    </div>
-
-    <!-- DIRECTION FILTER TABS -->
-    <div class="controls-bar">
-      <div class="subtabs" id="signalsTabs">
-        <span class="subtab ${signalsState.direction === 'all' ? 'is-active' : ''}" data-dir="all">All Signals</span>
-        <span class="subtab ${signalsState.direction === 'buy' ? 'is-active' : ''}" data-dir="buy">Buy / Long</span>
-        <span class="subtab ${signalsState.direction === 'sell' ? 'is-active' : ''}" data-dir="sell">Sell / Take Profit</span>
-        <span class="subtab ${signalsState.direction === 'watch' ? 'is-active' : ''}" data-dir="watch">Watchlist / Alert</span>
-      </div>
-    </div>
-
-    <div id="signalsList"><div class="state-msg">Loading alpha signals…</div></div>
-  `;
-
-  document.getElementById('signalsTabs').addEventListener('click', (e) => {
-    const tab = e.target.closest('.subtab');
-    if (!tab) return;
-    signalsState.direction = tab.dataset.dir;
-    signalsState.page = 1;
-    renderSignalsPage();
-  });
-
-  loadSignals();
-}
-
-async function loadSignals() {
-  const container = document.getElementById('signalsList');
-  try {
-    const queryDir = signalsState.direction === 'all' ? '' : `&direction=${signalsState.direction}`;
-    const res = await fetchApi(`/signals?page=${signalsState.page}&limit=${signalsState.limit}${queryDir}`);
-    const signals = res.signals || [];
-
-    if (signals.length === 0) {
-      container.innerHTML = `<div class="state-msg">No active signals found in this category.</div>`;
-      return;
-    }
-
-    const cards = signals.map(s => {
-      const dirCls = s.direction === 'buy' ? 'buy' : s.direction === 'sell' ? 'sell' : 'watch';
-      const dirIcon = s.direction === 'buy' ? '▲ BUY' : s.direction === 'sell' ? '▼ SELL' : '● WATCH';
-      const timeAgo = fmtAge(s.posted_at);
-
-      let tokenPill = '';
-      if (s.token_symbol) {
-        tokenPill = `
-          <div class="signal-token-pill" onclick="location.hash='#/token/${s.token_id}'">
-            <img src="${escapeHtml(s.token_logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(s.token_symbol)}">
-            <span>$${escapeHtml(s.token_symbol)} (${fmtPrice(s.token_price)})</span>
-          </div>
-        `;
-      }
-
-      return `
-        <div class="signal-card">
-          <div>
-            <div class="signal-header">
-              <span class="signal-badge ${dirCls}">${dirIcon}</span>
-              <span class="signal-source-badge">${escapeHtml((s.source || 'telegram').replace(/_/g, ' ').toUpperCase())}</span>
-            </div>
-            <h3 class="signal-title">${escapeHtml(s.title)}</h3>
-            <div class="signal-body">${escapeHtml(s.message)}</div>
-          </div>
-          <div class="signal-footer">
-            <div>${tokenPill || '<span style="color:var(--text-faint);">Market-wide Setup</span>'}</div>
-            <span>${timeAgo}</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    container.innerHTML = `<div class="signals-grid">${cards}</div>`;
-  } catch (err) {
-    container.innerHTML = `<div class="state-msg">Failed to load signals: ${escapeHtml(err.message)}</div>`;
-  }
-}
 
 /* ---------------- 10. LEGAL & INFO PAGES (Phase 3 Task 4) ---------------- */
 
@@ -1777,7 +1687,7 @@ function renderDisclaimer() {
       <div class="legal-updated">Last Updated: September 2026</div>
 
       <h2>1. No Financial Advice</h2>
-      <p>None of the content, price data, market rankings, security risk scores, or Telegram signals provided on Bulls Traking constitutes financial, legal, investment, or trading advice. All information is provided for general informational and educational purposes only.</p>
+      <p>None of the content, price data, market rankings, or security risk scores provided on Bulls Traking constitutes financial, legal, investment, or trading advice. All information is provided for general informational and educational purposes only.</p>
 
       <h2>2. High Volatility & Capital Loss Warning</h2>
       <p>Digital assets, decentralized liquidity pools, and newly minted tokens are subject to extreme market volatility, low liquidity, slippage, and high risk of total loss. You should never invest funds that you cannot afford to lose.</p>
@@ -1825,8 +1735,6 @@ function route() {
     renderGainers();
   } else if (path === '/watchlist') {
     renderWatchlistPage();
-  } else if (path === '/signals') {
-    renderSignalsPage();
   } else if (path === '/scan') {
     renderScanner();
   } else if (path === '/promoted') {
