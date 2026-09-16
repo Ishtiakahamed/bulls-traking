@@ -255,7 +255,7 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
                 ${renderSourceBadge(t)}
                 ${isSubmitted ? '<span class="badge-new">NEW</span>' : ''}
                 ${showAge && t.age ? `<span class="badge-age">${escapeHtml(t.age)}</span>` : ''}
-                ${showHot ? `<span class="badge-hot">🔥 ${t.hot_score}</span>` : ''}
+                ${showHot ? `<span class="badge-hot">${t.hot_score}</span>` : ''}
               </div>
               <div class="token-chain-row">
                 <span class="chain-tag">${escapeHtml(t.chain ? t.chain.replace('-ecosystem', '') : '')}</span>
@@ -328,7 +328,7 @@ async function renderHome() {
       <!-- PROMOTED TOKENS SECTION -->
       ${data.promoted && data.promoted.length > 0 ? `
         <section class="promoted-section">
-          <h3 class="section-headline">🔥 Promoted Tokens</h3>
+          <h3 class="section-headline">Promoted Tokens</h3>
           <div class="promoted-grid">${promotedCards}</div>
         </section>
       ` : ''}
@@ -336,11 +336,11 @@ async function renderHome() {
       <!-- TABS & CHAIN CONTROLS -->
       <div class="controls-bar">
         <div class="subtabs" id="homeTabs">
-          <span class="subtab ${homeState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">🔥 Trending</span>
-          <span class="subtab ${homeState.tab === 'top' ? 'is-active' : ''}" data-tab="top">🏆 Top Coins</span>
-          <span class="subtab ${homeState.tab === 'new' ? 'is-active' : ''}" data-tab="new">🆕 New Coins</span>
-          <span class="subtab ${homeState.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">⚡ Hot Coins</span>
-          <span class="subtab ${homeState.tab === 'gainers' ? 'is-active' : ''}" data-tab="gainers">📈 Top Gainers</span>
+          <span class="subtab ${homeState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending</span>
+          <span class="subtab ${homeState.tab === 'top' ? 'is-active' : ''}" data-tab="top">Top Coins</span>
+          <span class="subtab ${homeState.tab === 'new' ? 'is-active' : ''}" data-tab="new">New Coins</span>
+          <span class="subtab ${homeState.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">Hot Coins</span>
+          <span class="subtab ${homeState.tab === 'gainers' ? 'is-active' : ''}" data-tab="gainers">Top Gainers</span>
         </div>
 
         <div class="chains" id="homeChains">
@@ -1005,13 +1005,12 @@ function renderScanner() {
       const isWarn = !isCritical && (scan.risk_level === 'MEDIUM' || scan.mintable === 1 || (scan.buy_tax || 0) > 10 || (scan.sell_tax || 0) > 10 || scan.blacklist === 1);
       
       const summaryClass = isCritical ? 'danger' : isWarn ? 'warn' : 'safe';
-      const summaryIcon = isCritical ? '🚨' : isWarn ? '⚠️' : '🛡️';
       const summaryTitle = isCritical ? 'High / Critical Risk' : isWarn ? 'Medium Risk / Warning' : 'Safe / Low Risk';
 
       resultContainer.innerHTML = `
         <div class="risk-summary ${summaryClass}">
           <div>
-            <div class="risk-badge-title">${summaryIcon} ${summaryTitle}</div>
+            <div class="risk-badge-title">${summaryTitle}</div>
             <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
               ${isCritical ? 'Critical security vulnerabilities detected. Exercise extreme caution.' : isWarn ? 'Minor risk flags identified. Check taxes and ownership permissions.' : 'No critical contract risks or malicious routines detected.'}
             </div>
@@ -1070,7 +1069,6 @@ function renderScanner() {
 function renderPresales() {
   app.innerHTML = `
     <div class="placeholder-card">
-      <div style="font-size:2rem;margin-bottom:0.5rem;">🚀</div>
       <h2>Presale Radar</h2>
       <p>Presale tracking is coming soon.</p>
     </div>
@@ -1142,7 +1140,7 @@ function renderSubmit() {
           <textarea name="description" rows="3" placeholder="Describe the token utilities and roadmap..."></textarea>
         </div>
 
-        <button type="submit" class="submit-btn" id="submitBtn">Submit Token 🚀</button>
+        <button type="submit" class="submit-btn" id="submitBtn">Submit Token</button>
       </form>
     </div>
 
@@ -1173,7 +1171,7 @@ function renderSubmit() {
       container.style.display = 'block';
       container.innerHTML = `
         <div class="success-screen-card">
-          <h2>🎉 Token Submitted Successfully</h2>
+          <h2>Token Submitted Successfully</h2>
           <p>
             Your token has been successfully processed and is now live on <b>Bulls Traking</b>.<br>
             It will appear in New Coins and token discovery sections.
@@ -1187,7 +1185,7 @@ function renderSubmit() {
     } catch (err) {
       alert('Submission error: ' + err.message);
       btn.disabled = false;
-      btn.textContent = 'Submit Token 🚀';
+      btn.textContent = 'Submit Token';
     }
   });
 }
@@ -1202,9 +1200,9 @@ async function renderTokenDetail(idOrAddress) {
     const t = res.data;
 
     const socials = [];
-    if (t.website_url) socials.push(`<a href="${escapeHtml(t.website_url)}" target="_blank" rel="noopener">🌐 Website</a>`);
-    if (t.x_url) socials.push(`<a href="${escapeHtml(t.x_url)}" target="_blank" rel="noopener">𝕏 Twitter</a>`);
-    if (t.telegram_url) socials.push(`<a href="${escapeHtml(t.telegram_url)}" target="_blank" rel="noopener">✈ Telegram</a>`);
+    if (t.website_url) socials.push(`<a href="${escapeHtml(t.website_url)}" target="_blank" rel="noopener">Website</a>`);
+    if (t.x_url) socials.push(`<a href="${escapeHtml(t.x_url)}" target="_blank" rel="noopener">X (Twitter)</a>`);
+    if (t.telegram_url) socials.push(`<a href="${escapeHtml(t.telegram_url)}" target="_blank" rel="noopener">Telegram</a>`);
 
     // Dynamic SEO
     document.title = `${t.name} ($${t.symbol}) Price, Market Cap & Data | Bulls Traking`;
@@ -1237,7 +1235,7 @@ async function renderTokenDetail(idOrAddress) {
         <div class="stat-box"><div class="label">Rank</div><div class="value">#${t.market_cap_rank || 'N/A'}</div></div>
         <div class="stat-box"><div class="label">1h Change</div><div class="value">${fmtChg(t.change_1h)}</div></div>
         <div class="stat-box"><div class="label">7d Change</div><div class="value">${fmtChg(t.change_7d)}</div></div>
-        <div class="stat-box"><div class="label">Hot Score</div><div class="value" style="color:var(--ember);">🔥 ${t.hot_score || 'N/A'}</div></div>
+        <div class="stat-box"><div class="label">Hot Score</div><div class="value" style="color:var(--ember);">${t.hot_score || 'N/A'}</div></div>
       </div>
 
       <div class="detail-grid">
@@ -1344,9 +1342,9 @@ async function renderNewPairs() {
     <!-- TABS & CHAIN CONTROLS -->
     <div class="controls-bar">
       <div class="subtabs" id="radarTabs">
-        <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">⚡ Latest (< 24h)</span>
-        <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">🔥 Trending Pools</span>
-        <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">🛡 Matured (> 7d)</span>
+        <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">Latest (< 24h)</span>
+        <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending Pools</span>
+        <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">Matured (> 7d)</span>
       </div>
 
       <div class="chains" id="radarChains">
@@ -1595,9 +1593,9 @@ async function renderSignalsPage() {
     <div class="controls-bar">
       <div class="subtabs" id="signalsTabs">
         <span class="subtab ${signalsState.direction === 'all' ? 'is-active' : ''}" data-dir="all">All Signals</span>
-        <span class="subtab ${signalsState.direction === 'buy' ? 'is-active' : ''}" data-dir="buy">🟢 Buy / Long</span>
-        <span class="subtab ${signalsState.direction === 'sell' ? 'is-active' : ''}" data-dir="sell">🔴 Sell / Take Profit</span>
-        <span class="subtab ${signalsState.direction === 'watch' ? 'is-active' : ''}" data-dir="watch">🟡 Watchlist / Alert</span>
+        <span class="subtab ${signalsState.direction === 'buy' ? 'is-active' : ''}" data-dir="buy">Buy / Long</span>
+        <span class="subtab ${signalsState.direction === 'sell' ? 'is-active' : ''}" data-dir="sell">Sell / Take Profit</span>
+        <span class="subtab ${signalsState.direction === 'watch' ? 'is-active' : ''}" data-dir="watch">Watchlist / Alert</span>
       </div>
     </div>
 
@@ -1670,7 +1668,7 @@ async function loadSignals() {
 
 const LEGAL_DISCLAIMER_NOTICE = `
   <div class="legal-disclaimer-box">
-    ⚠️ <b>Legal Review Disclaimer:</b> This document is an initial operational placeholder provided for platform structure demonstration. Prior to production launch in regulated jurisdictions, this agreement must undergo formal review by qualified digital asset and securities legal counsel.
+    <b>Legal Review Disclaimer:</b> This document is an initial operational placeholder provided for platform structure demonstration. Prior to production launch in regulated jurisdictions, this agreement must undergo formal review by qualified digital asset and securities legal counsel.
   </div>
 `;
 

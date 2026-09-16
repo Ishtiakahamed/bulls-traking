@@ -115,7 +115,7 @@ async function processSubmission(data) {
       chain,
       contractAddress: cleanContract,
       status: 'LIVE',
-      message: '🎉 Token Submitted Successfully. Your token has been successfully processed and is now live on Bulls Traking.'
+      message: 'Token Submitted Successfully. Your token has been successfully processed and is now live on Bulls Traking.'
     };
   });
 }

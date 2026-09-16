@@ -211,7 +211,7 @@ function getSubmissionStatus(submissionId) {
     ...sub,
     currentStep,
     isLive: sub.listing_status === 'LIVE',
-    celebrationMessage: sub.listing_status === 'LIVE' ? '🎉 Congratulations! Your token is now listed on Bull Straking.' : null
+    celebrationMessage: sub.listing_status === 'LIVE' ? 'Congratulations! Your token is now listed on Bull Straking.' : null
   };
 }
 
