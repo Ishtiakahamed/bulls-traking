@@ -9,6 +9,9 @@ const { getActivePromotions } = require('../services/promotionService');
 const { getSyncStatus } = require('../workers/syncWorker');
 const { queryOne } = require('../../database/db');
 
+const homeCache = new Map();
+const HOME_CACHE_TTL_MS = 10000; // 10 seconds in-memory cache
+
 /**
  * Single optimized home data API response (Section 42)
  */
@@ -17,6 +20,12 @@ function handleGetHomeData(req, res, next) {
     const chain = req.query.chain || 'all';
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const cacheKey = `${chain}:${limit}:${page}`;
+
+    const cached = homeCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < HOME_CACHE_TTL_MS)) {
+      return res.json(cached.payload);
+    }
 
     const trendingRes = getTrendingCoins({ chain, limit, page });
     const newCoinsRes = getNewCoins({ chain, limit, page });
@@ -40,7 +49,7 @@ function handleGetHomeData(req, res, next) {
 
     const syncStatus = getSyncStatus();
 
-    res.json({
+    const payload = {
       success: true,
       data: {
         trending: trendingRes.tokens,
@@ -67,7 +76,9 @@ function handleGetHomeData(req, res, next) {
           providerStatus: syncStatus.providerStatus
         }
       }
-    });
+    };
+    homeCache.set(cacheKey, { timestamp: Date.now(), payload });
+    res.json(payload);
   } catch (err) {
     next(err);
   }

@@ -3,14 +3,27 @@ const { calculateTokenAge } = require('../utils/helpers');
 const config = require('../../config/default');
 
 function attachSparklines(tokens) {
-  return tokens.map(tok => {
-    const history = query(`
-      SELECT price FROM token_price_history 
-      WHERE token_id = ? 
-      ORDER BY timestamp ASC LIMIT 14
-    `, [tok.id]);
+  if (!tokens || tokens.length === 0) return [];
+  const tokenIds = tokens.map(t => t.id).filter(Boolean);
+  if (tokenIds.length === 0) return tokens;
 
-    const prices = history.length > 1 ? history.map(h => h.price) : [tok.price * 0.95, tok.price];
+  const placeholders = tokenIds.map(() => '?').join(',');
+  const allHistory = query(`
+    SELECT token_id, price FROM token_price_history 
+    WHERE token_id IN (${placeholders})
+    ORDER BY timestamp ASC
+  `, tokenIds);
+
+  const historyMap = new Map();
+  for (const h of allHistory) {
+    if (!historyMap.has(h.token_id)) historyMap.set(h.token_id, []);
+    const arr = historyMap.get(h.token_id);
+    if (arr.length < 14) arr.push(h.price);
+  }
+
+  return tokens.map(tok => {
+    const arr = historyMap.get(tok.id);
+    const prices = (arr && arr.length > 1) ? arr : [tok.price * 0.95, tok.price];
     return {
       ...tok,
       age: calculateTokenAge(tok.first_seen_at),

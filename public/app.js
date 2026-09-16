@@ -144,21 +144,29 @@ async function fetchApi(endpoint, options = {}) {
 
 /* ---------------- ticker tape ---------------- */
 
+function populateTape(tokens) {
+  const track = document.getElementById('tapeTrack');
+  if (!track || !tokens || tokens.length === 0) return;
+  const items = tokens.map((c) => {
+    const chg = c.change_24h;
+    const cls = chg > 0 ? 'up' : 'down';
+    const sign = chg > 0 ? '+' : '';
+    return `<span class="tape-item" data-ticker-symbol="${escapeHtml(c.symbol)}"><b>${escapeHtml(c.symbol)}</b><span class="ticker-price">${fmtPrice(c.price)}</span><span class="${cls}">${sign}${(chg ?? 0).toFixed(1)}%</span></span>`;
+  });
+  track.innerHTML = items.join('') + items.join('');
+}
+
 async function loadTape() {
+  if (state.homeData && state.homeData.trending) {
+    populateTape(state.homeData.trending.slice(0, 12));
+    return;
+  }
   try {
     const res = await fetchApi('/tokens/trending?limit=12');
-    const track = document.getElementById('tapeTrack');
-    if (!res.tokens || res.tokens.length === 0) return;
-
-    const items = res.tokens.map((c) => {
-      const chg = c.change_24h;
-      const cls = chg > 0 ? 'up' : 'down';
-      const sign = chg > 0 ? '+' : '';
-      return `<span class="tape-item" data-ticker-symbol="${escapeHtml(c.symbol)}"><b>${escapeHtml(c.symbol)}</b><span class="ticker-price">${fmtPrice(c.price)}</span><span class="${cls}">${sign}${(chg ?? 0).toFixed(1)}%</span></span>`;
-    });
-    track.innerHTML = items.join('') + items.join('');
+    populateTape(res.tokens);
   } catch (e) {
-    document.getElementById('tape').style.display = 'none';
+    const tape = document.getElementById('tape');
+    if (tape) tape.style.display = 'none';
   }
 }
 
@@ -297,14 +305,18 @@ async function renderHome() {
   try {
     homeState.page = 1;
     homeState.chain = state.chain || 'all';
-    homeState.tab = state.tab || 'trending';
-
     // Fetch initial home aggregator with 20 items per tab and market stats
     const res = await fetchApi(`/home?chain=${homeState.chain}&limit=20&page=1`);
     const data = res.data;
     state.homeData = data;
 
     updateMarketStatus(data.marketStats);
+    if (data.trending && data.trending.length > 0) {
+      populateTape(data.trending.slice(0, 12));
+    }
+
+    const initialKey = homeState.tab === 'top' ? 'topCoins' : homeState.tab;
+    const initialTokens = data[initialKey] || [];
 
     const promotedCards = (data.promoted || []).map(p => `
       <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
@@ -366,7 +378,10 @@ async function renderHome() {
             </tr>
           </thead>
           <tbody id="homeTableBody">
-            <tr><td colspan="14" class="state-msg">Loading tokens…</td></tr>
+            ${initialTokens.length > 0 ? renderTokenRows(initialTokens, {
+              showAge: homeState.tab === 'new',
+              showHot: homeState.tab === 'hot'
+            }) : '<tr><td colspan="14" class="state-msg">Loading tokens…</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -381,6 +396,30 @@ async function renderHome() {
       homeState.page = page;
       const tbody = document.getElementById('homeTableBody');
       const pagWrap = document.getElementById('homePaginationWrap');
+
+      // Fast-path: render page 1 instantly from pre-fetched home aggregator without duplicate network call
+      const tabKey = tabName === 'top' ? 'topCoins' : tabName;
+      if (page === 1 && !append && data && data[tabKey] && data[tabKey].length > 0) {
+        const tokens = data[tabKey];
+        const total = data.pagination?.[`${tabName}Total`] || data.marketStats?.totalTokens || 1009;
+        homeState.total = total;
+        const totalPages = Math.max(1, Math.ceil(total / homeState.limit));
+
+        tbody.innerHTML = renderTokenRows(tokens, {
+          showAge: tabName === 'new',
+          showHot: tabName === 'hot'
+        });
+
+        renderHomePagination(pagWrap, {
+          tabName,
+          page: 1,
+          limit: homeState.limit,
+          total,
+          totalPages,
+          loadedCount: tokens.length
+        });
+        return;
+      }
 
       if (!append) {
         tbody.innerHTML = `<tr><td colspan="14" class="state-msg">Loading ${tabName} tokens (Page ${page})…</td></tr>`;
