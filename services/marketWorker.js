@@ -1,6 +1,5 @@
 const { query, execute, transaction } = require('../db/database');
-
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+const { marketDataProvider } = require('../backend/providers');
 
 let isSyncing = false;
 
@@ -21,19 +20,14 @@ async function syncMarketData() {
 
     const now = Math.floor(Date.now() / 1000);
 
-    // Fetch batch from CoinGecko markets
+    // Fetch batch from multi-provider market data ingestion (CMC + CoinGecko)
     let marketDataMap = new Map();
     try {
-      const res = await fetch(`${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false`, {
-        headers: { 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(6000)
-      });
-      if (res.ok) {
-        const list = await res.json();
-        for (const item of list) {
-          if (item.id) marketDataMap.set(item.id, item);
-          if (item.symbol) marketDataMap.set(item.symbol.toLowerCase(), item);
-        }
+      const list = await marketDataProvider.fetchMarketList({ perPage: 100, page: 1 });
+      for (const item of list) {
+        if (item.providerId) marketDataMap.set(item.providerId.toLowerCase(), item);
+        if (item.id) marketDataMap.set(item.id.toLowerCase(), item);
+        if (item.symbol) marketDataMap.set(item.symbol.toLowerCase(), item);
       }
     } catch (e) {
       console.warn('[MarketWorker] External API reach notice (using fallback normalization):', e.message);

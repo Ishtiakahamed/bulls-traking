@@ -11,20 +11,61 @@ class MarketDataProvider {
   }
 
   /**
-   * Fetch market data with automatic fallback
+   * Fetch market data combining CoinMarketCap and CoinGecko for maximum coverage & redundancy
    */
   async fetchMarketList(options = {}) {
+    const combined = [];
+    const seenSymbols = new Set();
+
+    // 1. Fetch from primary provider (e.g. CoinMarketCap Pro)
     try {
-      return await this.primary.fetchMarkets(options);
-    } catch (primaryErr) {
-      console.warn(`[MarketDataProvider] Primary (${this.primary.name}) failed: ${primaryErr.message}. Attempting fallback...`);
-      try {
-        return await this.fallback.fetchMarkets(options);
-      } catch (fallbackErr) {
-        console.warn(`[MarketDataProvider] Fallback (${this.fallback.name}) failed: ${fallbackErr.message}`);
-        throw new Error(`All market data providers failed. Primary: ${primaryErr.message}, Fallback: ${fallbackErr.message}`);
+      const list = await this.primary.fetchMarkets(options);
+      if (Array.isArray(list) && list.length > 0) {
+        for (const item of list) {
+          combined.push(item);
+          if (item.symbol) seenSymbols.add(item.symbol.toUpperCase());
+        }
       }
+    } catch (primaryErr) {
+      console.warn(`[MarketDataProvider] Primary (${this.primary.name}) notice: ${primaryErr.message}`);
     }
+
+    // 2. Also fetch from fallback/complementary provider (e.g. CoinGecko) to merge & enrich
+    try {
+      const fallbackList = await this.fallback.fetchMarkets(options);
+      if (Array.isArray(fallbackList) && fallbackList.length > 0) {
+        for (const item of fallbackList) {
+          const sym = item.symbol ? item.symbol.toUpperCase() : null;
+          if (sym && seenSymbols.has(sym)) {
+            // Enrich existing with CoinGecko ID, ATH, ATL, and logo if missing
+            const existing = combined.find(c => (c.symbol || '').toUpperCase() === sym);
+            if (existing) {
+              if (!existing.coingecko_id && item.providerId) existing.coingecko_id = item.providerId;
+              if (!existing.logo && item.logo) existing.logo = item.logo;
+              if (!existing.ath && item.ath) {
+                existing.ath = item.ath;
+                existing.athDate = item.athDate;
+              }
+              if (!existing.atl && item.atl) {
+                existing.atl = item.atl;
+                existing.atlDate = item.atlDate;
+              }
+            }
+          } else {
+            combined.push(item);
+            if (sym) seenSymbols.add(sym);
+          }
+        }
+      }
+    } catch (fallbackErr) {
+      console.warn(`[MarketDataProvider] Secondary (${this.fallback.name}) notice: ${fallbackErr.message}`);
+    }
+
+    if (combined.length === 0) {
+      throw new Error('All market data providers (CoinMarketCap & CoinGecko) failed to return market data.');
+    }
+
+    return combined;
   }
 
   /**
