@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS tokens (
   website_url TEXT,
   x_url TEXT,
   telegram_url TEXT,
+  reddit_url TEXT,
   price REAL DEFAULT 0,
   market_cap REAL DEFAULT 0,
   volume_24h REAL DEFAULT 0,
@@ -94,6 +95,8 @@ CREATE TABLE IF NOT EXISTS promotions (
   priority INTEGER DEFAULT 0,
   is_active INTEGER DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  auto_trading_url TEXT,
+  reddit_url TEXT,
   FOREIGN KEY (token_id) REFERENCES tokens(id) ON DELETE CASCADE
 );
 
@@ -116,6 +119,18 @@ CREATE TABLE IF NOT EXISTS promotion_orders (
   order_status VARCHAR(30) DEFAULT 'pending',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  tx_hash VARCHAR(255),
+  chain VARCHAR(50),
+  contract_address VARCHAR(255),
+  token_name VARCHAR(150),
+  token_symbol VARCHAR(50),
+  logo_url TEXT,
+  website_url TEXT,
+  x_url TEXT,
+  telegram_url TEXT,
+  reddit_url TEXT,
+  payment_method VARCHAR(50),
+  auto_trading_url TEXT,
   FOREIGN KEY (token_id) REFERENCES tokens(id) ON DELETE SET NULL
 );
 

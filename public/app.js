@@ -60,9 +60,15 @@ const debounce = (fn, ms) => {
 
 const fmtAge = (d) => {
   if (!d) return '—';
-  const diffMs = Date.now() - new Date(d).getTime();
-  if (isNaN(diffMs) || diffMs < 0) return 'Just now';
-  const mins = Math.floor(diffMs / 60000);
+  let s = String(d).trim();
+  if (!s.endsWith('Z') && !s.includes('+') && !s.includes('GMT')) {
+    s = s.replace(' ', 'T') + 'Z';
+  }
+  const diffMs = Date.now() - new Date(s).getTime();
+  if (isNaN(diffMs) || diffMs < 30000) return 'Just now';
+  const secs = Math.floor(diffMs / 1000);
+  if (secs < 60) return `${secs}s ago`;
+  const mins = Math.floor(secs / 60);
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
@@ -70,6 +76,30 @@ const fmtAge = (d) => {
   if (days < 30) return `${days}d ago`;
   const months = Math.floor(days / 30);
   return `${months}mo ago`;
+};
+
+const getTokenFallbackAvatar = (symbol = '', name = '') => {
+  const cleanSym = String(symbol || name || '?').slice(0, 4).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  let hash = 0;
+  for (let i = 0; i < cleanSym.length; i++) {
+    hash = cleanSym.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue1 = Math.abs(hash % 360);
+  const hue2 = (hue1 + 40) % 360;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><defs><linearGradient id="g_${hue1}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="hsl(${hue1},68%,48%)"/><stop offset="100%" stop-color="hsl(${hue2},82%,32%)"/></linearGradient></defs><circle cx="18" cy="18" r="18" fill="url(#g_${hue1})"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="11" font-weight="800" fill="#ffffff">${cleanSym || '?'}</text></svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+};
+
+const normalizeTokenLogo = (url, symbol = '', name = '') => {
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    return getTokenFallbackAvatar(symbol, name);
+  }
+  let u = url.trim();
+  const hashMatch = u.match(/(?:ipfs\/|ipfs:\/\/)([a-zA-Z0-9_-]+)/);
+  if (hashMatch && hashMatch[1]) {
+    return `https://pump.mypinata.cloud/ipfs/${hashMatch[1]}`;
+  }
+  return u;
 };
 
 /* ---------------- Watchlist helpers (Phase 3 Task 2) ---------------- */
@@ -188,46 +218,92 @@ function updateMarketStatus(stats) {
 /* ---------------- render table rows helper & badges ---------------- */
 
 function renderSourceBadge(t) {
-  if (t.coingecko_id) {
-    return `
+  const badges = [];
+
+  const isCmc = (t.logo_url && t.logo_url.includes('coinmarketcap')) ||
+                (t.provider_id && !isNaN(Number(t.provider_id)) && !t.provider_id.startsWith('0x')) ||
+                Boolean(t.cmc_id) ||
+                (t.market_cap_rank != null && t.market_cap_rank > 0 && t.market_cap_rank <= 100);
+
+  const isCg = Boolean(t.coingecko_id) ||
+               (t.logo_url && t.logo_url.includes('coingecko')) ||
+               (t.provider_id && isNaN(Number(t.provider_id)) && !t.provider_id.startsWith('0x') && t.provider_id !== 'bulls-traking');
+
+  const isDex = Boolean(t.liquidity > 0) || 
+                (t.contract_address && t.contract_address.length > 20 && (t.is_submitted === 1 || (!isCg && !isCmc)));
+
+  if (isCmc) {
+    badges.push(`
+      <span class="source-tag cmc" title="Verified market telemetry via CoinMarketCap Pro">
+        <img src="assets/coinmarketcap.png" class="source-mini-logo" alt="CMC">
+        <span>CMC</span>
+      </span>
+    `);
+  }
+
+  if (isCg) {
+    badges.push(`
       <span class="source-tag cg" title="Verified market telemetry via CoinGecko API">
-        <svg class="source-mini-logo" viewBox="0 0 32 32" width="12" height="12" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="16" fill="#8DC63F"/><path d="M16.5 8C12 8 9 11 9 15.5C9 18 10.2 20.3 12 21.5C11.6 22.4 11.3 23.5 11.5 24.5C11.7 25.1 12.3 25.5 13 25.2C13.9 24.7 14.7 24 15.4 23.1C15.8 23.2 16.1 23.2 16.5 23.2C21 23.2 25 19.7 25 15.5C25 11 21 8 16.5 8ZM13.5 14.2C12.6 14.2 11.9 13.5 11.9 12.6C11.9 11.7 12.6 11 13.5 11C14.4 11 15.1 11.7 15.1 12.6C15.1 13.5 14.4 14.2 13.5 14.2ZM20 19C18.7 20 16.5 20.3 15 19.5C14.6 19.3 14.7 18.6 15.2 18.6C16.4 18.7 18.1 18.5 19.2 17.7C19.7 17.3 20.3 18.5 20 19Z" fill="#1B222C"/><circle cx="13.5" cy="12.6" r="1" fill="#FFFFFF"/></svg>
+        <img src="assets/coingecko.png" class="source-mini-logo" alt="CG">
         <span>CG</span>
       </span>
-    `;
+    `);
   }
-  if (t.liquidity > 0 || (t.contract_address && t.contract_address.length > 20)) {
-    return `
-      <span class="source-tag dex" title="On-chain LP & metrics via DexScreener">
-        <svg class="source-mini-logo" viewBox="0 0 32 32" width="12" height="12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="16" fill="#131722"/><path d="M7 23.5L15 8.5L18.5 17L24.5 8.5" stroke="#00E5FF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+
+  if (isDex || badges.length === 0) {
+    badges.push(`
+      <span class="source-tag dex" title="On-chain telemetry & LP depth via DexScreener">
+        <img src="assets/dexscreener.png" class="source-mini-logo" alt="DEX">
         <span>DEX</span>
       </span>
-    `;
+    `);
   }
-  return `
-    <span class="source-tag onchain" title="Verified Bulls Traking Listing">
-      <span class="source-mini-logo" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f5a623;"></span>
-      <span>Verified</span>
-    </span>
-  `;
+
+  return badges.join('');
 }
 
 function renderSocialLinks(t) {
-  const webUrl = t.website_url || (t.coingecko_id ? `https://www.coingecko.com/en/coins/${t.coingecko_id}` : (t.contract_address ? `https://dexscreener.com/search?q=${t.contract_address}` : `#/token/${t.id}`));
-  const xUrl = t.x_url || `https://x.com/search?q=${encodeURIComponent('$' + t.symbol)}`;
-  const tgUrl = t.telegram_url || `https://t.me/s/${encodeURIComponent(t.symbol.toLowerCase())}`;
+  const links = [];
+
+  if (t.website_url) {
+    links.push(`
+      <a href="${escapeHtml(t.website_url)}" target="_blank" rel="noopener noreferrer" class="social-btn web" title="Website" onclick="event.stopPropagation();">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </a>
+    `);
+  }
+
+  if (t.x_url) {
+    links.push(`
+      <a href="${escapeHtml(t.x_url)}" target="_blank" rel="noopener noreferrer" class="social-btn x" title="X / Twitter" onclick="event.stopPropagation();">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+    `);
+  }
+
+  if (t.telegram_url) {
+    links.push(`
+      <a href="${escapeHtml(t.telegram_url)}" target="_blank" rel="noopener noreferrer" class="social-btn tg" title="Telegram Community" onclick="event.stopPropagation();">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+      </a>
+    `);
+  }
+
+  if (t.reddit_url) {
+    links.push(`
+      <a href="${escapeHtml(t.reddit_url)}" target="_blank" rel="noopener noreferrer" class="social-btn reddit" title="Reddit Community" onclick="event.stopPropagation();">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.56 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.702zM9.25 12C8.56 12 8 12.56 8 13.25c0 .687.56 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+      </a>
+    `);
+  }
+
+  if (links.length === 0) {
+    return `<div class="social-links-cell" onclick="event.stopPropagation();"><span style="color:var(--text-faint);font-size:11px;">—</span></div>`;
+  }
 
   return `
     <div class="social-links-cell" onclick="event.stopPropagation();">
-      <a href="${escapeHtml(webUrl)}" target="_blank" rel="noopener noreferrer" class="social-btn web" title="Website / Explorer" onclick="event.stopPropagation();">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      </a>
-      <a href="${escapeHtml(xUrl)}" target="_blank" rel="noopener noreferrer" class="social-btn x" title="X / Twitter ($${escapeHtml(t.symbol)})" onclick="event.stopPropagation();">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-      </a>
-      <a href="${escapeHtml(tgUrl)}" target="_blank" rel="noopener noreferrer" class="social-btn tg" title="Telegram Community" onclick="event.stopPropagation();">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-      </a>
+      ${links.join('')}
     </div>
   `;
 }
@@ -255,7 +331,7 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
         <td>${t.market_cap_rank || idx + 1}</td>
         <td>
           <div class="token-cell">
-            <img src="${escapeHtml(t.logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(t.symbol)}" class="token-avatar" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
+            <img src="${escapeHtml(normalizeTokenLogo(t.logo_url, t.symbol, t.name))}" alt="${escapeHtml(t.symbol)}" class="token-avatar" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(t.symbol)}', '${escapeHtml(t.name)}');">
             <div class="token-meta">
               <div class="token-title-row">
                 <span class="token-name">${escapeHtml(t.name)}</span>
@@ -318,23 +394,36 @@ async function renderHome() {
     const initialKey = homeState.tab === 'top' ? 'topCoins' : homeState.tab;
     const initialTokens = data[initialKey] || [];
 
-    const promotedCards = (data.promoted || []).map(p => `
-      <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
-        <div class="promoted-meta">
-          <img class="promoted-logo" src="${escapeHtml(p.logo_url || '')}" alt="${escapeHtml(p.symbol)}" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
-          <div>
-            <div class="promoted-name">
-              ${escapeHtml(p.name)} <span class="badge-promoted">PROMOTED</span>
-            </div>
-            <span style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(p.chain.replace('-ecosystem',''))}</span>
+function renderPromotedCard(p) {
+  const chainName = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'BSC').toUpperCase();
+  const tradeUrl = p.auto_trading_url || (p.contract_address ? `https://dexscreener.com/search?q=${encodeURIComponent(p.contract_address)}` : null);
+
+  return `
+    <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
+      <div class="promoted-meta">
+        <img class="promoted-logo" src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
+        <div>
+          <div class="promoted-name">
+            ${escapeHtml(p.name)} <span class="badge-promoted">PROMOTED</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+            <span style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(chainName)}</span>
+            ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">🚀 Trade ↗</a>` : ''}
           </div>
         </div>
-        <div style="text-align:right;">
-          <div class="promoted-price">${fmtPrice(p.price)}</div>
-          <div>${fmtChg(p.change_24h)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="promoted-price">${fmtPrice(p.price)}</div>
+        <div>${fmtChg(p.change_24h)}</div>
+        <div style="margin-top:4px;">
+          ${renderSocialLinks(p)}
         </div>
       </div>
-    `).join('');
+    </div>
+  `;
+}
+
+    const promotedCards = (data.promoted || []).map(renderPromotedCard).join('');
 
     app.innerHTML = `
       <!-- PROMOTED TOKENS SECTION -->
@@ -835,9 +924,16 @@ async function renderGainers() {
 
 async function renderPromotedPage() {
   app.innerHTML = `
-    <div class="page-head">
-      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Promoted Tokens</h1>
-      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Active sponsored partner projects with active promotion records.</p>
+    <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Promoted Tokens</h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Active sponsored partner projects with verified promotion records.</p>
+      </div>
+      <div>
+        <a href="#/promote" class="btn-solid" style="display:inline-flex;align-items:center;gap:6px;">
+          <span>★ Promote Your Coin</span>
+        </a>
+      </div>
     </div>
     <div id="promotedGrid" class="promoted-grid">
       <div class="state-msg">Loading promoted tokens…</div>
@@ -853,23 +949,7 @@ async function renderPromotedPage() {
       return;
     }
 
-    container.innerHTML = res.data.map(p => `
-      <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
-        <div class="promoted-meta">
-          <img class="promoted-logo" src="${escapeHtml(p.logo_url || '')}" alt="${escapeHtml(p.symbol)}" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
-          <div>
-            <div class="promoted-name">
-              ${escapeHtml(p.name)} <span class="badge-promoted">PROMOTED</span>
-            </div>
-            <span style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(p.chain.replace('-ecosystem',''))}</span>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <div class="promoted-price">${fmtPrice(p.price)}</div>
-          <div>${fmtChg(p.change_24h)}</div>
-        </div>
-      </div>
-    `).join('');
+    container.innerHTML = res.data.map(renderPromotedCard).join('');
 
     // Promoted Tokens Table (Task 2d)
     const tableWrap = document.createElement('div');
@@ -893,6 +973,432 @@ async function renderPromotedPage() {
     app.appendChild(tableWrap);
   } catch (err) {
     document.getElementById('promotedGrid').innerHTML = `<div class="state-msg">Error: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+/* ---------------- 6b. PROMOTE COIN VIEW (/promote) ---------------- */
+
+let promoteOrderState = {
+  selectedPkg: '7D',
+  price: 499,
+  days: 7,
+  activeOrder: null
+};
+
+async function renderPromotePage() {
+  document.title = 'Promote Your Token | Bulls Traking';
+  promoteOrderState.selectedPkg = '7D';
+  promoteOrderState.price = 499;
+  promoteOrderState.days = 7;
+  promoteOrderState.activeOrder = null;
+
+  app.innerHTML = `
+    <div class="promote-container">
+      <div class="page-head" style="text-align:center;margin-bottom:2rem;">
+        <span style="display:inline-block;background:rgba(245,166,35,0.12);color:var(--gold);border:1px solid rgba(245,166,35,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:8px;">★ SPONSORED SPOTLIGHT</span>
+        <h1 style="font-family:var(--display);margin:0 0 .5rem;font-size:2rem;">Promote Your Token</h1>
+        <p style="color:var(--text-muted);font-size:14px;max-width:620px;margin:0 auto;">
+          Get featured at the top of Bulls Traking homepage, drive instant verified 1-click DEX trading volume, and gain spotlight across all chains with automated on-chain verification.
+        </p>
+      </div>
+
+      <div class="promote-grid-layout">
+        <!-- FORM COLUMN -->
+        <div class="form-card" style="margin:0;max-width:none;">
+          <form id="promoteForm" onsubmit="event.preventDefault(); submitPromotionOrder();">
+            <h3 style="margin:0 0 1rem;font-size:1.1rem;color:var(--ink);">1. Token Information</h3>
+            
+            <div class="field-row">
+              <div class="field">
+                <label for="pName">Token Name *</label>
+                <input type="text" id="pName" placeholder="e.g. Bulls Protocol" required>
+              </div>
+              <div class="field">
+                <label for="pSymbol">Token Symbol *</label>
+                <input type="text" id="pSymbol" placeholder="e.g. BULL" required>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="pChain">Network Chain *</label>
+                <select id="pChain" required>
+                  <option value="bsc">BNB Chain (BSC)</option>
+                  <option value="solana">Solana</option>
+                  <option value="ethereum">Ethereum</option>
+                  <option value="base">Base</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pContract">Contract Address (CA) *</label>
+                <input type="text" id="pContract" placeholder="Token mint or contract address" required>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="pLogo">Token Logo URL * <span style="font-size:11px;color:var(--text-faint);font-weight:normal;">(Square 1:1, 256x256 or 512x512 PNG/WebP/SVG)</span></label>
+              <input type="url" id="pLogo" placeholder="https://yourdomain.com/logo.png" required>
+            </div>
+
+            <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">2. Social Links <span style="font-size:11px;color:var(--text-faint);font-weight:normal;">(Optional — only provided links will display icons)</span></h3>
+            
+            <div class="field-row">
+              <div class="field">
+                <label for="pWeb">🌐 Official Website</label>
+                <input type="url" id="pWeb" placeholder="https://yourproject.com">
+              </div>
+              <div class="field">
+                <label for="pX">𝕏 / Twitter Handle or URL</label>
+                <input type="text" id="pX" placeholder="https://x.com/yourproject">
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="pTg">✈ Telegram Community</label>
+                <input type="text" id="pTg" placeholder="https://t.me/yourcommunity">
+              </div>
+              <div class="field">
+                <label for="pReddit">👾 Reddit Community</label>
+                <input type="text" id="pReddit" placeholder="https://reddit.com/r/yourproject">
+              </div>
+            </div>
+
+            <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">3. Select Promotion Package</h3>
+            <div class="package-selector" id="pkgSelector">
+              <div class="package-card" data-key="1D" data-price="99" data-days="1">
+                <div style="font-weight:700;font-size:14px;color:var(--ink);">1 Day</div>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$99</div>
+                <div style="font-size:11px;color:var(--text-muted);">Quick Spotlight</div>
+              </div>
+              <div class="package-card" data-key="3D" data-price="249" data-days="3">
+                <div style="font-weight:700;font-size:14px;color:var(--ink);">3 Days</div>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$249</div>
+                <div style="font-size:11px;color:var(--text-muted);">Weekend Run</div>
+              </div>
+              <div class="package-card is-selected" data-key="7D" data-price="499" data-days="7">
+                <span class="pkg-badge">POPULAR</span>
+                <div style="font-weight:700;font-size:14px;color:var(--ink);">7 Days</div>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$499</div>
+                <div style="font-size:11px;color:var(--text-muted);">Full Week Momentum</div>
+              </div>
+              <div class="package-card" data-key="30D" data-price="1499" data-days="30">
+                <span class="pkg-badge" style="background:#00E5FF;">VIP</span>
+                <div style="font-weight:700;font-size:14px;color:var(--ink);">30 Days</div>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$1,499</div>
+                <div style="font-size:11px;color:var(--text-muted);">Maximum Dominance</div>
+              </div>
+            </div>
+
+            <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">4. Payment Method</h3>
+            <div style="display:flex;gap:12px;margin-bottom:1.5rem;">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                <input type="radio" name="payMethod" value="direct_onchain" checked>
+                <span><b>Direct On-Chain Transfer (USDT / SOL)</b> — Instant Auto-Verification (0% Fee)</span>
+              </label>
+            </div>
+
+            <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:12px;font-size:15px;cursor:pointer;">
+              Continue to Instant Payment ($499 USDT) →
+            </button>
+          </form>
+
+          <!-- ORDER PAYMENT MODAL / AREA (HIDDEN INITIALLY) -->
+          <div id="paymentArea" style="display:none;margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.5rem;">
+            <div style="background:rgba(127,184,120,0.06);border:1px solid rgba(127,184,120,0.25);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:12px;color:var(--text-muted);">ORDER #<span id="dispOrderId"></span></span>
+                <span style="background:rgba(245,166,35,0.15);color:var(--gold);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600;" id="dispOrderStatus">Awaiting Payment</span>
+              </div>
+              <div style="font-size:1.4rem;font-weight:800;color:var(--ink);margin-bottom:4px;">
+                Send <span style="color:var(--up);" id="dispAmount">$499 USDT</span>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin:0 0 10px;">
+                Send the exact amount in <b>BEP-20 USDT (BNB Chain)</b> or <b>Solana</b> to the platform treasury address below:
+              </p>
+
+              <label style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">Platform Treasury Address:</label>
+              <div class="deposit-address-box">
+                <span id="dispTreasuryAddr">0x71C568630A7EbC4B2b122E1a22114777d1303b71</span>
+                <button type="button" class="copy-btn" id="btnCopyTreasury" onclick="copyTreasuryAddress()">Copy 📋</button>
+              </div>
+
+              <!-- TxHash Verification Form -->
+              <div style="margin-top:1.25rem;">
+                <label for="inputTxHash" style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Paste Transaction Hash (TxHash):</label>
+                <div style="display:flex;gap:8px;">
+                  <input type="text" id="inputTxHash" placeholder="e.g. 0xabcd1234... or Solana signature" style="flex:1;padding:8px 12px;font-family:monospace;font-size:12px;background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:4px;">
+                  <button type="button" id="btnVerifyTx" class="btn-solid" onclick="verifyAndActivateOrder()" style="padding:8px 16px;white-space:nowrap;">
+                    🚀 Verify & Activate Now
+                  </button>
+                </div>
+                <div id="verifyStatusMsg" style="margin-top:8px;font-size:12px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVIEW COLUMN -->
+        <div>
+          <div style="position:sticky;top:20px;">
+            <h3 style="margin:0 0 .75rem;font-size:1.05rem;color:var(--ink);">Live Promoted Card Preview</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 1rem;">This is how your promoted token will look on the homepage.</p>
+            
+            <div id="previewCardWrap">
+              <div class="promoted-card" style="border:1px solid var(--gold);box-shadow:0 0 15px rgba(245,166,35,0.15);">
+                <div class="promoted-meta">
+                  <img id="prevLogo" class="promoted-logo" src="assets/logo-transparent.png" alt="Preview Logo" onerror="this.onerror=null; this.src='assets/logo-transparent.png';">
+                  <div>
+                    <div class="promoted-name">
+                      <span id="prevName">Token Name</span> <span class="badge-promoted">PROMOTED</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                      <span id="prevChain" style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">BSC</span>
+                      <a id="prevTradeBtn" href="#" target="_blank" class="btn-promoted-trade" title="Trade directly on DEX">🚀 Trade ↗</a>
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="promoted-price">$0.000100</div>
+                  <div style="color:var(--up);">+12.4%</div>
+                  <div id="prevSocials" style="margin-top:4px;display:flex;justify-content:flex-end;gap:3px;">
+                    <span style="color:var(--text-faint);font-size:11px;">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+              <h4 style="margin:0 0 .5rem;font-size:12px;color:var(--ink);">⚡ What You Get:</h4>
+              <ul style="margin:0;padding-left:1.2rem;font-size:12px;color:var(--text-muted);line-height:1.6;">
+                <li>Top Homepage Carousel Placement</li>
+                <li>Exclusive Promoted Spotlight Grid</li>
+                <li>1-Click Verified DEX Trading Button</li>
+                <li>Live Social Links: Website, 𝕏, Telegram, Reddit</li>
+                <li>Instant Automated On-Chain Verification</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  initPromotePreviewHandlers();
+}
+
+function initPromotePreviewHandlers() {
+  const pName = document.getElementById('pName');
+  const pSymbol = document.getElementById('pSymbol');
+  const pChain = document.getElementById('pChain');
+  const pContract = document.getElementById('pContract');
+  const pLogo = document.getElementById('pLogo');
+  const pWeb = document.getElementById('pWeb');
+  const pX = document.getElementById('pX');
+  const pTg = document.getElementById('pTg');
+  const pReddit = document.getElementById('pReddit');
+
+  const prevName = document.getElementById('prevName');
+  const prevChain = document.getElementById('prevChain');
+  const prevLogo = document.getElementById('prevLogo');
+  const prevTradeBtn = document.getElementById('prevTradeBtn');
+  const prevSocials = document.getElementById('prevSocials');
+  const btnCreateOrder = document.getElementById('btnCreateOrder');
+
+  function updatePreview() {
+    if (prevName) prevName.textContent = pName.value.trim() ? `${pName.value.trim()} (${(pSymbol.value.trim() || 'PROMO').toUpperCase()})` : 'Token Name';
+    if (prevChain) prevChain.textContent = (pChain.value || 'bsc').toUpperCase();
+    if (prevLogo && pLogo.value.trim()) prevLogo.src = pLogo.value.trim();
+
+    const ca = pContract.value.trim();
+    const ch = pChain.value;
+    let tradeUrl = '#';
+    let dexLabel = 'Trade';
+    if (ca) {
+      if (ch === 'solana') { tradeUrl = `https://raydium.io/swap/?outputMint=${ca}`; dexLabel = 'Raydium'; }
+      else if (ch === 'bsc') { tradeUrl = `https://pancakeswap.finance/swap?outputCurrency=${ca}`; dexLabel = 'PancakeSwap'; }
+      else if (ch === 'ethereum') { tradeUrl = `https://app.uniswap.org/swap?outputCurrency=${ca}&chain=ethereum`; dexLabel = 'Uniswap'; }
+      else if (ch === 'base') { tradeUrl = `https://aerodrome.finance/swap?outputCurrency=${ca}`; dexLabel = 'Aerodrome'; }
+      else { tradeUrl = `https://dexscreener.com/search?q=${ca}`; }
+    }
+    if (prevTradeBtn) {
+      prevTradeBtn.href = tradeUrl;
+      prevTradeBtn.textContent = `🚀 ${dexLabel} ↗`;
+    }
+
+    if (prevSocials) {
+      prevSocials.innerHTML = renderSocialLinks({
+        website_url: pWeb.value.trim() || null,
+        x_url: pX.value.trim() || null,
+        telegram_url: pTg.value.trim() || null,
+        reddit_url: pReddit.value.trim() || null
+      });
+    }
+  }
+
+  [pName, pSymbol, pChain, pContract, pLogo, pWeb, pX, pTg, pReddit].forEach(el => {
+    if (el) el.addEventListener('input', updatePreview);
+  });
+
+  // Package selector click handler
+  const cards = document.querySelectorAll('#pkgSelector .package-card');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      promoteOrderState.selectedPkg = card.dataset.key;
+      promoteOrderState.price = Number(card.dataset.price);
+      promoteOrderState.days = Number(card.dataset.days);
+      if (btnCreateOrder) {
+        btnCreateOrder.textContent = `Continue to Instant Payment ($${promoteOrderState.price} USDT) →`;
+      }
+      const dispAmount = document.getElementById('dispAmount');
+      if (dispAmount) dispAmount.textContent = `$${promoteOrderState.price} USDT`;
+    });
+  });
+}
+
+async function submitPromotionOrder() {
+  const btn = document.getElementById('btnCreateOrder');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Generating Secure Order…';
+  }
+
+  try {
+    const payload = {
+      tokenName: document.getElementById('pName').value.trim(),
+      tokenSymbol: document.getElementById('pSymbol').value.trim().toUpperCase(),
+      chain: document.getElementById('pChain').value,
+      contractAddress: document.getElementById('pContract').value.trim(),
+      logoUrl: document.getElementById('pLogo').value.trim(),
+      websiteUrl: document.getElementById('pWeb').value.trim() || null,
+      xUrl: document.getElementById('pX').value.trim() || null,
+      telegramUrl: document.getElementById('pTg').value.trim() || null,
+      redditUrl: document.getElementById('pReddit').value.trim() || null,
+      packageKey: promoteOrderState.selectedPkg,
+      price: promoteOrderState.price,
+      durationDays: promoteOrderState.days,
+      paymentMethod: 'direct_onchain'
+    };
+
+    const res = await fetchApi('/promotions/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.orderId) throw new Error(res.error || 'Failed to create order.');
+
+    promoteOrderState.activeOrder = res;
+    const paymentArea = document.getElementById('paymentArea');
+    if (paymentArea) paymentArea.style.display = 'block';
+
+    document.getElementById('dispOrderId').textContent = res.orderId;
+    document.getElementById('dispAmount').textContent = `$${res.price} USDT`;
+    
+    // Set treasury address based on chain
+    const treasuryMap = res.treasuryAddresses || {};
+    const chainKey = payload.chain === 'solana' ? 'solana' : 'bsc';
+    const chosenTreasury = treasuryMap[chainKey] || treasuryMap.bsc || '0x71C568630A7EbC4B2b122E1a22114777d1303b71';
+    document.getElementById('dispTreasuryAddr').textContent = chosenTreasury;
+
+    if (btn) {
+      btn.style.display = 'none';
+    }
+
+    // Smooth scroll down to payment area
+    paymentArea.scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    alert('Error creating order: ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = `Continue to Instant Payment ($${promoteOrderState.price} USDT) →`;
+    }
+  }
+}
+
+function copyTreasuryAddress() {
+  const addr = document.getElementById('dispTreasuryAddr')?.textContent;
+  if (!addr) return;
+  navigator.clipboard.writeText(addr).then(() => {
+    const btn = document.getElementById('btnCopyTreasury');
+    if (btn) {
+      btn.textContent = 'Copied! ✓';
+      setTimeout(() => { btn.textContent = 'Copy 📋'; }, 2000);
+    }
+  }).catch(() => {
+    prompt('Copy Treasury Address:', addr);
+  });
+}
+
+async function verifyAndActivateOrder() {
+  const txInput = document.getElementById('inputTxHash');
+  const btn = document.getElementById('btnVerifyTx');
+  const statusMsg = document.getElementById('verifyStatusMsg');
+  const order = promoteOrderState.activeOrder;
+
+  if (!order || !order.orderId) {
+    alert('No active order found. Please submit token details first.');
+    return;
+  }
+
+  const txHash = txInput?.value.trim();
+  if (!txHash) {
+    if (statusMsg) {
+      statusMsg.innerHTML = '<span style="color:var(--down);">Please paste your transaction hash (TxHash) first.</span>';
+    }
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Verifying on Blockchain…';
+  }
+  if (statusMsg) {
+    statusMsg.innerHTML = '<span style="color:var(--text-muted);">Querying blockchain RPC for transaction receipt…</span>';
+  }
+
+  try {
+    const res = await fetchApi('/promotions/verify-tx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: order.orderId,
+        txHash
+      })
+    });
+
+    if (res.success) {
+      if (statusMsg) {
+        statusMsg.innerHTML = `
+          <div style="background:rgba(127,184,120,0.15);color:var(--up);padding:10px 14px;border-radius:6px;border:1px solid rgba(127,184,120,0.3);margin-top:10px;">
+            <b>🎉 Payment Verified!</b> Your promotion is now <b>LIVE</b> on Bulls Traking.<br>
+            Redirecting to Promoted section in 2 seconds…
+          </div>
+        `;
+      }
+      const dispStatus = document.getElementById('dispOrderStatus');
+      if (dispStatus) {
+        dispStatus.textContent = 'ACTIVE / LIVE';
+        dispStatus.style.background = 'rgba(127,184,120,0.2)';
+        dispStatus.style.color = 'var(--up)';
+      }
+
+      setTimeout(() => {
+        location.hash = '#/promoted';
+      }, 2200);
+    } else {
+      throw new Error(res.error || 'Verification failed');
+    }
+  } catch (err) {
+    if (statusMsg) {
+      statusMsg.innerHTML = `<div style="color:var(--down);margin-top:6px;"><b>Verification Notice:</b> ${escapeHtml(err.message)}</div>`;
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🚀 Verify & Activate Now';
+    }
   }
 }
 
@@ -1171,7 +1677,7 @@ async function renderTokenDetail(idOrAddress) {
       </div>
 
       <div class="detail-head">
-        <img src="${escapeHtml(t.logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(t.symbol)}" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
+        <img src="${escapeHtml(normalizeTokenLogo(t.logo_url, t.symbol, t.name))}" alt="${escapeHtml(t.symbol)}" class="token-detail-logo" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(t.symbol)}', '${escapeHtml(t.name)}');">
         <div>
           <h1>
             ${escapeHtml(t.name)} <span class="sym">$${escapeHtml(t.symbol)}</span>
@@ -1251,7 +1757,7 @@ function initSearch() {
 
       results.innerHTML = res.data.map(t => `
         <div class="search-row" onclick="location.hash='#/token/${t.id}'; document.getElementById('searchResults').classList.add('hidden');">
-          <img src="${escapeHtml(t.logo_url || '')}" alt="${escapeHtml(t.symbol)}" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
+          <img src="${escapeHtml(normalizeTokenLogo(t.logo_url, t.symbol, t.name))}" alt="${escapeHtml(t.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(t.symbol)}', '${escapeHtml(t.name)}');">
           <span style="font-weight:600;">${escapeHtml(t.name)}</span>
           <span class="sym">$${escapeHtml(t.symbol)}</span>
           <span style="margin-left:auto;font-weight:600;">${fmtPrice(t.price)}</span>
@@ -1281,19 +1787,30 @@ let newPairsState = {
   limit: 25
 };
 
+let radarAutoRefreshTimer = null;
+
 async function renderNewPairs() {
   document.title = 'New Pairs Radar | Bulls Traking';
   app.innerHTML = `
-    <div class="page-head">
-      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">New Pairs Radar</h1>
-      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Real-time on-chain pair discovery, profiling telemetry, and newly minted pool tracking across leading DEXs.</p>
+    <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">New Pairs Radar</h1>
+        <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Real-time on-chain pair discovery, profiling telemetry, and newly minted pool tracking across Pump.fun, four.meme, StonkFun, and DEXs.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <span class="live-pill" style="display:inline-flex;align-items:center;gap:6px;background:rgba(127,184,120,0.12);color:var(--up);border:1px solid rgba(127,184,120,0.25);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--up);box-shadow:0 0 8px var(--up);display:inline-block;"></span>
+          LIVE RADAR
+        </span>
+        <button id="btnRefreshRadar" class="btn-ghost" style="padding:4px 12px;font-size:11px;cursor:pointer;">⟳ Refresh</button>
+      </div>
     </div>
 
     <!-- RADAR DISCLAIMER BANNER -->
     <div class="radar-disclaimer">
       <span class="icon">ℹ</span>
       <div>
-        <b>Real-time discovery feed:</b> Sourced via DexScreener's public token profile stream across Solana, Ethereum, BNB Chain, and Base. Pairs are indexed upon profile submission. Trading newly created pairs carries extreme volatility and high capital risk. Always verify contract security before interacting.
+        <b>Live Real-Time Radar:</b> Multi-source on-chain discovery across <b>Pump.fun</b> (Solana), <b>four.meme</b> (BNB Chain), <b>StonkFun</b>, and <b>DexScreener</b>. Token pairs stream in immediately upon deployment. Trading newly created pairs carries high capital risk. Always verify contract security before interacting.
       </div>
     </div>
 
@@ -1341,10 +1858,53 @@ async function renderNewPairs() {
     renderNewPairs();
   });
 
+  const btnRefresh = document.getElementById('btnRefreshRadar');
+  if (btnRefresh) {
+    btnRefresh.addEventListener('click', () => {
+      newPairsState.page = 1;
+      loadRadarPairs(false, true);
+    });
+  }
 
+  loadRadarPairs(false);
 
-  loadRadarPairs();
+  // Set auto-refresh interval (every 5 seconds) to pull newly minted tokens live
+  if (radarAutoRefreshTimer) clearInterval(radarAutoRefreshTimer);
+  radarAutoRefreshTimer = setInterval(() => {
+    const { path } = parseHash();
+    if (path !== '/new-pairs') {
+      clearInterval(radarAutoRefreshTimer);
+      radarAutoRefreshTimer = null;
+      return;
+    }
+    if (newPairsState.page === 1) {
+      loadRadarPairs(true);
+    }
+  }, 5000);
 }
+
+const SOURCE_MAP = {
+  'pumpfun': {
+    name: 'Pump.fun',
+    badge: 'assets/sources/pumpfun.png',
+    getPoolUrl: (p) => `https://pump.fun/coin/${p.token_address}`
+  },
+  'fourmeme': {
+    name: 'four.meme',
+    badge: 'assets/sources/fourmeme.png',
+    getPoolUrl: (p) => `https://four.meme/token/${p.token_address}`
+  },
+  'stonkfun': {
+    name: 'StonkFun',
+    badge: 'assets/sources/stonkfun.svg',
+    getPoolUrl: (p) => `https://www.stonkfun.xyz/token/${p.token_address}`
+  },
+  'dexscreener': {
+    name: 'DexScreener',
+    badge: 'assets/dexscreener.png',
+    getPoolUrl: (p, dsChain) => `https://dexscreener.com/${dsChain}/${p.pair_address}`
+  }
+};
 
 function renderRadarRows(pairs, startIdx = 0) {
   if (!pairs || pairs.length === 0) {
@@ -1352,39 +1912,49 @@ function renderRadarRows(pairs, startIdx = 0) {
   }
 
   return pairs.map((p, idx) => {
-    const chainLabel = (p.chain || '').replace('-ecosystem', '').toUpperCase();
+    const chainLabel = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'BSC').toUpperCase();
     const age = fmtAge(p.pair_created_at);
     const txns = p.txn_count_24h != null && p.txn_count_24h > 0 ? Number(p.txn_count_24h).toLocaleString() : '—';
     const shortAddress = p.pair_address ? `${p.pair_address.slice(0, 4)}...${p.pair_address.slice(-4)}` : '';
     
-    const dsChain = p.chain === 'solana-ecosystem' ? 'solana' : p.chain === 'binance-smart-chain' ? 'bsc' : p.chain === 'ethereum-ecosystem' ? 'ethereum' : 'base';
-    const dsUrl = `https://dexscreener.com/${dsChain}/${p.pair_address}`;
+    const dsChain = (p.chain === 'solana-ecosystem' || p.chain === 'solana') ? 'solana' : (p.chain === 'binance-smart-chain' || p.chain === 'bsc') ? 'bsc' : (p.chain === 'ethereum-ecosystem' || p.chain === 'ethereum') ? 'ethereum' : 'base';
+    
+    const sourceKey = (p.source || 'dexscreener').toLowerCase();
+    const sourceCfg = SOURCE_MAP[sourceKey] || SOURCE_MAP['dexscreener'];
+    const badgeImg = sourceCfg.badge ? `<img src="${sourceCfg.badge}" alt="${sourceCfg.name}" title="Discovered via ${sourceCfg.name}" class="source-badge">` : '';
+    const poolUrl = sourceCfg.getPoolUrl ? sourceCfg.getPoolUrl(p, dsChain) : `https://dexscreener.com/${dsChain}/${p.pair_address}`;
 
     return `
       <tr>
         <td>${startIdx + idx + 1}</td>
         <td>
           <div class="token-cell">
-            <img src="${escapeHtml(p.logo_url || 'https://assets.coingecko.com/coins/images/325/standard/Tether.png')}" alt="${escapeHtml(p.symbol)}" onerror="this.src='https://assets.coingecko.com/coins/images/325/standard/Tether.png'">
+            <img src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
             <div>
-              <span class="token-name">${escapeHtml(p.name)}</span>
-              <span class="token-sym">${escapeHtml(p.symbol)}</span>
-              <div style="font-size:11px;color:var(--text-faint);margin-top:2px;">
-                Pool: <code>${shortAddress}</code>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="token-name">${escapeHtml(p.name)}</span>
+                ${badgeImg}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+                <span class="token-sym">${escapeHtml(p.symbol)}</span>
+                ${p.twitter_url ? `<a href="${escapeHtml(p.twitter_url)}" target="_blank" rel="noopener" class="token-social-link" title="Twitter / X">𝕏</a>` : ''}
+                ${p.telegram_url ? `<a href="${escapeHtml(p.telegram_url)}" target="_blank" rel="noopener" class="token-social-link" title="Telegram">✈</a>` : ''}
+                ${p.website_url ? `<a href="${escapeHtml(p.website_url)}" target="_blank" rel="noopener" class="token-social-link" title="Website">🌐</a>` : ''}
               </div>
             </div>
           </div>
         </td>
-        <td class="cell-price"><b>${fmtPrice(p.price)}</b></td>
+        <td><b>${fmtPrice(p.price)}</b></td>
         <td>${fmtUsd(p.liquidity)}</td>
         <td>${fmtUsd(p.volume_24h)}</td>
         <td>${txns}</td>
-        <td><span class="badge-age">${age}</span></td>
-        <td><span class="badge-age" style="background:rgba(255,255,255,0.06);color:var(--text-faint);">${chainLabel}</span></td>
+        <td><span class="pair-age-pill">${age}</span></td>
+        <td><span class="chain-badge chain-${escapeHtml(p.chain || '')}">${chainLabel}</span></td>
         <td>
-          <div style="display:flex;gap:6px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:6px;">
             <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost" style="padding:2px 8px;font-size:11px;">Scan</a>
-            <a href="${dsUrl}" target="_blank" rel="noopener" style="font-size:11px;color:var(--cyan);">Pool ↗</a>
+            <a href="${poolUrl}" target="_blank" rel="noopener" class="btn-ghost" style="padding:3px 8px;font-size:11px;text-decoration:none;">View Pool ↗</a>
+            <button class="btn-copy-address" data-address="${escapeHtml(p.token_address || p.pair_address)}" title="Copy Contract Address" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:2px 4px;">📋</button>
           </div>
         </td>
       </tr>
@@ -1392,12 +1962,18 @@ function renderRadarRows(pairs, startIdx = 0) {
   }).join('');
 }
 
-async function loadRadarPairs() {
+async function loadRadarPairs(silent = false, isManual = false) {
   const tbody = document.getElementById('radarTableBody');
   const btnMore = document.getElementById('btnLoadMoreRadar');
+  if (!tbody) return;
+
+  if (!silent) {
+    tbody.innerHTML = `<tr><td colspan="9" class="state-msg">Scanning on-chain pairs radar…</td></tr>`;
+  }
 
   try {
-    const res = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}&page=${newPairsState.page}&limit=${newPairsState.limit}`);
+    const refreshParam = isManual ? '&refresh=1' : '';
+    const res = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}&page=${newPairsState.page}&limit=${newPairsState.limit}${refreshParam}`);
     const pairs = res.pairs || [];
     tbody.innerHTML = renderRadarRows(pairs, 0);
 
@@ -1683,6 +2259,8 @@ function route() {
     renderScanner();
   } else if (path === '/promoted') {
     renderPromotedPage();
+  } else if (path === '/promote') {
+    renderPromotePage();
   } else if (path === '/presales') {
     renderPresales();
   } else if (path === '/submit') {

@@ -40,10 +40,10 @@ function handleGetHomeData(req, res, next) {
         SUM(volume_24h) as total24hVolume,
         COUNT(*) as totalActiveTokens
       FROM (
-        SELECT market_cap, volume_24h, symbol
+        SELECT market_cap, volume_24h, name
         FROM tokens
         WHERE is_active = 1
-        GROUP BY UPPER(TRIM(symbol))
+        GROUP BY UPPER(TRIM(name))
       )
     `);
 

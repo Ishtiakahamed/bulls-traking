@@ -148,3 +148,38 @@ The background synchronization worker runs automatically via `backend/workers/sy
 * **CoinGecko Free Tier Rate Limits**: CoinGecko public API allows ~10–30 requests per minute. The Bulls Traking backend abstracts and throttles provider queries. Visitors **never** hit external APIs directly.
 * **New Token On-Chain Discovery**: DexScreener on-chain endpoints are used to resolve newly submitted DEX tokens on Solana, Ethereum, BNB Chain, and Base.
 * **Presales**: Presale radar is scoped as a placeholder page (`Presale tracking is coming soon.`) per Phase 1 instructions.
+
+---
+
+## 8. Deploying to Vercel (Zero-Config Serverless)
+
+Bulls Traking is configured for out-of-the-box deployment on Vercel.
+
+### Key Serverless Features
+- **Node.js 22 Runtime**: Pinned to `"node": "22.x"` in `package.json` for native `node:sqlite` (`DatabaseSync`) support.
+- **Serverless API Routing**: `vercel.json` and `api/index.js` handle all API requests (`/api/*`) and SPA routing (`/index.html`).
+- **Cold-Start Auto-Hydration**: On cold container boot, `/tmp/bullstraking.db` is initialized and automatically hydrated with 100+ verified tokens and multi-source launchpad pairs (`pumpfun`, `fourmeme`, `stonkfun`, `dexscreener`).
+- **On-Demand Launchpad Refresh**: Visiting or refreshing the New Pairs radar triggers on-demand live polling to StonkFun & DexScreener.
+
+### Quick Deploy via Vercel CLI
+```bash
+# 1. Install Vercel CLI (if not already installed)
+npm install -g vercel
+
+# 2. Deploy directly from repository root
+vercel
+
+# 3. Deploy to production
+vercel --prod
+```
+
+### Deploy via GitHub / Vercel Dashboard
+1. Push this repository to GitHub or GitLab.
+2. In the [Vercel Dashboard](https://vercel.com/new), select **Import Project** and pick your repository.
+3. Framework Preset: Choose **Other**.
+4. Root Directory: `./` (leave default).
+5. Environment Variables (Optional):
+   - `COINGECKO_API_KEY`: *(Optional)* Your CoinGecko API key.
+   - `COINMARKETCAP_API_KEY`: *(Optional)* Your CoinMarketCap Pro API key.
+6. Click **Deploy**.
+

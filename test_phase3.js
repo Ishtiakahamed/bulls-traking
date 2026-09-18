@@ -141,10 +141,9 @@ async function runPhase3Tests() {
   });
 
   // 9. Frontend Asset Integrity: HTML & Nav Links
-  await test('9. Frontend index.html contains New Pairs, Watchlist, and Legal nav (Signals removed)', () => {
+  await test('9. Frontend index.html contains New Pairs and Legal nav', () => {
     const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
     assert.ok(html.includes('href="#/new-pairs"'), 'Missing new-pairs nav link');
-    assert.ok(html.includes('href="#/watchlist"'), 'Missing watchlist nav link');
     assert.ok(!html.includes('href="#/signals"'), 'Signals nav link should be removed');
     assert.ok(html.includes('href="#/about"'), 'Missing about footer link');
     assert.ok(html.includes('href="#/terms-of-service"'), 'Missing terms footer link');

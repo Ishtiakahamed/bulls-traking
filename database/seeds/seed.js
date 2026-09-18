@@ -1,8 +1,10 @@
 const { initDatabase, execute, queryOne, query, transaction } = require('../db');
 
-function runSeed() {
-  console.log('[Seed] Initializing Phase 1 database schema...');
-  initDatabase();
+function runSeed(skipInit = false) {
+  if (!skipInit) {
+    console.log('[Seed] Initializing Phase 1 database schema...');
+    initDatabase();
+  }
 
   console.log('[Seed] Seeding Bulls Traking tokens & promotions...');
 
@@ -373,6 +375,12 @@ function runSeed() {
             0, 0, 1, 'LIVE', 'verified',
             ?, CURRENT_TIMESTAMP
           )
+          ON CONFLICT(chain, contract_address) DO UPDATE SET
+            coingecko_id = COALESCE(excluded.coingecko_id, tokens.coingecko_id),
+            price = excluded.price,
+            market_cap = excluded.market_cap,
+            volume_24h = excluded.volume_24h,
+            last_data_sync = CURRENT_TIMESTAMP
         `;
         for (const dt of discovered) {
           const exists = queryOne('SELECT id FROM tokens WHERE chain = ? AND (coingecko_id = ? OR UPPER(TRIM(symbol)) = UPPER(TRIM(?))) LIMIT 1', [dt.chain, dt.coingecko_id, dt.symbol]);

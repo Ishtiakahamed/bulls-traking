@@ -43,8 +43,11 @@ try {
 }
 
 let isSeeding = false;
+let isInitialized = false;
 
 function initDatabase() {
+  if (isInitialized) return;
+  isInitialized = true;
   const schemaPath = path.join(__dirname, 'migrations', '001_phase1_schema.sql');
   const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
   db.exec(schemaSql);
@@ -109,6 +112,11 @@ function initDatabase() {
         txn_count_24h INTEGER DEFAULT 0,
         pair_created_at DATETIME,
         status VARCHAR(20) DEFAULT 'latest',
+        source VARCHAR(50) DEFAULT 'dexscreener',
+        website_url TEXT,
+        twitter_url TEXT,
+        telegram_url TEXT,
+        metadata TEXT,
         first_discovered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         last_synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT uq_new_pairs_chain_pair UNIQUE (chain, pair_address)
@@ -131,8 +139,93 @@ function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_signals_posted ON signals(posted_at);
       CREATE INDEX IF NOT EXISTS idx_signals_direction ON signals(direction);
     `);
+
+    // Migration for existing new_pairs tables
+    const npCols = db.prepare('PRAGMA table_info(new_pairs)').all().map(c => c.name);
+    if (!npCols.includes('source')) {
+      db.exec("ALTER TABLE new_pairs ADD COLUMN source VARCHAR(50) DEFAULT 'dexscreener';");
+    }
+    if (!npCols.includes('website_url')) {
+      db.exec("ALTER TABLE new_pairs ADD COLUMN website_url TEXT;");
+    }
+    if (!npCols.includes('twitter_url')) {
+      db.exec("ALTER TABLE new_pairs ADD COLUMN twitter_url TEXT;");
+    }
+    if (!npCols.includes('telegram_url')) {
+      db.exec("ALTER TABLE new_pairs ADD COLUMN telegram_url TEXT;");
+    }
+    if (!npCols.includes('metadata')) {
+      db.exec("ALTER TABLE new_pairs ADD COLUMN metadata TEXT;");
+    }
+    db.exec('CREATE INDEX IF NOT EXISTS idx_new_pairs_source ON new_pairs(source);');
+
+    // Normalize legacy timestamps without timezone to standard UTC ISO-8601
+    db.exec(`
+      UPDATE new_pairs 
+      SET pair_created_at = replace(pair_created_at, ' ', 'T') || 'Z' 
+      WHERE pair_created_at IS NOT NULL 
+        AND pair_created_at NOT LIKE '%Z' 
+        AND pair_created_at NOT LIKE '%+%';
+    `);
   } catch (p3Err) {
     console.warn('[DB Phase 3 Notice]', p3Err.message);
+  }
+
+  // Promoted coins & Hybrid payment migrations
+  try {
+    const tokenCols = db.prepare('PRAGMA table_info(tokens)').all().map(c => c.name);
+    if (!tokenCols.includes('reddit_url')) {
+      db.exec('ALTER TABLE tokens ADD COLUMN reddit_url TEXT;');
+    }
+
+    const promoCols = db.prepare('PRAGMA table_info(promotions)').all().map(c => c.name);
+    if (!promoCols.includes('auto_trading_url')) {
+      db.exec('ALTER TABLE promotions ADD COLUMN auto_trading_url TEXT;');
+    }
+    if (!promoCols.includes('reddit_url')) {
+      db.exec('ALTER TABLE promotions ADD COLUMN reddit_url TEXT;');
+    }
+
+    const orderCols = db.prepare('PRAGMA table_info(promotion_orders)').all().map(c => c.name);
+    if (!orderCols.includes('tx_hash')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN tx_hash VARCHAR(255);');
+    }
+    if (!orderCols.includes('chain')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN chain VARCHAR(50);');
+    }
+    if (!orderCols.includes('contract_address')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN contract_address VARCHAR(255);');
+    }
+    if (!orderCols.includes('token_name')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN token_name VARCHAR(150);');
+    }
+    if (!orderCols.includes('token_symbol')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN token_symbol VARCHAR(50);');
+    }
+    if (!orderCols.includes('logo_url')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN logo_url TEXT;');
+    }
+    if (!orderCols.includes('website_url')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN website_url TEXT;');
+    }
+    if (!orderCols.includes('x_url')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN x_url TEXT;');
+    }
+    if (!orderCols.includes('telegram_url')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN telegram_url TEXT;');
+    }
+    if (!orderCols.includes('reddit_url')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN reddit_url TEXT;');
+    }
+    if (!orderCols.includes('payment_method')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN payment_method VARCHAR(50);');
+    }
+    if (!orderCols.includes('auto_trading_url')) {
+      db.exec('ALTER TABLE promotion_orders ADD COLUMN auto_trading_url TEXT;');
+    }
+    db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_promo_orders_tx_hash ON promotion_orders(tx_hash) WHERE tx_hash IS NOT NULL;');
+  } catch (promoMigErr) {
+    console.warn('[DB Promotion Migration Notice]', promoMigErr.message);
   }
 
   // Auto-seed initial tokens if table is empty (e.g. on clean serverless start)
@@ -143,12 +236,22 @@ function initDatabase() {
         console.log('[DB] Under-populated or fresh database detected. Auto-seeding full verified tokens pool...');
         isSeeding = true;
         const { runSeed } = require('./seeds/seed');
-        runSeed();
+        runSeed(true);
         isSeeding = false;
       }
     } catch (seedErr) {
       isSeeding = false;
       console.warn('[DB Auto-seed Notice]', seedErr.message);
+    }
+
+    try {
+      const npCount = db.prepare('SELECT COUNT(*) as count FROM new_pairs').get();
+      if (!npCount || npCount.count === 0) {
+        const { seedInitialPairsIfEmpty } = require('../services/newPairsService');
+        seedInitialPairsIfEmpty();
+      }
+    } catch (npErr) {
+      // Non-fatal if newPairsService not yet loaded
     }
   }
 
@@ -205,3 +308,10 @@ module.exports = {
   execute,
   transaction
 };
+
+// Ensure database schema is initialized on first load
+try {
+  initDatabase();
+} catch (autoInitErr) {
+  console.warn('[DB AutoInit Notice]', autoInitErr.message);
+}

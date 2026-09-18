@@ -11,6 +11,26 @@ const adminRoutes = require('../../routes/adminRoutes');
 const { handleGetHomeData } = require('../controllers/homeController');
 const { getSyncStatus } = require('../workers/syncWorker');
 
+// Root API Route
+router.get('/', (req, res) => {
+  res.json({
+    success: true,
+    platform: 'Bulls Traking API',
+    version: '1.0.0',
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      home: '/api/home',
+      tokens: '/api/tokens',
+      newPairs: '/api/new-pairs',
+      signals: '/api/signals',
+      marketStats: '/api/market-stats',
+      security: '/api/security/scan'
+    }
+  });
+});
+
 // Health Check (Section 26)
 router.get('/health', (req, res) => {
   const sync = getSyncStatus();

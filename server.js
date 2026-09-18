@@ -34,8 +34,40 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname)));
 
+// Root API status endpoint
+app.get(['/api', '/api/'], (req, res) => {
+  res.json({
+    success: true,
+    platform: 'Bulls Traking API',
+    version: '1.0.0',
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      home: '/api/home',
+      tokens: '/api/tokens',
+      newPairs: '/api/new-pairs',
+      signals: '/api/signals',
+      marketStats: '/api/market-stats',
+      security: '/api/security/scan'
+    }
+  });
+});
+
 // Mount REST API layer
 app.use('/api', apiRoutes);
+
+// Serverless fallback: if request arrived without /api prefix on Vercel
+if (process.env.VERCEL) {
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    const apiEndpoints = ['/tokens', '/health', '/home', '/new-pairs', '/signals', '/market-stats', '/submit', '/promotions', '/security', '/admin'];
+    if (apiEndpoints.some(p => req.path.startsWith(p))) {
+      return apiRoutes(req, res, next);
+    }
+    next();
+  });
+}
 
 // SPA fallback for non-API routes
 app.get('*', (req, res, next) => {

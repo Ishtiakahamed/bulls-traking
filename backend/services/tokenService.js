@@ -33,7 +33,7 @@ function attachSparklines(tokens) {
 }
 
 /**
- * Top Coins (Section 9): Sorted by Market Cap DESC, deduplicated by symbol
+ * Top Coins (Section 9): Sorted by Market Cap DESC, deduplicated by name
  */
 function getTopCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const p = Math.max(1, parseInt(page, 10));
@@ -50,7 +50,7 @@ function getTopCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(symbol)) 
+        PARTITION BY UPPER(TRIM(name)) 
         ORDER BY market_cap DESC, volume_24h DESC
       ) as rn
       FROM tokens
@@ -63,7 +63,7 @@ function getTopCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
+  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
   const countParams = chain && chain !== 'all' ? [chain] : [];
   const total = queryOne(countSql, countParams)?.count || 0;
 
@@ -75,7 +75,7 @@ function getTopCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
 
 /**
  * New Coins (Section 10): Source A (API) + Source B (User Submitted)
- * Sorted by first_seen_at DESC, deduplicated by symbol
+ * Sorted by first_seen_at DESC, deduplicated by name
  */
 function getNewCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const p = Math.max(1, parseInt(page, 10));
@@ -92,7 +92,7 @@ function getNewCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(symbol)) 
+        PARTITION BY UPPER(TRIM(name)) 
         ORDER BY first_seen_at DESC, id DESC
       ) as rn
       FROM tokens
@@ -105,7 +105,7 @@ function getNewCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
+  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
   const countParams = chain && chain !== 'all' ? [chain] : [];
   const total = queryOne(countSql, countParams)?.count || 0;
 
@@ -116,7 +116,7 @@ function getNewCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
 }
 
 /**
- * Hot Coins (Section 13): Algorithmic Hot Score DESC, deduplicated by symbol
+ * Hot Coins (Section 13): Algorithmic Hot Score DESC, deduplicated by name
  */
 function getHotCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const p = Math.max(1, parseInt(page, 10));
@@ -133,7 +133,7 @@ function getHotCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(symbol)) 
+        PARTITION BY UPPER(TRIM(name)) 
         ORDER BY hot_score DESC, volume_24h DESC
       ) as rn
       FROM tokens
@@ -146,7 +146,7 @@ function getHotCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
+  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
   const countParams = chain && chain !== 'all' ? [chain] : [];
   const total = queryOne(countSql, countParams)?.count || 0;
 
@@ -157,7 +157,7 @@ function getHotCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
 }
 
 /**
- * Top Gainers (Section 14): 24h percentage gain DESC with minimum quality filter, deduplicated by symbol
+ * Top Gainers (Section 14): 24h percentage gain DESC with minimum quality filter, deduplicated by name
  */
 function getTopGainers({ chain = 'all', limit = 50, page = 1 } = {}) {
   const p = Math.max(1, parseInt(page, 10));
@@ -175,7 +175,7 @@ function getTopGainers({ chain = 'all', limit = 50, page = 1 } = {}) {
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(symbol)) 
+        PARTITION BY UPPER(TRIM(name)) 
         ORDER BY change_24h DESC, volume_24h DESC
       ) as rn
       FROM tokens
@@ -189,7 +189,7 @@ function getTopGainers({ chain = 'all', limit = 50, page = 1 } = {}) {
 
   const tokens = query(sql, params);
   const countSql = `
-    SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count 
+    SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count 
     FROM tokens 
     WHERE is_active = 1 AND volume_24h >= ? AND change_24h > 0 ${chainFilter}
   `;
@@ -203,7 +203,7 @@ function getTopGainers({ chain = 'all', limit = 50, page = 1 } = {}) {
 }
 
 /**
- * Trending Coins (Section 39): Internal ranking, deduplicated by symbol
+ * Trending Coins (Section 39): Internal ranking, deduplicated by name
  */
 function getTrendingCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const p = Math.max(1, parseInt(page, 10));
@@ -220,7 +220,7 @@ function getTrendingCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(symbol)) 
+        PARTITION BY UPPER(TRIM(name)) 
         ORDER BY (volume_24h * 0.4 + market_cap * 0.3 + ABS(change_24h) * 100000) DESC
       ) as rn
       FROM tokens
@@ -233,7 +233,7 @@ function getTrendingCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   params.push(lim, offset);
 
   const tokens = query(sql, params);
-  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(symbol))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
+  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count FROM tokens WHERE is_active = 1 ${chainFilter}`;
   const countParams = chain && chain !== 'all' ? [chain] : [];
   const total = queryOne(countSql, countParams)?.count || 0;
 
@@ -289,7 +289,7 @@ function searchTokens(searchQuery, limit = 10) {
     SELECT * FROM (
       SELECT id, name, symbol, logo_url, price, change_24h, chain, contract_address, provider_id, market_cap, volume_24h,
              ROW_NUMBER() OVER (
-               PARTITION BY UPPER(TRIM(symbol))
+               PARTITION BY UPPER(TRIM(name))
                ORDER BY market_cap DESC, volume_24h DESC
              ) as rn
       FROM tokens

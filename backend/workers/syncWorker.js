@@ -156,6 +156,9 @@ function getSyncStatus() {
 
 const { discoverNewPairs } = require('../../services/newPairsService');
 const { discoverTokens, resolveContractAddresses } = require('../../services/tokenDiscoveryService');
+const { startPumpfunListener } = require('./pumpfunListener');
+const { startFourmemeListener } = require('./fourmemeListener');
+const { pollNewLaunches } = require('../../services/stonkfunService');
 
 function startSyncWorker() {
   console.log(`[SyncWorker] Registered with ${config.syncIntervalMs / 1000}s interval.`);
@@ -167,6 +170,36 @@ function startSyncWorker() {
   console.log(`[NewPairsWorker] Registered with ${config.newPairsSyncIntervalMs / 1000}s interval.`);
   setTimeout(discoverNewPairs, 4000);
   const newPairsInterval = setInterval(discoverNewPairs, config.newPairsSyncIntervalMs);
+
+  // Start Pump.fun real-time event listener (PumpPortal WebSocket)
+  try {
+    startPumpfunListener();
+  } catch (pfErr) {
+    console.warn('[SyncWorker] Failed to start PumpFun listener:', pfErr.message);
+  }
+
+  // Start four.meme on-chain event listener (BSC contract TokenCreate)
+  try {
+    startFourmemeListener();
+  } catch (fmErr) {
+    console.warn('[SyncWorker] Failed to start FourMeme listener:', fmErr.message);
+  }
+
+  // Schedule StonkFun launches poller (runs every 2 minutes)
+  setTimeout(async () => {
+    try {
+      await pollNewLaunches();
+    } catch (sfErr) {
+      console.warn('[SyncWorker] Initial StonkFun polling error:', sfErr.message);
+    }
+  }, 5000);
+  const stonkfunInterval = setInterval(async () => {
+    try {
+      await pollNewLaunches();
+    } catch (sfErr) {
+      console.warn('[SyncWorker] StonkFun interval error:', sfErr.message);
+    }
+  }, 120000);
 
   // Token Discovery Worker: Expand token pool across chains via CoinGecko
   console.log(`[TokenDiscovery] Registered with ${config.tokenDiscoveryIntervalMs / 1000}s interval.`);
@@ -191,7 +224,7 @@ function startSyncWorker() {
   const { startTelegramWorker } = require('./telegramIngestWorker');
   startTelegramWorker();
 
-  return { marketInterval, newPairsInterval, discoveryInterval };
+  return { marketInterval, newPairsInterval, discoveryInterval, stonkfunInterval };
 }
 
 module.exports = {
