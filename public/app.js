@@ -1819,36 +1819,21 @@ async function renderNewPairs() {
     </div>
 
     <!-- TABS & CHAIN CONTROLS -->
-    <div class="controls-bar" style="display:flex;flex-direction:column;gap:12px;align-items:stretch;margin-bottom:1.25rem;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-        <div class="subtabs" id="radarTabs">
-          <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">Latest (< 24h)</span>
-          <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending Pools</span>
-          <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">Matured (> 7d)</span>
-        </div>
+    <div class="controls-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem;">
+      <div class="subtabs" id="radarTabs">
+        <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">Latest (< 24h)</span>
+        <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending Pools</span>
+        <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">Matured (> 7d)</span>
       </div>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Chain:</span>
-          <div class="radar-filter-group" id="radarChainFilters">
-            <span class="filter-pill ${newPairsState.chain === 'all' ? 'is-active' : ''}" data-chain="all">All Chains</span>
-            <span class="filter-pill ${newPairsState.chain === 'solana' ? 'is-active' : ''}" data-chain="solana">Solana</span>
-            <span class="filter-pill ${newPairsState.chain === 'bsc' ? 'is-active' : ''}" data-chain="bsc">BNB Chain</span>
-            <span class="filter-pill ${newPairsState.chain === 'base' ? 'is-active' : ''}" data-chain="base">Base</span>
-            <span class="filter-pill ${newPairsState.chain === 'ethereum' ? 'is-active' : ''}" data-chain="ethereum">Ethereum</span>
-          </div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Source:</span>
-          <div class="radar-filter-group" id="radarSourceFilters">
-            <span class="filter-pill ${newPairsState.source === 'all' ? 'is-active' : ''}" data-source="all">All Sources</span>
-            <span class="filter-pill ${newPairsState.source === 'pumpfun' ? 'is-active' : ''}" data-source="pumpfun">Pump.fun</span>
-            <span class="filter-pill ${newPairsState.source === 'fourmeme' ? 'is-active' : ''}" data-source="fourmeme">four.meme</span>
-            <span class="filter-pill ${newPairsState.source === 'stonkfun' ? 'is-active' : ''}" data-source="stonkfun">StonkFun</span>
-            <span class="filter-pill ${newPairsState.source === 'dexscreener' ? 'is-active' : ''}" data-source="dexscreener">DexScreener</span>
-          </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Chain:</span>
+        <div class="radar-filter-group" id="radarChainFilters">
+          <span class="filter-pill ${newPairsState.chain === 'all' ? 'is-active' : ''}" data-chain="all">All Chains</span>
+          <span class="filter-pill ${newPairsState.chain === 'solana' ? 'is-active' : ''}" data-chain="solana">Solana</span>
+          <span class="filter-pill ${newPairsState.chain === 'bsc' ? 'is-active' : ''}" data-chain="bsc">BNB Chain</span>
+          <span class="filter-pill ${newPairsState.chain === 'base' ? 'is-active' : ''}" data-chain="base">Base</span>
+          <span class="filter-pill ${newPairsState.chain === 'ethereum' ? 'is-active' : ''}" data-chain="ethereum">Ethereum</span>
         </div>
       </div>
     </div>
@@ -1892,14 +1877,6 @@ async function renderNewPairs() {
     const pill = e.target.closest('.filter-pill');
     if (!pill) return;
     newPairsState.chain = pill.dataset.chain;
-    newPairsState.page = 1;
-    renderNewPairs();
-  });
-
-  document.getElementById('radarSourceFilters')?.addEventListener('click', (e) => {
-    const pill = e.target.closest('.filter-pill');
-    if (!pill) return;
-    newPairsState.source = pill.dataset.source;
     newPairsState.page = 1;
     renderNewPairs();
   });
@@ -2024,8 +2001,7 @@ async function loadRadarPairs(silent = false, isManual = false) {
 
   try {
     const refreshParam = isManual ? '&refresh=1' : '';
-    const srcParam = newPairsState.source && newPairsState.source !== 'all' ? `&source=${newPairsState.source}` : '';
-    const res = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}${srcParam}&page=${newPairsState.page}&limit=${newPairsState.limit}${refreshParam}`);
+    const res = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}&page=${newPairsState.page}&limit=${newPairsState.limit}${refreshParam}`);
     const pairs = res.pairs || [];
 
     if (silent && tbody.children.length > 0 && pairs.length > 0) {
@@ -2065,7 +2041,7 @@ async function loadRadarPairs(silent = false, isManual = false) {
           btnMore.textContent = 'Loading more pairs…';
           try {
             newPairsState.page++;
-            const nextRes = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}${srcParam}&page=${newPairsState.page}&limit=${newPairsState.limit}`);
+            const nextRes = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}&page=${newPairsState.page}&limit=${newPairsState.limit}`);
             const nextPairs = nextRes.pairs || [];
             if (nextPairs.length > 0) {
               const startIdx = (newPairsState.page - 1) * newPairsState.limit;
@@ -2104,11 +2080,6 @@ function handleLiveNewPair(p) {
     const pairChain = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'bsc');
     const filterChain = newPairsState.chain.replace('-ecosystem', '').replace('binance-smart-chain', 'bsc');
     if (pairChain !== filterChain) return;
-  }
-
-  // Check source filter
-  if (newPairsState.source !== 'all' && (p.source || '').toLowerCase() !== newPairsState.source.toLowerCase()) {
-    return;
   }
 
   const tbody = document.getElementById('radarTableBody');

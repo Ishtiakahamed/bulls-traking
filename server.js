@@ -54,6 +54,21 @@ app.get(['/api', '/api/'], (req, res) => {
   });
 });
 
+// Edge CDN Caching headers for high-speed delivery on Vercel & Proxies
+app.use((req, res, next) => {
+  if (req.method === 'GET' && (req.path.startsWith('/api') || process.env.VERCEL)) {
+    // Exclude private admin, payment, or order endpoints from caching
+    if (req.path.includes('/admin') || req.path.includes('/pay') || req.path.includes('/order')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    } else {
+      // Allow Vercel Edge CDN to serve cached responses instantly in 15-30ms,
+      // and revalidate in background every 5 seconds.
+      res.setHeader('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=59');
+    }
+  }
+  next();
+});
+
 // Mount REST API layer
 app.use('/api', apiRoutes);
 
