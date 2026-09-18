@@ -1798,22 +1798,11 @@ async function renderNewPairs() {
       <h1 style="font-family:var(--display);margin:0;font-size:1.75rem;">New Pairs Radar</h1>
     </div>
 
-    <!-- TABS & CHAIN CONTROLS -->
-    <div class="controls-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem;">
+    <!-- TABS CONTROLS -->
+    <div class="controls-bar" style="margin-bottom:1.25rem;">
       <div class="subtabs" id="radarTabs">
         <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">Latest (< 24h)</span>
         <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">Matured (> 7d)</span>
-      </div>
-
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Chain:</span>
-        <div class="radar-filter-group" id="radarChainFilters">
-          <span class="filter-pill ${newPairsState.chain === 'all' ? 'is-active' : ''}" data-chain="all">All Chains</span>
-          <span class="filter-pill ${newPairsState.chain === 'solana' ? 'is-active' : ''}" data-chain="solana">Solana</span>
-          <span class="filter-pill ${newPairsState.chain === 'bsc' ? 'is-active' : ''}" data-chain="bsc">BNB Chain</span>
-          <span class="filter-pill ${newPairsState.chain === 'base' ? 'is-active' : ''}" data-chain="base">Base</span>
-          <span class="filter-pill ${newPairsState.chain === 'ethereum' ? 'is-active' : ''}" data-chain="ethereum">Ethereum</span>
-        </div>
       </div>
     </div>
 
@@ -1848,14 +1837,6 @@ async function renderNewPairs() {
     const tabEl = e.target.closest('.subtab');
     if (!tabEl) return;
     newPairsState.tab = tabEl.dataset.tab;
-    newPairsState.page = 1;
-    renderNewPairs();
-  });
-
-  document.getElementById('radarChainFilters')?.addEventListener('click', (e) => {
-    const pill = e.target.closest('.filter-pill');
-    if (!pill) return;
-    newPairsState.chain = pill.dataset.chain;
     newPairsState.page = 1;
     renderNewPairs();
   });
