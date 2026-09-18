@@ -1792,37 +1792,16 @@ let radarAutoRefreshTimer = null;
 
 async function renderNewPairs() {
   document.title = 'New Pairs Radar | Bulls Traking';
+  if (newPairsState.tab === 'trending') newPairsState.tab = 'latest';
   app.innerHTML = `
-    <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
-      <div>
-        <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">New Pairs Radar</h1>
-        <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Real-time on-chain pair discovery, profiling telemetry, and newly minted pool tracking across Pump.fun, four.meme, StonkFun, and DEXs.</p>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
-        <span class="live-pill streaming">
-          <span class="live-pulse-dot"></span>
-          LIVE RADAR STREAM
-        </span>
-        <span id="radarLiveFeedback" style="font-size:12px;color:var(--text-muted);display:inline-flex;align-items:center;gap:6px;">
-          ⚡ Streaming On-Chain Feeds • Auto-Syncing
-        </span>
-        <button id="btnRefreshRadar" class="btn-ghost" style="padding:4px 12px;font-size:11px;cursor:pointer;">⟳ Refresh</button>
-      </div>
-    </div>
-
-    <!-- RADAR DISCLAIMER BANNER -->
-    <div class="radar-disclaimer">
-      <span class="icon">ℹ</span>
-      <div>
-        <b>Live Real-Time Radar:</b> Multi-source on-chain discovery across <b>Pump.fun</b> (Solana), <b>four.meme</b> (BNB Chain), <b>StonkFun</b>, and <b>DexScreener</b>. Token pairs stream in immediately upon deployment. Trading newly created pairs carries high capital risk. Always verify contract security before interacting.
-      </div>
+    <div class="page-head" style="margin-bottom:1rem;">
+      <h1 style="font-family:var(--display);margin:0;font-size:1.75rem;">New Pairs Radar</h1>
     </div>
 
     <!-- TABS & CHAIN CONTROLS -->
     <div class="controls-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem;">
       <div class="subtabs" id="radarTabs">
         <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">Latest (< 24h)</span>
-        <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending Pools</span>
         <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">Matured (> 7d)</span>
       </div>
 
