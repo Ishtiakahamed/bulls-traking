@@ -153,6 +153,31 @@ async function processTokenCreateLog(log) {
       websiteUrl, twitterUrl, telegramUrl, metaJson
     ]);
 
+    try {
+      const { broadcast } = require('../websocket/wsServer');
+      broadcast({
+        type: 'NEW_PAIR',
+        data: {
+          chain: 'bsc',
+          pair_address: tokenAddress,
+          token_address: tokenAddress,
+          name,
+          symbol,
+          logo_url: logoUrl,
+          price: priceUsd,
+          liquidity: liquidityUsd,
+          volume_24h: volume24h,
+          txn_count_24h: 1,
+          pair_created_at: pairCreatedAt,
+          status: 'latest',
+          source: 'fourmeme',
+          website_url: websiteUrl,
+          twitter_url: twitterUrl,
+          telegram_url: telegramUrl
+        }
+      });
+    } catch (_) {}
+
     // If logo was not available on immediate block creation, schedule a delayed retry to fetch after indexation
     if (!logoUrl) {
       setTimeout(async () => {

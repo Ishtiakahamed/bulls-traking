@@ -117,6 +117,31 @@ async function pollNewLaunches() {
           websiteUrl, twitterUrl, telegramUrl, metaJson
         ]);
 
+        try {
+          const { broadcast } = require('../backend/websocket/wsServer');
+          broadcast({
+            type: 'NEW_PAIR',
+            data: {
+              chain: 'solana',
+              pair_address: pool,
+              token_address: mint,
+              name,
+              symbol,
+              logo_url: logoUrl,
+              price,
+              liquidity,
+              volume_24h: volume24h,
+              txn_count_24h: 1,
+              pair_created_at: pairCreatedAt,
+              status: 'latest',
+              source: 'stonkfun',
+              website_url: websiteUrl,
+              twitter_url: twitterUrl,
+              telegram_url: telegramUrl
+            }
+          });
+        } catch (_) {}
+
         upsertedMints.push(mint);
       } catch (tokErr) {
         // Continue processing other tokens

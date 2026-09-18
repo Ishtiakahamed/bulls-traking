@@ -134,6 +134,31 @@ async function handleNewTokenEvent(event) {
       websiteUrl, twitterUrl, telegramUrl, metaJson
     ]);
 
+    try {
+      const { broadcast } = require('../websocket/wsServer');
+      broadcast({
+        type: 'NEW_PAIR',
+        data: {
+          chain: 'solana',
+          pair_address: pairAddress,
+          token_address: mint,
+          name,
+          symbol,
+          logo_url: logoUrl,
+          price: priceUsd,
+          liquidity: liquidityUsd,
+          volume_24h: initialBuyVol,
+          txn_count_24h: 1,
+          pair_created_at: pairCreatedAt,
+          status: 'latest',
+          source: 'pumpfun',
+          website_url: websiteUrl,
+          twitter_url: twitterUrl,
+          telegram_url: telegramUrl
+        }
+      });
+    } catch (_) {}
+
     console.log(`[PumpFunListener] Indexed new pump.fun launch: ${symbol} (${name}) [${mint.slice(0, 8)}...]`);
   } catch (err) {
     console.warn('[PumpFunListener] Error processing token:', err.message);

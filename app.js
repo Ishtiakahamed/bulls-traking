@@ -65,7 +65,7 @@ const fmtAge = (d) => {
     s = s.replace(' ', 'T') + 'Z';
   }
   const diffMs = Date.now() - new Date(s).getTime();
-  if (isNaN(diffMs) || diffMs < 30000) return 'Just now';
+  if (isNaN(diffMs) || diffMs < 5000) return 'Just now';
   const secs = Math.floor(diffMs / 1000);
   if (secs < 60) return `${secs}s ago`;
   const mins = Math.floor(secs / 60);
@@ -1782,7 +1782,8 @@ function initSearch() {
 
 let newPairsState = {
   tab: 'latest', // 'latest' | 'trending' | 'matured'
-  chain: 'all',
+  chain: 'all',  // 'all' | 'solana' | 'bsc' | 'base' | 'ethereum'
+  source: 'all', // 'all' | 'pumpfun' | 'fourmeme' | 'stonkfun' | 'dexscreener'
   page: 1,
   limit: 25
 };
@@ -1797,10 +1798,13 @@ async function renderNewPairs() {
         <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">New Pairs Radar</h1>
         <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Real-time on-chain pair discovery, profiling telemetry, and newly minted pool tracking across Pump.fun, four.meme, StonkFun, and DEXs.</p>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
-        <span class="live-pill" style="display:inline-flex;align-items:center;gap:6px;background:rgba(127,184,120,0.12);color:var(--up);border:1px solid rgba(127,184,120,0.25);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;">
-          <span style="width:6px;height:6px;border-radius:50%;background:var(--up);box-shadow:0 0 8px var(--up);display:inline-block;"></span>
-          LIVE RADAR
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
+        <span class="live-pill streaming">
+          <span class="live-pulse-dot"></span>
+          LIVE RADAR STREAM
+        </span>
+        <span id="radarLiveFeedback" style="font-size:12px;color:var(--text-muted);display:inline-flex;align-items:center;gap:6px;">
+          ⚡ Streaming On-Chain Feeds • Auto-Syncing
         </span>
         <button id="btnRefreshRadar" class="btn-ghost" style="padding:4px 12px;font-size:11px;cursor:pointer;">⟳ Refresh</button>
       </div>
@@ -1815,11 +1819,37 @@ async function renderNewPairs() {
     </div>
 
     <!-- TABS & CHAIN CONTROLS -->
-    <div class="controls-bar">
-      <div class="subtabs" id="radarTabs">
-        <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">Latest (< 24h)</span>
-        <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending Pools</span>
-        <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">Matured (> 7d)</span>
+    <div class="controls-bar" style="display:flex;flex-direction:column;gap:12px;align-items:stretch;margin-bottom:1.25rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div class="subtabs" id="radarTabs">
+          <span class="subtab ${newPairsState.tab === 'latest' ? 'is-active' : ''}" data-tab="latest">Latest (< 24h)</span>
+          <span class="subtab ${newPairsState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending Pools</span>
+          <span class="subtab ${newPairsState.tab === 'matured' ? 'is-active' : ''}" data-tab="matured">Matured (> 7d)</span>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Chain:</span>
+          <div class="radar-filter-group" id="radarChainFilters">
+            <span class="filter-pill ${newPairsState.chain === 'all' ? 'is-active' : ''}" data-chain="all">All Chains</span>
+            <span class="filter-pill ${newPairsState.chain === 'solana' ? 'is-active' : ''}" data-chain="solana">Solana</span>
+            <span class="filter-pill ${newPairsState.chain === 'bsc' ? 'is-active' : ''}" data-chain="bsc">BNB Chain</span>
+            <span class="filter-pill ${newPairsState.chain === 'base' ? 'is-active' : ''}" data-chain="base">Base</span>
+            <span class="filter-pill ${newPairsState.chain === 'ethereum' ? 'is-active' : ''}" data-chain="ethereum">Ethereum</span>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Source:</span>
+          <div class="radar-filter-group" id="radarSourceFilters">
+            <span class="filter-pill ${newPairsState.source === 'all' ? 'is-active' : ''}" data-source="all">All Sources</span>
+            <span class="filter-pill ${newPairsState.source === 'pumpfun' ? 'is-active' : ''}" data-source="pumpfun">Pump.fun</span>
+            <span class="filter-pill ${newPairsState.source === 'fourmeme' ? 'is-active' : ''}" data-source="fourmeme">four.meme</span>
+            <span class="filter-pill ${newPairsState.source === 'stonkfun' ? 'is-active' : ''}" data-source="stonkfun">StonkFun</span>
+            <span class="filter-pill ${newPairsState.source === 'dexscreener' ? 'is-active' : ''}" data-source="dexscreener">DexScreener</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1858,6 +1888,22 @@ async function renderNewPairs() {
     renderNewPairs();
   });
 
+  document.getElementById('radarChainFilters')?.addEventListener('click', (e) => {
+    const pill = e.target.closest('.filter-pill');
+    if (!pill) return;
+    newPairsState.chain = pill.dataset.chain;
+    newPairsState.page = 1;
+    renderNewPairs();
+  });
+
+  document.getElementById('radarSourceFilters')?.addEventListener('click', (e) => {
+    const pill = e.target.closest('.filter-pill');
+    if (!pill) return;
+    newPairsState.source = pill.dataset.source;
+    newPairsState.page = 1;
+    renderNewPairs();
+  });
+
   const btnRefresh = document.getElementById('btnRefreshRadar');
   if (btnRefresh) {
     btnRefresh.addEventListener('click', () => {
@@ -1868,7 +1914,7 @@ async function renderNewPairs() {
 
   loadRadarPairs(false);
 
-  // Set auto-refresh interval (every 5 seconds) to pull newly minted tokens live
+  // Set auto-refresh interval (every 4 seconds) to pull newly minted tokens live
   if (radarAutoRefreshTimer) clearInterval(radarAutoRefreshTimer);
   radarAutoRefreshTimer = setInterval(() => {
     const { path } = parseHash();
@@ -1880,7 +1926,7 @@ async function renderNewPairs() {
     if (newPairsState.page === 1) {
       loadRadarPairs(true);
     }
-  }, 5000);
+  }, 4000);
 }
 
 const SOURCE_MAP = {
@@ -1906,60 +1952,65 @@ const SOURCE_MAP = {
   }
 };
 
+function renderSingleRadarRow(p, idx = 0, isNew = false) {
+  const chainLabel = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'BSC').toUpperCase();
+  const age = fmtAge(p.pair_created_at);
+  const txns = p.txn_count_24h != null && p.txn_count_24h > 0 ? Number(p.txn_count_24h).toLocaleString() : '—';
+  
+  const dsChain = (p.chain === 'solana-ecosystem' || p.chain === 'solana') ? 'solana' : (p.chain === 'binance-smart-chain' || p.chain === 'bsc') ? 'bsc' : (p.chain === 'ethereum-ecosystem' || p.chain === 'ethereum') ? 'ethereum' : 'base';
+  
+  const sourceKey = (p.source || 'dexscreener').toLowerCase();
+  const sourceCfg = SOURCE_MAP[sourceKey] || SOURCE_MAP['dexscreener'];
+  const badgeImg = sourceCfg.badge ? `<img src="${sourceCfg.badge}" alt="${sourceCfg.name}" title="Discovered via ${sourceCfg.name}" class="source-badge">` : '';
+  const poolUrl = sourceCfg.getPoolUrl ? sourceCfg.getPoolUrl(p, dsChain) : `https://dexscreener.com/${dsChain}/${p.pair_address}`;
+
+  const isVeryFresh = p.pair_created_at && (Date.now() - new Date(p.pair_created_at).getTime() < 60000);
+  const freshBadge = isVeryFresh ? `<span class="badge-fresh-new">NEW</span>` : '';
+  const rowClass = isNew ? 'row-new-pair' : '';
+  const pairId = p.pair_address || p.token_address;
+
+  return `
+    <tr data-pair-id="${escapeHtml(pairId)}" class="${rowClass}">
+      <td>${idx + 1}</td>
+      <td>
+        <div class="token-cell">
+          <img src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="token-name">${escapeHtml(p.name)}</span>
+              ${badgeImg}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
+              <span class="token-sym">${escapeHtml(p.symbol)}</span>
+              ${p.twitter_url ? `<a href="${escapeHtml(p.twitter_url)}" target="_blank" rel="noopener" class="token-social-link" title="Twitter / X">𝕏</a>` : ''}
+              ${p.telegram_url ? `<a href="${escapeHtml(p.telegram_url)}" target="_blank" rel="noopener" class="token-social-link" title="Telegram">✈</a>` : ''}
+              ${p.website_url ? `<a href="${escapeHtml(p.website_url)}" target="_blank" rel="noopener" class="token-social-link" title="Website">🌐</a>` : ''}
+            </div>
+          </div>
+        </div>
+      </td>
+      <td><b>${fmtPrice(p.price)}</b></td>
+      <td>${fmtUsd(p.liquidity)}</td>
+      <td>${fmtUsd(p.volume_24h)}</td>
+      <td>${txns}</td>
+      <td><span class="pair-age-pill">${age}</span>${freshBadge}</td>
+      <td><span class="chain-badge chain-${escapeHtml(p.chain || '')}">${chainLabel}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost" style="padding:2px 8px;font-size:11px;">Scan</a>
+          <a href="${poolUrl}" target="_blank" rel="noopener" class="btn-ghost" style="padding:3px 8px;font-size:11px;text-decoration:none;">View Pool ↗</a>
+          <button class="btn-copy-address" data-address="${escapeHtml(p.token_address || p.pair_address)}" title="Copy Contract Address" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:2px 4px;">📋</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
 function renderRadarRows(pairs, startIdx = 0) {
   if (!pairs || pairs.length === 0) {
     return `<tr><td colspan="9" class="state-msg">No newly discovered pairs in this classification.</td></tr>`;
   }
-
-  return pairs.map((p, idx) => {
-    const chainLabel = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'BSC').toUpperCase();
-    const age = fmtAge(p.pair_created_at);
-    const txns = p.txn_count_24h != null && p.txn_count_24h > 0 ? Number(p.txn_count_24h).toLocaleString() : '—';
-    const shortAddress = p.pair_address ? `${p.pair_address.slice(0, 4)}...${p.pair_address.slice(-4)}` : '';
-    
-    const dsChain = (p.chain === 'solana-ecosystem' || p.chain === 'solana') ? 'solana' : (p.chain === 'binance-smart-chain' || p.chain === 'bsc') ? 'bsc' : (p.chain === 'ethereum-ecosystem' || p.chain === 'ethereum') ? 'ethereum' : 'base';
-    
-    const sourceKey = (p.source || 'dexscreener').toLowerCase();
-    const sourceCfg = SOURCE_MAP[sourceKey] || SOURCE_MAP['dexscreener'];
-    const badgeImg = sourceCfg.badge ? `<img src="${sourceCfg.badge}" alt="${sourceCfg.name}" title="Discovered via ${sourceCfg.name}" class="source-badge">` : '';
-    const poolUrl = sourceCfg.getPoolUrl ? sourceCfg.getPoolUrl(p, dsChain) : `https://dexscreener.com/${dsChain}/${p.pair_address}`;
-
-    return `
-      <tr>
-        <td>${startIdx + idx + 1}</td>
-        <td>
-          <div class="token-cell">
-            <img src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
-            <div>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <span class="token-name">${escapeHtml(p.name)}</span>
-                ${badgeImg}
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
-                <span class="token-sym">${escapeHtml(p.symbol)}</span>
-                ${p.twitter_url ? `<a href="${escapeHtml(p.twitter_url)}" target="_blank" rel="noopener" class="token-social-link" title="Twitter / X">𝕏</a>` : ''}
-                ${p.telegram_url ? `<a href="${escapeHtml(p.telegram_url)}" target="_blank" rel="noopener" class="token-social-link" title="Telegram">✈</a>` : ''}
-                ${p.website_url ? `<a href="${escapeHtml(p.website_url)}" target="_blank" rel="noopener" class="token-social-link" title="Website">🌐</a>` : ''}
-              </div>
-            </div>
-          </div>
-        </td>
-        <td><b>${fmtPrice(p.price)}</b></td>
-        <td>${fmtUsd(p.liquidity)}</td>
-        <td>${fmtUsd(p.volume_24h)}</td>
-        <td>${txns}</td>
-        <td><span class="pair-age-pill">${age}</span></td>
-        <td><span class="chain-badge chain-${escapeHtml(p.chain || '')}">${chainLabel}</span></td>
-        <td>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost" style="padding:2px 8px;font-size:11px;">Scan</a>
-            <a href="${poolUrl}" target="_blank" rel="noopener" class="btn-ghost" style="padding:3px 8px;font-size:11px;text-decoration:none;">View Pool ↗</a>
-            <button class="btn-copy-address" data-address="${escapeHtml(p.token_address || p.pair_address)}" title="Copy Contract Address" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:2px 4px;">📋</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  return pairs.map((p, idx) => renderSingleRadarRow(p, startIdx + idx, false)).join('');
 }
 
 async function loadRadarPairs(silent = false, isManual = false) {
@@ -1973,9 +2024,36 @@ async function loadRadarPairs(silent = false, isManual = false) {
 
   try {
     const refreshParam = isManual ? '&refresh=1' : '';
-    const res = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}&page=${newPairsState.page}&limit=${newPairsState.limit}${refreshParam}`);
+    const srcParam = newPairsState.source && newPairsState.source !== 'all' ? `&source=${newPairsState.source}` : '';
+    const res = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}${srcParam}&page=${newPairsState.page}&limit=${newPairsState.limit}${refreshParam}`);
     const pairs = res.pairs || [];
-    tbody.innerHTML = renderRadarRows(pairs, 0);
+
+    if (silent && tbody.children.length > 0 && pairs.length > 0) {
+      const currentFirstId = tbody.firstElementChild?.dataset?.pairId;
+      const newFirstId = pairs[0].pair_address || pairs[0].token_address;
+
+      if (currentFirstId && currentFirstId !== newFirstId) {
+        // Collect existing IDs to identify truly new pairs
+        const existingIds = new Set(Array.from(tbody.querySelectorAll('tr[data-pair-id]')).map(r => r.dataset.pairId));
+        tbody.innerHTML = pairs.map((p, idx) => {
+          const id = p.pair_address || p.token_address;
+          const isFresh = !existingIds.has(id);
+          return renderSingleRadarRow(p, idx, isFresh);
+        }).join('');
+
+        const feedbackEl = document.getElementById('radarLiveFeedback');
+        if (feedbackEl) {
+          feedbackEl.innerHTML = `<span style="color:#00e699;font-weight:700;">⚡ Updated with newly discovered pairs!</span>`;
+          setTimeout(() => {
+            if (feedbackEl) feedbackEl.textContent = '⚡ Streaming On-Chain Feeds • Auto-Syncing';
+          }, 3000);
+        }
+      } else {
+        tbody.innerHTML = renderRadarRows(pairs, 0);
+      }
+    } else {
+      tbody.innerHTML = renderRadarRows(pairs, 0);
+    }
 
     if (pairs.length < newPairsState.limit) {
       if (btnMore) btnMore.style.display = 'none';
@@ -1987,11 +2065,11 @@ async function loadRadarPairs(silent = false, isManual = false) {
           btnMore.textContent = 'Loading more pairs…';
           try {
             newPairsState.page++;
-            const nextRes = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}&page=${newPairsState.page}&limit=${newPairsState.limit}`);
+            const nextRes = await fetchApi(`/new-pairs?tab=${newPairsState.tab}&chain=${newPairsState.chain}${srcParam}&page=${newPairsState.page}&limit=${newPairsState.limit}`);
             const nextPairs = nextRes.pairs || [];
             if (nextPairs.length > 0) {
               const startIdx = (newPairsState.page - 1) * newPairsState.limit;
-              tbody.insertAdjacentHTML('beforeend', renderRadarRows(nextPairs, startIdx));
+              tbody.insertAdjacentHTML('beforeend', nextPairs.map((p, idx) => renderSingleRadarRow(p, startIdx + idx, false)).join(''));
             }
             if (nextPairs.length < newPairsState.limit) {
               btnMore.style.display = 'none';
@@ -2008,6 +2086,64 @@ async function loadRadarPairs(silent = false, isManual = false) {
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="9" class="state-msg">Radar telemetry temporarily unavailable: ${escapeHtml(err.message)}</td></tr>`;
     if (btnMore) btnMore.style.display = 'none';
+  }
+}
+
+/**
+ * Real-Time WebSocket handler for incoming new token pair launches
+ */
+function handleLiveNewPair(p) {
+  if (!p) return;
+  const { path } = parseHash();
+  if (path !== '/new-pairs') return;
+  if (newPairsState.page !== 1) return;
+  if (newPairsState.tab !== 'latest') return;
+
+  // Check chain filter
+  if (newPairsState.chain !== 'all') {
+    const pairChain = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'bsc');
+    const filterChain = newPairsState.chain.replace('-ecosystem', '').replace('binance-smart-chain', 'bsc');
+    if (pairChain !== filterChain) return;
+  }
+
+  // Check source filter
+  if (newPairsState.source !== 'all' && (p.source || '').toLowerCase() !== newPairsState.source.toLowerCase()) {
+    return;
+  }
+
+  const tbody = document.getElementById('radarTableBody');
+  if (!tbody) return;
+
+  const pairId = p.pair_address || p.token_address;
+  if (tbody.querySelector(`tr[data-pair-id="${pairId}"]`)) return;
+
+  // Clear empty state message if present
+  const emptyRow = tbody.querySelector('.state-msg');
+  if (emptyRow) tbody.innerHTML = '';
+
+  // Render and prepend new row with glowing animation
+  const rowHtml = renderSingleRadarRow(p, 0, true);
+  tbody.insertAdjacentHTML('afterbegin', rowHtml);
+
+  // Keep table rows limited
+  while (tbody.children.length > (newPairsState.limit || 25)) {
+    tbody.removeChild(tbody.lastElementChild);
+  }
+
+  // Re-number rank column (1..N)
+  Array.from(tbody.children).forEach((tr, i) => {
+    const firstCell = tr.firstElementChild;
+    if (firstCell) firstCell.textContent = i + 1;
+  });
+
+  // Flash header feedback
+  const feedbackEl = document.getElementById('radarLiveFeedback');
+  if (feedbackEl) {
+    const srcCfg = SOURCE_MAP[(p.source || '').toLowerCase()] || { name: p.source || 'On-Chain' };
+    feedbackEl.innerHTML = `<span style="color:#00e699;font-weight:700;">⚡ Live catch: ${escapeHtml(p.symbol || p.name)} on ${srcCfg.name}!</span>`;
+    setTimeout(() => {
+      if (feedbackEl) feedbackEl.textContent = '⚡ Streaming On-Chain Feeds • Auto-Syncing';
+    }, 3500);
   }
 }
 
@@ -2309,6 +2445,8 @@ function initWebSocket() {
         const msg = JSON.parse(event.data);
         if (msg.type === 'PRICE_UPDATE') {
           handleLivePriceUpdate(msg.data);
+        } else if (msg.type === 'NEW_PAIR') {
+          handleLiveNewPair(msg.data);
         }
       } catch (e) {
         // Non-fatal parse error

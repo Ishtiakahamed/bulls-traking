@@ -86,6 +86,12 @@ async function discoverNewPairs() {
       }
     }
 
+    // If DexScreener was rate limited or empty, fallback to GeckoTerminal real-time new pools
+    if (discoveredPairs.length === 0) {
+      const gtPairs = await discoverGeckoTerminalPools();
+      discoveredPairs.push(...gtPairs);
+    }
+
     // Clean up spam duplicate names
     cleanupDuplicatePairs();
 
@@ -97,6 +103,80 @@ async function discoverNewPairs() {
     console.warn('[NewPairsService Error]', err.message);
     return [];
   }
+}
+
+/**
+ * Discovers new on-chain pools across Solana, BSC, Base, and Ethereum from GeckoTerminal.
+ * Provides resilient, real-time DEX discovery that bypasses Cloudflare rate limits.
+ */
+async function discoverGeckoTerminalPools() {
+  const networks = [
+    { net: 'solana', chain: 'solana' },
+    { net: 'bsc', chain: 'bsc' },
+    { net: 'base', chain: 'base' },
+    { net: 'eth', chain: 'ethereum' }
+  ];
+
+  const discovered = [];
+
+  for (const { net, chain } of networks) {
+    try {
+      const res = await fetch(`https://api.geckoterminal.com/api/v2/networks/${net}/new_pools`, {
+        headers: { 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(4000)
+      });
+      if (!res.ok) continue;
+
+      const json = await res.json();
+      const pools = json.data;
+      if (!Array.isArray(pools)) continue;
+
+      for (const p of pools.slice(0, 10)) {
+        try {
+          const attr = p.attributes || {};
+          const pairAddress = attr.address;
+          if (!pairAddress) continue;
+
+          const baseTokenId = p.relationships?.base_token?.data?.id || '';
+          const tokenAddress = baseTokenId.replace(`${net}_`, '') || pairAddress;
+          const name = (attr.name || 'New Pool').slice(0, 150);
+          const symbol = name.split('/')[0]?.trim().slice(0, 50) || 'PAIR';
+          const price = parseFloat(attr.base_token_price_usd || 0);
+          const liquidity = parseFloat(attr.reserve_in_usd || 0);
+          const volume24h = parseFloat(attr.volume_usd?.h24 || 0);
+          const txnCount = (parseInt(attr.transactions?.h24?.buys || 0, 10) + parseInt(attr.transactions?.h24?.sells || 0, 10)) || 1;
+          const pairCreatedAt = attr.pool_created_at ? new Date(attr.pool_created_at).toISOString() : new Date().toISOString();
+
+          execute(`
+            INSERT INTO new_pairs (
+              chain, pair_address, token_address, name, symbol, logo_url,
+              price, liquidity, volume_24h, txn_count_24h, pair_created_at,
+              status, source, website_url, twitter_url, telegram_url, metadata,
+              first_discovered_at, last_synced_at
+            ) VALUES (
+              ?, ?, ?, ?, ?, null,
+              ?, ?, ?, ?, ?,
+              'latest', 'dexscreener', null, null, null, null,
+              CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            )
+            ON CONFLICT(chain, pair_address) DO UPDATE SET
+              price = excluded.price,
+              liquidity = CASE WHEN excluded.liquidity > 0 THEN excluded.liquidity ELSE new_pairs.liquidity END,
+              volume_24h = excluded.volume_24h,
+              txn_count_24h = excluded.txn_count_24h,
+              last_synced_at = CURRENT_TIMESTAMP
+          `, [
+            chain, pairAddress, tokenAddress, name, symbol,
+            price, liquidity, volume24h, txnCount, pairCreatedAt
+          ]);
+
+          discovered.push(pairAddress);
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
+  return discovered;
 }
 
 /**
@@ -215,8 +295,8 @@ function getNewPairs(options = {}) {
         status, source, website_url, twitter_url, telegram_url, metadata,
         first_discovered_at, last_synced_at,
         ROW_NUMBER() OVER (
-          PARTITION BY UPPER(TRIM(name))
-          ORDER BY liquidity DESC, volume_24h DESC, pair_created_at DESC, id DESC
+          PARTITION BY chain, pair_address
+          ORDER BY pair_created_at DESC, id DESC
         ) as rn
       FROM new_pairs
       ${whereSql}
@@ -234,7 +314,7 @@ function getNewPairs(options = {}) {
   params.push(limitNum, offsetNum);
 
   const pairs = query(sql, params);
-  const countRow = queryOne(`SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count FROM new_pairs ${whereSql}`, params.slice(0, -2));
+  const countRow = queryOne(`SELECT COUNT(*) as count FROM new_pairs ${whereSql}`, params.slice(0, -2));
   const total = countRow?.count || 0;
 
   // Background auto-enrichment of missing logos
@@ -640,8 +720,8 @@ function cleanupDuplicatePairs() {
       WHERE id NOT IN (
         SELECT id FROM (
           SELECT id, ROW_NUMBER() OVER (
-            PARTITION BY UPPER(TRIM(name))
-            ORDER BY liquidity DESC, volume_24h DESC, pair_created_at DESC, id DESC
+            PARTITION BY chain, pair_address
+            ORDER BY pair_created_at DESC, id DESC
           ) as rn
           FROM new_pairs
         ) WHERE rn = 1
@@ -660,6 +740,7 @@ cleanupDuplicatePairs();
 
 module.exports = {
   discoverNewPairs,
+  discoverGeckoTerminalPools,
   classifyPairs,
   getNewPairs,
   seedInitialPairsIfEmpty,

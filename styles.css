@@ -1874,6 +1874,100 @@ tbody tr:hover {
   50% { opacity: 0.35; transform: scale(0.85); }
 }
 
+/* Live Radar Real-Time Glow & Pulse */
+@keyframes newPairGlow {
+  0% {
+    background-color: rgba(0, 230, 153, 0.35);
+    box-shadow: inset 0 0 16px rgba(0, 230, 153, 0.45);
+  }
+  50% {
+    background-color: rgba(0, 230, 153, 0.18);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.row-new-pair {
+  animation: newPairGlow 2.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.live-pill.streaming {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 230, 153, 0.12);
+  color: #00e699;
+  border: 1px solid rgba(0, 230, 153, 0.32);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00e699;
+  box-shadow: 0 0 10px #00e699;
+  animation: radarDotPulse 1.5s infinite;
+}
+
+@keyframes radarDotPulse {
+  0% { transform: scale(0.85); opacity: 0.7; box-shadow: 0 0 4px #00e699; }
+  50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px #00e699; }
+  100% { transform: scale(0.85); opacity: 0.7; box-shadow: 0 0 4px #00e699; }
+}
+
+.badge-fresh-new {
+  display: inline-block;
+  background: #00e699;
+  color: #0c1017;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: radarDotPulse 1.8s infinite;
+}
+
+.radar-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card-bg, #111622);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.filter-pill:hover {
+  color: var(--text-main, #fff);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.filter-pill.is-active {
+  background: var(--card-bg-hover, rgba(255, 255, 255, 0.08));
+  color: #00e699;
+  border-color: #00e699;
+  font-weight: 600;
+}
+
 /* ==========================================================================
    RESPONSIVE LAYOUT BREAKPOINTS
    ========================================================================== */
