@@ -81,9 +81,18 @@ async function handleNewTokenEvent(event) {
     const name = (metadata?.name || rawName).slice(0, 150);
     const symbol = (metadata?.symbol || rawSymbol).slice(0, 50);
     const logoUrl = normalizeIpfsUri(metadata?.image || metadata?.icon) || null;
-    const websiteUrl = metadata?.website || metadata?.external_url || null;
-    const twitterUrl = metadata?.twitter || null;
-    const telegramUrl = metadata?.telegram || null;
+    const websiteUrl = event.website || metadata?.website || metadata?.external_url || null;
+    const twitterUrl = event.twitter || metadata?.twitter || null;
+    const telegramUrl = event.telegram || metadata?.telegram || null;
+
+    const hasTwitter = Boolean(twitterUrl && String(twitterUrl).trim() !== '');
+    const hasTelegram = Boolean(telegramUrl && String(telegramUrl).trim() !== '');
+
+    // User requirement: Must have at least Twitter or Telegram.
+    // If only website is present without telegram/twitter, or no socials, do not save to DB and do not broadcast.
+    if (!hasTwitter && !hasTelegram) {
+      return;
+    }
 
     // Get current SOL price estimate
     const solRow = queryOne("SELECT price FROM tokens WHERE symbol = 'SOL' AND chain = 'solana'");

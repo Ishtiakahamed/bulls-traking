@@ -43,13 +43,38 @@ async function runTests() {
   assert.strictEqual(cssRoot, cssPub, 'styles.css and public/styles.css must be 100% identical');
   console.log('✅ Test 3: PASSED (100% parity verified between root and public)');
 
-  // Test 4: Pump.fun Ingestion & Error Resilience
-  console.log('Test 4: Verifying Pump.fun listener event ingestion and metadata resilience...');
+  // Test 4: Pump.fun Ingestion, Error Resilience & Social Media Filtering
+  console.log('Test 4: Verifying Pump.fun listener event ingestion, metadata resilience & social filters...');
   // Test dead metadata link handling (must not crash)
   const deadMeta = await fetchTokenMetadata('https://dead-ipfs-gateway-domain-999.xyz/ipfs/fakehash');
   assert.strictEqual(deadMeta, null, 'Dead metadata link should return null gracefully');
 
-  // Test event ingestion
+  // Test 4a: Token with NO socials must be REJECTED (neither website nor db)
+  const rejectedMintNoSocials = 'PUMP_REJECTED_NO_SOCIALS_' + Date.now();
+  await handleNewTokenEvent({
+    mint: rejectedMintNoSocials,
+    bondingCurveKey: 'CURVE_' + rejectedMintNoSocials,
+    name: 'No Socials Token',
+    symbol: 'NOSOC',
+    uri: ''
+  });
+  const rejectedRow1 = queryOne('SELECT * FROM new_pairs WHERE token_address = ?', [rejectedMintNoSocials]);
+  assert.strictEqual(rejectedRow1, null, 'Token without socials must not be saved to new_pairs');
+
+  // Test 4b: Token with ONLY website must be REJECTED
+  const rejectedMintOnlyWeb = 'PUMP_REJECTED_ONLY_WEB_' + Date.now();
+  await handleNewTokenEvent({
+    mint: rejectedMintOnlyWeb,
+    bondingCurveKey: 'CURVE_' + rejectedMintOnlyWeb,
+    name: 'Only Web Token',
+    symbol: 'ONLYWEB',
+    website: 'https://onlyweb.xyz',
+    uri: ''
+  });
+  const rejectedRow2 = queryOne('SELECT * FROM new_pairs WHERE token_address = ?', [rejectedMintOnlyWeb]);
+  assert.strictEqual(rejectedRow2, null, 'Token with only website must not be saved to new_pairs');
+
+  // Test 4c: Token with Twitter must be ACCEPTED
   const testMint = 'PUMP_TEST_MINT_' + Date.now();
   await handleNewTokenEvent({
     mint: testMint,
@@ -57,17 +82,20 @@ async function runTests() {
     name: 'Pump Test Dog',
     symbol: 'PTDOG',
     uri: '',
+    twitter: 'https://x.com/ptdog',
+    website: 'https://ptdog.xyz',
     marketCapSol: 35.5,
     vSolInBondingCurve: 32.1
   });
   const pumpRow = queryOne('SELECT * FROM new_pairs WHERE token_address = ?', [testMint]);
-  assert(pumpRow, 'Pump.fun event must be inserted into new_pairs');
+  assert(pumpRow, 'Pump.fun event with Twitter must be inserted into new_pairs');
   assert.strictEqual(pumpRow.source, 'pumpfun');
   assert.strictEqual(pumpRow.chain, 'solana');
   assert.strictEqual(pumpRow.status, 'latest');
   assert(pumpRow.price > 0, 'Pump price must be calculated');
   assert(pumpRow.liquidity > 0, 'Pump liquidity must be calculated');
-  console.log(`✅ Test 4: PASSED (Pump.fun token upserted with source='pumpfun', price=$${pumpRow.price.toFixed(6)})`);
+  assert.strictEqual(pumpRow.twitter_url, 'https://x.com/ptdog');
+  console.log(`✅ Test 4: PASSED (Pump.fun socials filtering verified, token upserted with price=$${pumpRow.price.toFixed(6)})`);
 
   // Test 5: StonkFun REST Ingestion & Rate Limit Handling
   console.log('Test 5: Verifying StonkFun live polling and schema mapping...');

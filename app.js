@@ -1943,11 +1943,19 @@ function renderSingleRadarRow(p, idx = 0, isNew = false) {
   `;
 }
 
+function hasRequiredSocials(p) {
+  if (!p) return false;
+  const hasTwitter = Boolean(p.twitter_url && String(p.twitter_url).trim() !== '');
+  const hasTelegram = Boolean(p.telegram_url && String(p.telegram_url).trim() !== '');
+  return hasTwitter || hasTelegram;
+}
+
 function renderRadarRows(pairs, startIdx = 0) {
-  if (!pairs || pairs.length === 0) {
+  const valid = (pairs || []).filter(hasRequiredSocials);
+  if (valid.length === 0) {
     return `<tr><td colspan="9" class="state-msg">No newly discovered pairs in this classification.</td></tr>`;
   }
-  return pairs.map((p, idx) => renderSingleRadarRow(p, startIdx + idx, false)).join('');
+  return valid.map((p, idx) => renderSingleRadarRow(p, startIdx + idx, false)).join('');
 }
 
 async function loadRadarPairs(silent = false, isManual = false) {
@@ -2030,6 +2038,7 @@ async function loadRadarPairs(silent = false, isManual = false) {
  */
 function handleLiveNewPair(p) {
   if (!p) return;
+  if (!hasRequiredSocials(p)) return;
   const { path } = parseHash();
   if (path !== '/new-pairs') return;
   if (newPairsState.page !== 1) return;

@@ -90,6 +90,15 @@ async function processTokenCreateLog(log) {
     const twitterUrl = enrich?.twitterUrl || null;
     const telegramUrl = enrich?.telegramUrl || null;
 
+    const hasTwitter = Boolean(twitterUrl && String(twitterUrl).trim() !== '');
+    const hasTelegram = Boolean(telegramUrl && String(telegramUrl).trim() !== '');
+
+    // User requirement: Must have at least Twitter or Telegram.
+    // If only website is present without telegram/twitter, or no socials, do not save to DB and do not broadcast.
+    if (!hasTwitter && !hasTelegram) {
+      return;
+    }
+
     // Get current BNB price for USD conversion
     const bnbRow = queryOne("SELECT price FROM tokens WHERE (symbol = 'BNB' OR symbol = 'WBNB') AND (chain = 'bsc' OR chain = 'binance-smart-chain')");
     const bnbPrice = (bnbRow && bnbRow.price > 0) ? bnbRow.price : 600.0;

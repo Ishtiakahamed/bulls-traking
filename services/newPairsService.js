@@ -62,22 +62,63 @@ async function discoverNewPairs() {
           : new Date().toISOString();
         const logoUrl = item.icon || null;
 
+        let websiteUrl = null;
+        let twitterUrl = null;
+        let telegramUrl = null;
+
+        if (Array.isArray(item.links)) {
+          for (const l of item.links) {
+            const lType = (l.type || '').toLowerCase();
+            if (lType === 'twitter' || l.url?.includes('twitter.com') || l.url?.includes('x.com')) twitterUrl = l.url;
+            else if (lType === 'telegram' || l.url?.includes('t.me')) telegramUrl = l.url;
+            else if (lType === 'website') websiteUrl = l.url;
+          }
+        }
+
+        if (pair.info) {
+          if (Array.isArray(pair.info.socials)) {
+            for (const s of pair.info.socials) {
+              const sType = (s.type || '').toLowerCase();
+              if (sType === 'twitter' || s.url?.includes('twitter.com') || s.url?.includes('x.com')) twitterUrl = twitterUrl || s.url;
+              else if (sType === 'telegram' || s.url?.includes('t.me')) telegramUrl = telegramUrl || s.url;
+            }
+          }
+          if (Array.isArray(pair.info.websites) && pair.info.websites[0]?.url) {
+            websiteUrl = websiteUrl || pair.info.websites[0].url;
+          }
+        }
+
+        const hasTwitter = Boolean(twitterUrl && String(twitterUrl).trim() !== '');
+        const hasTelegram = Boolean(telegramUrl && String(telegramUrl).trim() !== '');
+
+        // User requirement: Must have at least Twitter or Telegram.
+        // If only website is present without telegram/twitter, or no socials, do not save to database.
+        if (!hasTwitter && !hasTelegram) {
+          continue;
+        }
+
         execute(`
           INSERT INTO new_pairs (
             chain, pair_address, token_address, name, symbol, logo_url,
-            price, liquidity, volume_24h, txn_count_24h, pair_created_at, status, last_synced_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'latest', CURRENT_TIMESTAMP)
+            price, liquidity, volume_24h, txn_count_24h, pair_created_at,
+            status, source, website_url, twitter_url, telegram_url, last_synced_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'latest', 'dexscreener', ?, ?, ?, CURRENT_TIMESTAMP)
           ON CONFLICT(chain, pair_address) DO UPDATE SET
             price = excluded.price,
             liquidity = excluded.liquidity,
             volume_24h = excluded.volume_24h,
             txn_count_24h = excluded.txn_count_24h,
+            logo_url = COALESCE(excluded.logo_url, new_pairs.logo_url),
+            website_url = COALESCE(excluded.website_url, new_pairs.website_url),
+            twitter_url = COALESCE(excluded.twitter_url, new_pairs.twitter_url),
+            telegram_url = COALESCE(excluded.telegram_url, new_pairs.telegram_url),
             last_synced_at = CURRENT_TIMESTAMP
         `, [
           chainKey, pair.pairAddress, pair.baseToken.address,
           pair.baseToken.name || 'Discovered Token',
           pair.baseToken.symbol || 'PAIR',
-          logoUrl, price, liquidity, volume24h, txnCount, pairCreatedAt
+          logoUrl, price, liquidity, volume24h, txnCount, pairCreatedAt,
+          websiteUrl, twitterUrl, telegramUrl
         ]);
 
         discoveredPairs.push(pair.pairAddress);
@@ -277,6 +318,9 @@ function getNewPairs(options = {}) {
       params.push(chain);
     }
   }
+
+  // Mandatory filter: Must have at least Twitter or Telegram. Only website or no socials is excluded.
+  whereClauses.push("((twitter_url IS NOT NULL AND TRIM(twitter_url) != '') OR (telegram_url IS NOT NULL AND TRIM(telegram_url) != ''))");
 
   const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
@@ -735,8 +779,28 @@ function cleanupDuplicatePairs() {
   }
 }
 
+/**
+ * Remove any pairs from new_pairs table that do not have at least Twitter or Telegram.
+ * Tokens with only website or no socials are purged per user requirement.
+ */
+function cleanupInvalidSocialPairs() {
+  try {
+    const res = execute(`
+      DELETE FROM new_pairs
+      WHERE (twitter_url IS NULL OR TRIM(twitter_url) = '')
+        AND (telegram_url IS NULL OR TRIM(telegram_url) = '')
+    `);
+    if (res && res.changes > 0) {
+      console.log(`[NewPairsService] Cleaned up ${res.changes} pairs without required Twitter/Telegram links.`);
+    }
+  } catch (err) {
+    console.warn('[NewPairsService Social Cleanup Notice]', err.message);
+  }
+}
+
 seedInitialPairsIfEmpty();
 cleanupDuplicatePairs();
+cleanupInvalidSocialPairs();
 
 module.exports = {
   discoverNewPairs,
@@ -745,6 +809,7 @@ module.exports = {
   getNewPairs,
   seedInitialPairsIfEmpty,
   enrichMissingLogos,
-  cleanupDuplicatePairs
+  cleanupDuplicatePairs,
+  cleanupInvalidSocialPairs
 };
 
