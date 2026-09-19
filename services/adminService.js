@@ -65,10 +65,12 @@ function reviewSubmission(adminId, submissionId, action, note = '') {
  */
 function getAdminOrders() {
   return query(`
-    SELECT po.*, t.name AS token_name, t.symbol AS token_symbol, p.status AS payment_status_db
+    SELECT po.*, 
+           COALESCE(po.token_name, t.name) AS token_name, 
+           COALESCE(po.token_symbol, t.symbol) AS token_symbol, 
+           po.payment_status AS payment_status_db
     FROM promotion_orders po
     LEFT JOIN tokens t ON po.token_id = t.id
-    LEFT JOIN payments p ON p.order_id = po.id
     ORDER BY po.created_at DESC
   `);
 }
@@ -77,25 +79,20 @@ function getAdminOrders() {
  * Approve and activate a promotion order
  */
 function activatePromotionOrder(adminId, orderId) {
-  return transaction(() => {
-    const order = queryOne(`SELECT * FROM promotion_orders WHERE id = ?`, [orderId]);
-    if (!order) throw new Error('Order not found.');
+  const order = queryOne(`SELECT * FROM promotion_orders WHERE id = ?`, [orderId]);
+  if (!order) throw new Error('Order not found.');
 
-    execute(`
-      UPDATE promotion_orders 
-      SET order_status = 'active', payment_status = 'completed', approved_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `, [orderId]);
+  // Link with backend promotional engine to ensure token appears on live homepage & promoted page
+  const { activatePromotionFromOrder } = require('../backend/services/promotionService');
+  const manualTx = `TG_CLEAR_${orderId}_${Date.now()}`;
+  const promoResult = activatePromotionFromOrder(orderId, manualTx);
 
-    execute(`UPDATE payments SET status = 'completed', paid_at = CURRENT_TIMESTAMP WHERE order_id = ?`, [orderId]);
+  execute(`
+    INSERT INTO admin_logs (admin_id, action, entity_type, entity_id, old_value, new_value)
+    VALUES (?, 'PROMOTION_ORDER_ACTIVATED', 'promotion_orders', ?, ?, 'active')
+  `, [adminId, orderId, order.order_status]);
 
-    execute(`
-      INSERT INTO admin_logs (admin_id, action, entity_type, entity_id, old_value, new_value)
-      VALUES (?, 'PROMOTION_ORDER_ACTIVATED', 'promotion_orders', ?, ?, 'active')
-    `, [adminId, orderId, order.order_status]);
-
-    return { success: true, orderId };
-  });
+  return { success: true, orderId, ...promoResult };
 }
 
 /**

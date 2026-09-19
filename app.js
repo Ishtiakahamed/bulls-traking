@@ -1090,50 +1090,79 @@ async function renderPromotePage() {
               </div>
             </div>
 
-            <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">4. Payment Method</h3>
-            <div style="display:flex;gap:12px;margin-bottom:1.5rem;">
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
-                <input type="radio" name="payMethod" value="direct_onchain" checked>
-                <span><b>Direct On-Chain Transfer (USDT / SOL)</b> — Instant Auto-Verification (0% Fee)</span>
-              </label>
+            <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">4. Payment & Activation</h3>
+            <div style="background:rgba(0,136,204,0.08);border:1px solid rgba(0,136,204,0.25);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:1.6rem;line-height:1;">✈</span>
+                <div>
+                  <div style="color:var(--ink);font-size:13px;font-weight:700;">Official Telegram Ad Desk: <a href="https://t.me/bullclub_ads" target="_blank" style="color:#0088cc;text-decoration:underline;">@bullclub_ads</a></div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+                    Fast direct clearance via official Telegram desk. Accepted: USDT (BEP20 / TRC20 / ERC20), SOL, BNB or On-Chain.
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:12px;font-size:15px;cursor:pointer;">
-              Continue to Instant Payment ($499 USDT) →
+            <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:14px;font-size:15px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;">
+              <span>✈ Book via Telegram @bullclub_ads ($499 USDT) →</span>
             </button>
           </form>
 
-          <!-- ORDER PAYMENT MODAL / AREA (HIDDEN INITIALLY) -->
+          <!-- ORDER PAYMENT / TELEGRAM CLEARANCE MODAL -->
           <div id="paymentArea" style="display:none;margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.5rem;">
-            <div style="background:rgba(127,184,120,0.06);border:1px solid rgba(127,184,120,0.25);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <span style="font-size:12px;color:var(--text-muted);">ORDER #<span id="dispOrderId"></span></span>
-                <span style="background:rgba(245,166,35,0.15);color:var(--gold);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600;" id="dispOrderStatus">Awaiting Payment</span>
+            <div style="background:rgba(0,136,204,0.06);border:1px solid rgba(0,136,204,0.3);border-radius:10px;padding:1.4rem;margin-bottom:1rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+                <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">PROMOTION ORDER <span id="dispOrderId" style="color:#0088cc;">#BT-1000</span></span>
+                <span style="background:rgba(245,166,35,0.15);color:var(--gold);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;" id="dispOrderStatus">Awaiting Payment Clearance</span>
               </div>
-              <div style="font-size:1.4rem;font-weight:800;color:var(--ink);margin-bottom:4px;">
-                Send <span style="color:var(--up);" id="dispAmount">$499 USDT</span>
+              <div style="font-size:1.5rem;font-weight:800;color:var(--ink);margin-bottom:6px;">
+                Amount: <span style="color:var(--up);" id="dispAmount">$499 USDT</span>
               </div>
-              <p style="font-size:12px;color:var(--text-muted);margin:0 0 10px;">
-                Send the exact amount in <b>BEP-20 USDT (BNB Chain)</b> or <b>Solana</b> to the platform treasury address below:
+              <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px;line-height:1.5;">
+                Your order is reserved in our system! Contact our official Telegram desk <b>@bullclub_ads</b> with your order details for instant clearance and launch.
               </p>
 
-              <label style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">Platform Treasury Address:</label>
-              <div class="deposit-address-box">
-                <span id="dispTreasuryAddr">0x71C568630A7EbC4B2b122E1a22114777d1303b71</span>
-                <button type="button" class="copy-btn" id="btnCopyTreasury" onclick="copyTreasuryAddress()">Copy 📋</button>
-              </div>
-
-              <!-- TxHash Verification Form -->
-              <div style="margin-top:1.25rem;">
-                <label for="inputTxHash" style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Paste Transaction Hash (TxHash):</label>
-                <div style="display:flex;gap:8px;">
-                  <input type="text" id="inputTxHash" placeholder="e.g. 0xabcd1234... or Solana signature" style="flex:1;padding:8px 12px;font-family:monospace;font-size:12px;background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:4px;">
-                  <button type="button" id="btnVerifyTx" class="btn-solid" onclick="verifyAndActivateOrder()" style="padding:8px 16px;white-space:nowrap;">
-                    🚀 Verify & Activate Now
+              <!-- Telegram Primary Card -->
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.15rem;margin-bottom:1rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                  <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">1. Connect on Telegram</span>
+                  <span style="font-size:12px;color:#0088cc;font-weight:600;">@bullclub_ads</span>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                  <a id="btnOpenTgChat" href="https://t.me/bullclub_ads" target="_blank" class="btn-solid" style="background:#0088cc;border-color:#0088cc;padding:10px 18px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
+                    <span>✈ Open Chat with @bullclub_ads</span>
+                  </a>
+                  <button type="button" class="btn-subtle" onclick="copyOrderMessage()" style="padding:10px 14px;font-size:13px;cursor:pointer;">
+                    📋 Copy Order Message
                   </button>
                 </div>
-                <div id="verifyStatusMsg" style="margin-top:8px;font-size:12px;"></div>
+                <label style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">Pre-formatted Message for Admin:</label>
+                <textarea id="tgMessageText" readonly style="width:100%;height:105px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:11px;color:var(--ink);resize:none;box-sizing:border-box;"></textarea>
               </div>
+
+              <!-- Direct On-Chain Fallback Box -->
+              <details style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;">
+                <summary style="cursor:pointer;font-weight:600;color:var(--text-muted);">
+                  Or Pay Directly On-Chain via Treasury & Verify TxHash ▼
+                </summary>
+                <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+                  <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px;">
+                    Send USDT (BEP-20 / Solana) to platform treasury address below:
+                  </p>
+                  <label style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">Platform Treasury Address:</label>
+                  <div class="deposit-address-box" style="margin-bottom:10px;">
+                    <span id="dispTreasuryAddr">0x71C568630A7EbC4B2b122E1a22114777d1303b71</span>
+                    <button type="button" class="copy-btn" id="btnCopyTreasury" onclick="copyTreasuryAddress()">Copy 📋</button>
+                  </div>
+                  <div style="display:flex;gap:8px;">
+                    <input type="text" id="inputTxHash" placeholder="Paste TxHash or signature" style="flex:1;padding:8px 12px;font-family:monospace;font-size:12px;background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:4px;">
+                    <button type="button" id="btnVerifyTx" class="btn-solid" onclick="verifyAndActivateOrder()" style="padding:8px 14px;white-space:nowrap;font-size:12px;">
+                      Verify TxHash
+                    </button>
+                  </div>
+                  <div id="verifyStatusMsg" style="margin-top:8px;font-size:12px;"></div>
+                </div>
+              </details>
             </div>
           </div>
         </div>
@@ -1250,7 +1279,7 @@ function initPromotePreviewHandlers() {
       promoteOrderState.price = Number(card.dataset.price);
       promoteOrderState.days = Number(card.dataset.days);
       if (btnCreateOrder) {
-        btnCreateOrder.textContent = `Continue to Instant Payment ($${promoteOrderState.price} USDT) →`;
+        btnCreateOrder.innerHTML = `<span>✈ Book via Telegram @bullclub_ads ($${promoteOrderState.price} USDT) →</span>`;
       }
       const dispAmount = document.getElementById('dispAmount');
       if (dispAmount) dispAmount.textContent = `$${promoteOrderState.price} USDT`;
@@ -1279,7 +1308,7 @@ async function submitPromotionOrder() {
       packageKey: promoteOrderState.selectedPkg,
       price: promoteOrderState.price,
       durationDays: promoteOrderState.days,
-      paymentMethod: 'direct_onchain'
+      paymentMethod: 'telegram_manual'
     };
 
     const res = await fetchApi('/promotions/orders', {
@@ -1294,14 +1323,30 @@ async function submitPromotionOrder() {
     const paymentArea = document.getElementById('paymentArea');
     if (paymentArea) paymentArea.style.display = 'block';
 
-    document.getElementById('dispOrderId').textContent = res.orderId;
-    document.getElementById('dispAmount').textContent = `$${res.price} USDT`;
+    const orderNum = `#BT-${res.orderId}`;
+    const dispOrderId = document.getElementById('dispOrderId');
+    if (dispOrderId) dispOrderId.textContent = orderNum;
     
+    const dispAmount = document.getElementById('dispAmount');
+    if (dispAmount) dispAmount.textContent = `$${res.price} USDT`;
+
+    // Construct Telegram direct message
+    const tgMessage = `Hello Admin (@bullclub_ads)! I want to book promotion for my token on Bulls Traking:\n\n• Order ID: ${orderNum}\n• Token: ${payload.tokenName} (${payload.tokenSymbol})\n• Chain: ${payload.chain.toUpperCase()}\n• Contract: ${payload.contractAddress}\n• Package: ${promoteOrderState.selectedPkg} (${promoteOrderState.days} Days - $${res.price} USDT)\n\nPlease provide your payment address to clear this order.`;
+
+    const tgMessageText = document.getElementById('tgMessageText');
+    if (tgMessageText) tgMessageText.value = tgMessage;
+
+    const btnOpenTg = document.getElementById('btnOpenTgChat');
+    if (btnOpenTg) {
+      btnOpenTg.href = `https://t.me/bullclub_ads?text=${encodeURIComponent(tgMessage)}`;
+    }
+
     // Set treasury address based on chain
     const treasuryMap = res.treasuryAddresses || {};
     const chainKey = payload.chain === 'solana' ? 'solana' : 'bsc';
     const chosenTreasury = treasuryMap[chainKey] || treasuryMap.bsc || '0x71C568630A7EbC4B2b122E1a22114777d1303b71';
-    document.getElementById('dispTreasuryAddr').textContent = chosenTreasury;
+    const dispTreasury = document.getElementById('dispTreasuryAddr');
+    if (dispTreasury) dispTreasury.textContent = chosenTreasury;
 
     if (btn) {
       btn.style.display = 'none';
@@ -1313,9 +1358,19 @@ async function submitPromotionOrder() {
     alert('Error creating order: ' + err.message);
     if (btn) {
       btn.disabled = false;
-      btn.textContent = `Continue to Instant Payment ($${promoteOrderState.price} USDT) →`;
+      btn.innerHTML = `<span>✈ Book via Telegram @bullclub_ads ($${promoteOrderState.price} USDT) →</span>`;
     }
   }
+}
+
+function copyOrderMessage() {
+  const text = document.getElementById('tgMessageText')?.value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Order details copied to clipboard! Send this message to @bullclub_ads on Telegram.');
+  }).catch(() => {
+    prompt('Copy order details:', text);
+  });
 }
 
 function copyTreasuryAddress() {
@@ -1401,6 +1456,289 @@ async function verifyAndActivateOrder() {
     }
   }
 }
+
+/* ---------------- 6b. ADMIN PORTAL VIEW (/admin) ---------------- */
+
+let adminPortalState = {
+  key: sessionStorage.getItem('bt_admin_key') || '',
+  orders: []
+};
+
+async function renderAdminPage() {
+  document.title = 'Admin Portal | Bulls Traking';
+  
+  if (!adminPortalState.key) {
+    renderAdminLogin();
+    return;
+  }
+
+  await loadAdminDashboard();
+}
+
+function renderAdminLogin(errorMsg = '') {
+  app.innerHTML = `
+    <div style="max-width:440px;margin:3.5rem auto;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;box-shadow:0 8px 32px rgba(0,0,0,0.35);">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <span style="font-size:2.6rem;">🛡️</span>
+        <h2 style="font-family:var(--display);margin:0.5rem 0 0.25rem;font-size:1.6rem;color:var(--ink);">Bulls Traking Admin</h2>
+        <p style="font-size:13px;color:var(--text-muted);margin:0;">Promotion Clearance & Ad Activation Console</p>
+      </div>
+
+      ${errorMsg ? `<div style="background:rgba(235,87,87,0.12);color:var(--down);border:1px solid rgba(235,87,87,0.3);padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:1rem;text-align:center;">${escapeHtml(errorMsg)}</div>` : ''}
+
+      <form id="adminLoginForm" onsubmit="event.preventDefault(); handleAdminLogin();">
+        <div class="field" style="margin-bottom:1.25rem;">
+          <label for="adminKeyInput" style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--ink);">Admin Secret Key</label>
+          <input type="password" id="adminKeyInput" placeholder="Enter admin key (e.g. bulltrack2026)" required style="width:100%;padding:10px 12px;font-size:14px;background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:6px;box-sizing:border-box;">
+        </div>
+
+        <button type="submit" id="btnAdminLogin" class="btn-solid" style="width:100%;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">
+          Enter Admin Portal →
+        </button>
+      </form>
+    </div>
+  `;
+}
+
+async function handleAdminLogin() {
+  const input = document.getElementById('adminKeyInput');
+  const btn = document.getElementById('btnAdminLogin');
+  const key = input?.value.trim();
+  if (!key) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Verifying…'; }
+
+  try {
+    const res = await fetchApi('/admin/orders', {
+      headers: { 'x-admin-key': key }
+    });
+    if (res.success) {
+      adminPortalState.key = key;
+      sessionStorage.setItem('bt_admin_key', key);
+      await loadAdminDashboard();
+    } else {
+      throw new Error(res.error || 'Authentication failed');
+    }
+  } catch (err) {
+    renderAdminLogin('Invalid Admin Key. Access denied.');
+  }
+}
+
+function handleAdminLogout() {
+  adminPortalState.key = '';
+  sessionStorage.removeItem('bt_admin_key');
+  renderAdminLogin();
+}
+
+async function loadAdminDashboard() {
+  app.innerHTML = `
+    <div style="max-width:1180px;margin:2rem auto;padding:0 1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;">
+        <div>
+          <span style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px;">ADMINISTRATION CONSOLE</span>
+          <h1 style="font-family:var(--display);margin:4px 0 0;font-size:1.8rem;color:var(--ink);">Promotion Orders & Ad Management</h1>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <a href="https://t.me/bullclub_ads" target="_blank" class="btn-subtle" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:8px 14px;text-decoration:none;">
+            <span>✈ @bullclub_ads</span>
+          </a>
+          <button type="button" class="btn-subtle" onclick="loadAdminDashboard()" style="padding:8px 14px;font-size:13px;cursor:pointer;">
+            🔄 Refresh
+          </button>
+          <button type="button" class="btn-ghost" onclick="handleAdminLogout()" style="padding:8px 14px;font-size:13px;cursor:pointer;color:var(--down);">
+            🔒 Logout
+          </button>
+        </div>
+      </div>
+
+      <div id="adminNoticeArea"></div>
+
+      <!-- STATS OVERVIEW CARDS -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:1.5rem;" id="adminStatsArea">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.2rem;">
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Total Orders</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--ink);margin-top:4px;" id="statTotalOrders">—</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.2rem;">
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Pending Clearance</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--gold);margin-top:4px;" id="statPendingOrders">—</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.2rem;">
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Active Running Ads</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--up);margin-top:4px;" id="statActiveAds">—</div>
+        </div>
+      </div>
+
+      <!-- ORDERS TABLE -->
+      <div class="table-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow-x:auto;">
+        <table class="data-table" style="width:100%;border-collapse:collapse;" id="adminOrdersTable">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);text-align:left;font-size:12px;color:var(--text-muted);">
+              <th style="padding:12px;">ORDER #</th>
+              <th style="padding:12px;">TOKEN</th>
+              <th style="padding:12px;">CHAIN / CA</th>
+              <th style="padding:12px;">PACKAGE</th>
+              <th style="padding:12px;">PRICE</th>
+              <th style="padding:12px;">DATE</th>
+              <th style="padding:12px;">STATUS</th>
+              <th style="padding:12px;text-align:right;">ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="adminOrdersBody">
+            <tr><td colspan="8" style="padding:2rem;text-align:center;color:var(--text-muted);">Loading orders…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  try {
+    const res = await fetchApi('/admin/orders', {
+      headers: { 'x-admin-key': adminPortalState.key }
+    });
+
+    const orders = res.data || [];
+    adminPortalState.orders = orders;
+
+    const total = orders.length;
+    const pending = orders.filter(o => o.order_status !== 'active' && o.payment_status !== 'paid').length;
+    const active = orders.filter(o => o.order_status === 'active').length;
+
+    const elTotal = document.getElementById('statTotalOrders');
+    const elPending = document.getElementById('statPendingOrders');
+    const elActive = document.getElementById('statActiveAds');
+    if (elTotal) elTotal.textContent = total;
+    if (elPending) elPending.textContent = pending;
+    if (elActive) elActive.textContent = active;
+
+    const tbody = document.getElementById('adminOrdersBody');
+    if (!tbody) return;
+
+    if (orders.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:2rem;text-align:center;color:var(--text-muted);">No promotion orders found.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = orders.map(order => {
+      const isLive = order.order_status === 'active';
+      const logo = order.logo_url || 'assets/logo-transparent.png';
+      const tokenName = order.token_name || 'Unknown';
+      const tokenSymbol = order.token_symbol || 'TOKEN';
+      const chain = (order.chain || 'bsc').toUpperCase();
+      const ca = order.contract_address || '';
+      const caTrunc = ca ? `${ca.slice(0, 6)}...${ca.slice(-4)}` : 'N/A';
+      const pkg = order.package_name || `${order.duration_days || 7} Days`;
+      const price = `$${order.price || 0}`;
+      const dateStr = fmtAge(order.created_at);
+
+      let statusBadge = '';
+      if (isLive) {
+        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(127,184,120,0.2);color:var(--up);border:1px solid rgba(127,184,120,0.4);">🟢 ACTIVE LIVE</span>`;
+      } else if (order.payment_status === 'paid') {
+        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(0,136,204,0.2);color:#0088cc;border:1px solid rgba(0,136,204,0.4);">🔵 PAID</span>`;
+      } else {
+        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(245,166,35,0.15);color:var(--gold);border:1px solid rgba(245,166,35,0.3);">⏳ PENDING</span>`;
+      }
+
+      let actionBtn = '';
+      if (isLive) {
+        actionBtn = `
+          <a href="/#/promoted" target="_blank" class="btn-ghost" style="padding:6px 12px;font-size:12px;text-decoration:none;">
+            View Ad ↗
+          </a>
+        `;
+      } else {
+        actionBtn = `
+          <button type="button" class="btn-solid" onclick="activateOrderAdmin(${order.id})" id="btnActOrder_${order.id}" style="padding:6px 12px;font-size:12px;background:var(--up);border-color:var(--up);color:#15130e;font-weight:700;cursor:pointer;">
+            ⚡ Approve & Run Ad
+          </button>
+        `;
+      }
+
+      return `
+        <tr style="border-bottom:1px solid var(--border);font-size:13px;" id="orderRow_${order.id}">
+          <td style="padding:12px;font-weight:700;color:var(--ink);">#BT-${order.id}</td>
+          <td style="padding:12px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <img src="${escapeHtml(logo)}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" onerror="this.onerror=null; this.src='assets/logo-transparent.png';">
+              <div>
+                <div style="font-weight:700;color:var(--ink);">${escapeHtml(tokenName)}</div>
+                <div style="font-size:11px;color:var(--text-muted);">${escapeHtml(tokenSymbol)}</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:12px;">
+            <span style="font-size:11px;font-weight:700;color:var(--text-muted);">${escapeHtml(chain)}</span><br>
+            <span style="font-family:monospace;font-size:11px;color:var(--text-faint);" title="${escapeHtml(ca)}">${escapeHtml(caTrunc)}</span>
+          </td>
+          <td style="padding:12px;color:var(--ink);font-weight:600;">${escapeHtml(pkg)}</td>
+          <td style="padding:12px;font-weight:800;color:var(--up);">${price}</td>
+          <td style="padding:12px;color:var(--text-muted);font-size:12px;">${dateStr}</td>
+          <td style="padding:12px;">${statusBadge}</td>
+          <td style="padding:12px;text-align:right;">${actionBtn}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    const tbody = document.getElementById('adminOrdersBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:2rem;text-align:center;color:var(--down);">Failed to load orders: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+}
+
+async function activateOrderAdmin(orderId) {
+  if (!confirm(`Are you sure you want to approve Order #BT-${orderId} and start running the promotion ad now?`)) {
+    return;
+  }
+
+  const btn = document.getElementById(`btnActOrder_${orderId}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Activating…';
+  }
+
+  try {
+    const res = await fetchApi(`/admin/orders/${orderId}/activate`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-admin-key': adminPortalState.key 
+      }
+    });
+
+    if (res.success) {
+      const noticeArea = document.getElementById('adminNoticeArea');
+      if (noticeArea) {
+        noticeArea.innerHTML = `
+          <div style="background:rgba(127,184,120,0.15);color:var(--up);border:1px solid rgba(127,184,120,0.3);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+            <span>🎉 <b>Order #BT-${orderId} Activated!</b> Token is now running live on homepage carousel, spotlight grid, and promoted section.</span>
+            <a href="/#/promoted" target="_blank" style="color:var(--up);font-weight:700;margin-left:12px;">View Promoted Section →</a>
+          </div>
+        `;
+      }
+      await loadAdminDashboard();
+    } else {
+      throw new Error(res.error || 'Activation failed');
+    }
+  } catch (err) {
+    alert(`Failed to activate order: ${err.message}`);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Approve & Run Ad';
+    }
+  }
+}
+
+// Expose admin and promotion helper functions globally
+window.copyOrderMessage = copyOrderMessage;
+window.copyTreasuryAddress = copyTreasuryAddress;
+window.verifyAndActivateOrder = verifyAndActivateOrder;
+window.renderAdminPage = renderAdminPage;
+window.handleAdminLogin = handleAdminLogin;
+window.handleAdminLogout = handleAdminLogout;
+window.loadAdminDashboard = loadAdminDashboard;
+window.activateOrderAdmin = activateOrderAdmin;
 
 /* ---------------- 7a. CONTRACT SCANNER VIEW (/scan) (Phase 2 Task 1) ---------------- */
 
@@ -2337,6 +2675,8 @@ function route() {
     renderPromotedPage();
   } else if (path === '/promote') {
     renderPromotePage();
+  } else if (path === '/admin') {
+    renderAdminPage();
   } else if (path === '/presales') {
     renderPresales();
   } else if (path === '/submit') {

@@ -138,6 +138,19 @@ function initDatabase() {
       );
       CREATE INDEX IF NOT EXISTS idx_signals_posted ON signals(posted_at);
       CREATE INDEX IF NOT EXISTS idx_signals_direction ON signals(direction);
+
+      CREATE TABLE IF NOT EXISTS admin_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        admin_id VARCHAR(100) NOT NULL,
+        action VARCHAR(100) NOT NULL,
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id INTEGER NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        ip_address VARCHAR(45),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_admin_logs_created ON admin_logs(created_at);
     `);
 
     // Migration for existing new_pairs tables
