@@ -1035,9 +1035,47 @@ async function renderPromotePage() {
               </div>
             </div>
 
-            <div class="field">
-              <label for="pLogo">Token Logo URL * <span style="font-size:11px;color:var(--text-faint);font-weight:normal;">(Square 1:1, 256x256 or 512x512 PNG/WebP/SVG)</span></label>
-              <input type="url" id="pLogo" placeholder="https://yourdomain.com/logo.png" required>
+            <div class="field" style="margin-bottom:1.5rem;">
+              <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span style="font-weight:600;font-size:13px;color:var(--ink);">Token Logo *</span>
+                <span style="font-size:11px;color:var(--text-faint);">Square 1:1 (PNG, WebP, JPG or SVG)</span>
+              </label>
+
+              <!-- Upload Dropzone Card -->
+              <div id="logoUploadDropzone" style="border:2px dashed var(--border);border-radius:10px;padding:1.25rem;text-align:center;background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s ease;" onclick="document.getElementById('pLogoFileInput').click()">
+                <input type="file" id="pLogoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;" onchange="handleLogoFileUpload(event)">
+                
+                <div id="logoUploadPlaceholder">
+                  <div style="font-size:2rem;margin-bottom:4px;">🖼️</div>
+                  <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;">
+                    Click to Upload Token Logo File <span style="color:var(--gold);">or Drag & Drop</span>
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted);">
+                    Supports PNG, JPG, WebP, SVG up to 5MB
+                  </div>
+                </div>
+
+                <!-- Active Uploaded Thumbnail & Info (Hidden Initially) -->
+                <div id="logoUploadPreviewWrap" style="display:none;align-items:center;justify-content:center;gap:12px;">
+                  <img id="logoUploadThumb" src="" alt="Logo preview" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);box-shadow:0 0 10px rgba(245,166,35,0.3);">
+                  <div style="text-align:left;">
+                    <div id="logoUploadFileName" style="font-size:13px;font-weight:700;color:var(--ink);">logo.png</div>
+                    <div style="font-size:11px;color:var(--up);font-weight:600;">✓ Logo Selected & Ready <span style="color:var(--text-muted);font-weight:normal;margin-left:6px;text-decoration:underline;cursor:pointer;">(Change file)</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Or enter URL toggle -->
+              <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+                <button type="button" class="btn-ghost" onclick="toggleLogoUrlField()" style="font-size:11px;padding:2px 6px;text-decoration:underline;cursor:pointer;border:none;background:none;color:var(--text-muted);">
+                  🔗 Or enter Image URL manually
+                </button>
+                <span id="logoUploadStatus" style="font-size:11px;color:var(--text-muted);"></span>
+              </div>
+
+              <div id="logoUrlFieldWrap" style="display:none;margin-top:8px;">
+                <input type="text" id="pLogo" placeholder="https://yourdomain.com/logo.png or uploaded image URL" style="font-size:12px;width:100%;box-sizing:border-box;">
+              </div>
             </div>
 
             <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">2. Social Links <span style="font-size:11px;color:var(--text-faint);font-weight:normal;">(Optional — only provided links will display icons)</span></h3>
@@ -1269,6 +1307,34 @@ function initPromotePreviewHandlers() {
     if (el) el.addEventListener('input', updatePreview);
   });
 
+  // Logo upload dropzone drag & drop support
+  const dropzone = document.getElementById('logoUploadDropzone');
+  if (dropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.style.borderColor = 'var(--gold)';
+        dropzone.style.background = 'rgba(245,166,35,0.08)';
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.style.borderColor = 'var(--border)';
+        dropzone.style.background = 'rgba(255,255,255,0.02)';
+      }, false);
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const file = dt?.files?.[0];
+      if (file) processLogoFile(file);
+    }, false);
+  }
+
   // Package selector click handler
   const cards = document.querySelectorAll('#pkgSelector .package-card');
   cards.forEach(card => {
@@ -1287,8 +1353,88 @@ function initPromotePreviewHandlers() {
   });
 }
 
+function handleLogoFileUpload(e) {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+  processLogoFile(file);
+}
+
+function processLogoFile(file) {
+  if (!file.type.startsWith('image/')) {
+    alert('Please select a valid image file (PNG, JPG, WebP, SVG).');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Image size exceeds 5MB limit. Please choose a smaller image.');
+    return;
+  }
+
+  const reader = new FileReader();
+  const statusEl = document.getElementById('logoUploadStatus');
+  if (statusEl) statusEl.textContent = 'Processing image…';
+
+  reader.onload = async function(evt) {
+    const dataUrl = evt.target.result;
+    
+    // Update local preview thumbnail & info
+    const thumb = document.getElementById('logoUploadThumb');
+    const placeholder = document.getElementById('logoUploadPlaceholder');
+    const previewWrap = document.getElementById('logoUploadPreviewWrap');
+    const fileNameEl = document.getElementById('logoUploadFileName');
+    const prevLogo = document.getElementById('prevLogo');
+    const pLogoInput = document.getElementById('pLogo');
+
+    if (thumb) thumb.src = dataUrl;
+    if (placeholder) placeholder.style.display = 'none';
+    if (previewWrap) previewWrap.style.display = 'flex';
+    if (fileNameEl) fileNameEl.textContent = file.name;
+    if (prevLogo) prevLogo.src = dataUrl;
+    if (pLogoInput) pLogoInput.value = dataUrl;
+
+    if (statusEl) statusEl.textContent = 'Uploading to server…';
+
+    try {
+      const res = await fetchApi('/upload-logo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: dataUrl,
+          filename: file.name
+        })
+      });
+
+      if (res.success && res.url) {
+        if (pLogoInput) pLogoInput.value = res.url;
+        if (statusEl) statusEl.innerHTML = '<span style="color:var(--up);">✓ Uploaded</span>';
+      }
+    } catch (err) {
+      console.warn('[Logo Upload Notice] Stored as data URL:', err.message);
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--up);">✓ Ready</span>';
+    }
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function toggleLogoUrlField() {
+  const wrap = document.getElementById('logoUrlFieldWrap');
+  if (wrap) {
+    wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+    if (wrap.style.display === 'block') {
+      document.getElementById('pLogo')?.focus();
+    }
+  }
+}
+
 async function submitPromotionOrder() {
   const btn = document.getElementById('btnCreateOrder');
+  const logoVal = document.getElementById('pLogo')?.value.trim();
+
+  if (!logoVal) {
+    alert('Please upload a token logo image or provide a logo URL.');
+    return;
+  }
+
   if (btn) {
     btn.disabled = true;
     btn.textContent = 'Generating Secure Order…';
@@ -1300,7 +1446,7 @@ async function submitPromotionOrder() {
       tokenSymbol: document.getElementById('pSymbol').value.trim().toUpperCase(),
       chain: document.getElementById('pChain').value,
       contractAddress: document.getElementById('pContract').value.trim(),
-      logoUrl: document.getElementById('pLogo').value.trim(),
+      logoUrl: logoVal,
       websiteUrl: document.getElementById('pWeb').value.trim() || null,
       xUrl: document.getElementById('pX').value.trim() || null,
       telegramUrl: document.getElementById('pTg').value.trim() || null,
@@ -1782,6 +1928,8 @@ window.handleAdminLogout = handleAdminLogout;
 window.loadAdminDashboard = loadAdminDashboard;
 window.activateOrderAdmin = activateOrderAdmin;
 window.deleteOrderAdmin = deleteOrderAdmin;
+window.handleLogoFileUpload = handleLogoFileUpload;
+window.toggleLogoUrlField = toggleLogoUrlField;
 
 /* ---------------- 7a. CONTRACT SCANNER VIEW (/scan) (Phase 2 Task 1) ---------------- */
 
