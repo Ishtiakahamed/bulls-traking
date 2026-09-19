@@ -1489,7 +1489,7 @@ function renderAdminLogin(errorMsg = '') {
       <form id="adminLoginForm" onsubmit="event.preventDefault(); handleAdminLogin();">
         <div class="field" style="margin-bottom:1.25rem;">
           <label for="adminKeyInput" style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--ink);">Admin Secret Key</label>
-          <input type="password" id="adminKeyInput" placeholder="Enter admin key (e.g. bulltrack2026)" required style="width:100%;padding:10px 12px;font-size:14px;background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:6px;box-sizing:border-box;">
+          <input type="password" id="adminKeyInput" placeholder="Enter admin secret password" required style="width:100%;padding:10px 12px;font-size:14px;background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:6px;box-sizing:border-box;">
         </div>
 
         <button type="submit" id="btnAdminLogin" class="btn-solid" style="width:100%;padding:12px;font-size:14px;font-weight:700;cursor:pointer;">
