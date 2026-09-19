@@ -26,6 +26,10 @@
   --panel: var(--bg-panel);
   --panel-raised: var(--bg-panel-raised);
   --panel-hover: #262118;
+  --surface: var(--bg-panel);
+  --surface-hover: var(--bg-panel-raised);
+  --border: var(--line);
+  --accent: var(--gold);
   --line-light: var(--line);
   --card-bg: var(--bg-panel);
   --text: var(--ink);
@@ -82,8 +86,79 @@ button {
   cursor: pointer;
 }
 
-input, select, textarea {
+/* Universal Form Controls Theming (Trading Floor Ledger Dark Theme) */
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
   font-family: var(--font-body);
+  font-size: 13.5px;
+  background-color: var(--bg-page) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-lg, 4px);
+  padding: 0.65rem 0.85rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  line-height: 1.4;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 2px rgba(242, 169, 59, 0.2);
+}
+
+select {
+  cursor: pointer;
+}
+
+select option {
+  background-color: #1C1912 !important;
+  color: #F3EEE1 !important;
+}
+
+::placeholder {
+  color: var(--ink-faint) !important;
+  opacity: 0.85;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-group label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.02em;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 ::selection {
@@ -1597,16 +1672,37 @@ tbody tr:hover {
   max-width: 1080px;
   margin: 0 auto;
   padding: 1.5rem 0 3rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 .promote-grid-layout {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 2rem;
   align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+.promote-col-form,
+.promote-col-preview {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+.promote-form {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 @media (max-width: 900px) {
   .promote-grid-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
   }
 }
 .package-selector {
@@ -2504,37 +2600,83 @@ tbody tr:hover {
 
   /* Promote Page Mobile Layout */
   .promote-container {
-    padding: 0.5rem 0 2rem !important;
+    padding: 0.5rem 0.35rem 2rem !important;
     width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
   .promote-grid-layout {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 1.25rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
-  #promoteForm {
-    padding: 1.1rem 0.85rem !important;
+  .promote-col-form,
+  .promote-col-preview,
+  .promote-grid-layout > div {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  #promoteForm,
+  .promote-form {
+    padding: 1rem 0.75rem !important;
     border-radius: 8px !important;
     box-sizing: border-box !important;
     width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--line) !important;
   }
   .package-selector {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .package-card {
-    padding: 10px 6px !important;
+    padding: 10px 4px !important;
     text-align: center !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
   }
   .package-card .pkg-badge {
     font-size: 8px !important;
     padding: 1px 5px !important;
   }
-  #btnCreateOrder, #btnOpenTgChat, button[onclick="copyOrderMessage()"] {
+  #logoUploadDropzone {
     width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 1rem 0.5rem !important;
+    border: 2px dashed var(--line) !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+  }
+  #logoUploadPlaceholder div {
+    word-break: break-word !important;
+    max-width: 100% !important;
+  }
+  #btnCreateOrder,
+  #btnOpenTgChat,
+  button[onclick="copyOrderMessage()"] {
+    width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
     justify-content: center !important;
     text-align: center !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.35 !important;
+  }
+  #btnCreateOrder span {
+    white-space: normal !important;
+    word-break: break-word !important;
   }
 
   /* Submit Token Page Mobile Layout */
@@ -2543,18 +2685,45 @@ tbody tr:hover {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
   }
-  .field-row, .form-grid {
-    grid-template-columns: 1fr !important;
+  .field-row,
+  .form-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 0.75rem !important;
-  }
-  .field input, .field select, .field textarea,
-  .form-group input, .form-group select, .form-group textarea,
-  input[type="text"], input[type="url"], input[type="email"], select, textarea {
-    font-size: 16px !important;
-    min-height: 42px !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+  }
+  .field,
+  .form-group {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .field input,
+  .field select,
+  .field textarea,
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  input[type="text"],
+  input[type="url"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+    min-height: 44px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    background-color: var(--bg-page) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 6px !important;
+    padding: 0.65rem 0.85rem !important;
   }
   .submit-btn {
     width: 100% !important;

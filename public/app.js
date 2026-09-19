@@ -1004,8 +1004,8 @@ async function renderPromotePage() {
 
       <div class="promote-grid-layout">
         <!-- FORM COLUMN -->
-        <div>
-          <form id="promoteForm" onsubmit="event.preventDefault(); submitPromotionOrder();" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.75rem;">
+        <div class="promote-col-form">
+          <form id="promoteForm" class="promote-form" onsubmit="event.preventDefault(); submitPromotionOrder();">
             
             <h3 style="margin:0 0 1rem;font-size:1.1rem;color:var(--ink);">1. Token Information</h3>
             <div class="form-grid">
@@ -1136,8 +1136,8 @@ async function renderPromotePage() {
               </div>
             </div>
 
-            <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:14px;font-size:15px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;">
-              <span>✈ Book via Telegram @bullclub_ads ($149 USDT) →</span>
+            <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:13px 12px;font-size:14px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;white-space:normal;text-align:center;box-sizing:border-box;">
+              <span style="white-space:normal;word-break:break-word;">✈ Book via Telegram @bullclub_ads ($149 USDT) →</span>
             </button>
           </form>
 
@@ -1182,7 +1182,7 @@ async function renderPromotePage() {
         </div>
 
         <!-- PREVIEW COLUMN -->
-        <div>
+        <div class="promote-col-preview">
           <div style="position:sticky;top:20px;">
             <h3 style="margin:0 0 .75rem;font-size:1.05rem;color:var(--ink);">Live Promoted Card Preview</h3>
             <p style="font-size:12px;color:var(--text-muted);margin:0 0 1rem;">This is how your promoted token will look on the homepage.</p>
