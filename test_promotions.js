@@ -32,10 +32,10 @@ async function runTests() {
 
   // 2. Test Packages and Deposit Wallets
   console.log('[Test 2] Packages and Payment Configurations');
-  assert.strictEqual(PROMOTION_PACKAGES['1D'].price, 99);
-  assert.strictEqual(PROMOTION_PACKAGES['3D'].price, 249);
-  assert.strictEqual(PROMOTION_PACKAGES['7D'].price, 499);
-  assert.strictEqual(PROMOTION_PACKAGES['30D'].price, 1499);
+  assert.strictEqual(PROMOTION_PACKAGES['12H'].price, 39);
+  assert.strictEqual(PROMOTION_PACKAGES['1D'].price, 59);
+  assert.strictEqual(PROMOTION_PACKAGES['7D'].price, 149);
+  assert.strictEqual(PROMOTION_PACKAGES['30D'].price, 399);
   const treasuries = getTreasuryAddresses();
   assert.ok(treasuries.solana, 'Solana deposit wallet must exist');
   assert.ok(treasuries.bsc, 'BSC EVM deposit wallet must exist');
@@ -49,7 +49,7 @@ async function runTests() {
     tokenName: 'Automated Test Bull',
     tokenSymbol: 'ATBULL',
     logoUrl: 'https://example.com/logo.png',
-    packageKey: '3D',
+    packageKey: '7D',
     paymentMethod: 'direct_solana',
     websiteUrl: 'https://atbull.crypto',
     xUrl: 'https://x.com/atbull',
@@ -59,7 +59,7 @@ async function runTests() {
 
   const createdOrder = await promotionService.createPromotionOrder(testOrderPayload);
   assert.ok(createdOrder.orderId, 'Order must return orderId');
-  assert.strictEqual(createdOrder.price, 249, '3-day tier must be $249');
+  assert.strictEqual(createdOrder.price, 149, '7-day tier must be $149');
   assert.strictEqual(createdOrder.status, 'pending');
   assert.ok(createdOrder.autoTradingUrl.includes('Bonk111111111111111111111111111111111111111'), 'Order must have generated auto-trade link');
   console.log(`✓ Created order #${createdOrder.orderId} with auto-trading link: ${createdOrder.autoTradingUrl}\n`);

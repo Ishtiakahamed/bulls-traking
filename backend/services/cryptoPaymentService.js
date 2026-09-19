@@ -32,10 +32,11 @@ const RPC_ENDPOINTS = {
 
 // Official Promotion Packages
 const PROMOTION_PACKAGES = {
-  '1D': { name: 'Spotlight 1 Day', days: 1, price: 99, priority: 10 },
-  '3D': { name: 'Spotlight 3 Days', days: 3, price: 249, priority: 20 },
-  '7D': { name: 'Spotlight 7 Days', days: 7, price: 499, priority: 50 },
-  '30D': { name: 'Spotlight 30 Days', days: 30, price: 1499, priority: 100 }
+  '12H': { name: 'Spotlight 12 Hours', days: 0.5, hours: 12, price: 39, priority: 5 },
+  '1D': { name: 'Spotlight 1 Day', days: 1, hours: 24, price: 59, priority: 10 },
+  '3D': { name: 'Spotlight 3 Days', days: 3, hours: 72, price: 99, priority: 20 },
+  '7D': { name: 'Spotlight 7 Days', days: 7, hours: 168, price: 149, priority: 50 },
+  '30D': { name: 'Spotlight 30 Days', days: 30, hours: 720, price: 399, priority: 100 }
 };
 
 function getTreasuryAddresses() {

@@ -980,7 +980,7 @@ async function renderPromotedPage() {
 
 let promoteOrderState = {
   selectedPkg: '7D',
-  price: 499,
+  price: 149,
   days: 7,
   activeOrder: null
 };
@@ -988,7 +988,7 @@ let promoteOrderState = {
 async function renderPromotePage() {
   document.title = 'Promote Your Token | Bulls Traking';
   promoteOrderState.selectedPkg = '7D';
-  promoteOrderState.price = 499;
+  promoteOrderState.price = 149;
   promoteOrderState.days = 7;
   promoteOrderState.activeOrder = null;
 
@@ -1004,44 +1004,41 @@ async function renderPromotePage() {
 
       <div class="promote-grid-layout">
         <!-- FORM COLUMN -->
-        <div class="form-card" style="margin:0;max-width:none;">
-          <form id="promoteForm" onsubmit="event.preventDefault(); submitPromotionOrder();">
-            <h3 style="margin:0 0 1rem;font-size:1.1rem;color:var(--ink);">1. Token Information</h3>
+        <div>
+          <form id="promoteForm" onsubmit="event.preventDefault(); submitPromotionOrder();" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.75rem;">
             
-            <div class="field-row">
-              <div class="field">
+            <h3 style="margin:0 0 1rem;font-size:1.1rem;color:var(--ink);">1. Token Information</h3>
+            <div class="form-grid">
+              <div class="form-group">
                 <label for="pName">Token Name *</label>
                 <input type="text" id="pName" placeholder="e.g. Bulls Protocol" required>
               </div>
-              <div class="field">
+              <div class="form-group">
                 <label for="pSymbol">Token Symbol *</label>
                 <input type="text" id="pSymbol" placeholder="e.g. BULL" required>
               </div>
             </div>
 
-            <div class="field-row">
-              <div class="field">
+            <div class="form-grid">
+              <div class="form-group">
                 <label for="pChain">Network Chain *</label>
                 <select id="pChain" required>
-                  <option value="bsc">BNB Chain (BSC)</option>
+                  <option value="bsc" selected>BNB Chain (BSC)</option>
                   <option value="solana">Solana</option>
                   <option value="ethereum">Ethereum</option>
                   <option value="base">Base</option>
                 </select>
               </div>
-              <div class="field">
+              <div class="form-group">
                 <label for="pContract">Contract Address (CA) *</label>
                 <input type="text" id="pContract" placeholder="Token mint or contract address" required>
               </div>
             </div>
 
-            <div class="field" style="margin-bottom:1.5rem;">
-              <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="font-weight:600;font-size:13px;color:var(--ink);">Token Logo *</span>
-                <span style="font-size:11px;color:var(--text-faint);">Square 1:1 (PNG, WebP, JPG or SVG)</span>
-              </label>
-
-              <!-- Upload Dropzone Card -->
+            <div class="form-group">
+              <label>Token Logo * <span style="font-size:11px;color:var(--text-faint);">(PNG, JPG, WebP, SVG)</span></label>
+              
+              <!-- Direct File Upload Dropzone -->
               <div id="logoUploadDropzone" style="border:2px dashed var(--border);border-radius:10px;padding:1.25rem;text-align:center;background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s ease;" onclick="document.getElementById('pLogoFileInput').click()">
                 <input type="file" id="pLogoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;" onchange="handleLogoFileUpload(event)">
                 
@@ -1079,24 +1076,22 @@ async function renderPromotePage() {
             </div>
 
             <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">2. Social Links <span style="font-size:11px;color:var(--text-faint);font-weight:normal;">(Optional — only provided links will display icons)</span></h3>
-            
-            <div class="field-row">
-              <div class="field">
+            <div class="form-grid">
+              <div class="form-group">
                 <label for="pWeb">🌐 Official Website</label>
-                <input type="url" id="pWeb" placeholder="https://yourproject.com">
+                <input type="text" id="pWeb" placeholder="https://yourproject.com">
               </div>
-              <div class="field">
+              <div class="form-group">
                 <label for="pX">𝕏 / Twitter Handle or URL</label>
                 <input type="text" id="pX" placeholder="https://x.com/yourproject">
               </div>
             </div>
-
-            <div class="field-row">
-              <div class="field">
+            <div class="form-grid">
+              <div class="form-group">
                 <label for="pTg">✈ Telegram Community</label>
                 <input type="text" id="pTg" placeholder="https://t.me/yourcommunity">
               </div>
-              <div class="field">
+              <div class="form-group">
                 <label for="pReddit">👾 Reddit Community</label>
                 <input type="text" id="pReddit" placeholder="https://reddit.com/r/yourproject">
               </div>
@@ -1104,26 +1099,26 @@ async function renderPromotePage() {
 
             <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">3. Select Promotion Package</h3>
             <div class="package-selector" id="pkgSelector">
-              <div class="package-card" data-key="1D" data-price="99" data-days="1">
+              <div class="package-card" data-key="12H" data-price="39" data-days="0.5">
+                <div style="font-weight:700;font-size:14px;color:var(--ink);">12 Hours</div>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$39</div>
+                <div style="font-size:11px;color:var(--text-muted);">Quick Boost</div>
+              </div>
+              <div class="package-card" data-key="1D" data-price="59" data-days="1">
                 <div style="font-weight:700;font-size:14px;color:var(--ink);">1 Day</div>
-                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$99</div>
-                <div style="font-size:11px;color:var(--text-muted);">Quick Spotlight</div>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$59</div>
+                <div style="font-size:11px;color:var(--text-muted);">24h Spotlight</div>
               </div>
-              <div class="package-card" data-key="3D" data-price="249" data-days="3">
-                <div style="font-weight:700;font-size:14px;color:var(--ink);">3 Days</div>
-                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$249</div>
-                <div style="font-size:11px;color:var(--text-muted);">Weekend Run</div>
-              </div>
-              <div class="package-card is-selected" data-key="7D" data-price="499" data-days="7">
+              <div class="package-card is-selected" data-key="7D" data-price="149" data-days="7">
                 <span class="pkg-badge">POPULAR</span>
                 <div style="font-weight:700;font-size:14px;color:var(--ink);">7 Days</div>
-                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$499</div>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$149</div>
                 <div style="font-size:11px;color:var(--text-muted);">Full Week Momentum</div>
               </div>
-              <div class="package-card" data-key="30D" data-price="1499" data-days="30">
+              <div class="package-card" data-key="30D" data-price="399" data-days="30">
                 <span class="pkg-badge" style="background:#00E5FF;">VIP</span>
                 <div style="font-weight:700;font-size:14px;color:var(--ink);">30 Days</div>
-                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$1,499</div>
+                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$399</div>
                 <div style="font-size:11px;color:var(--text-muted);">Maximum Dominance</div>
               </div>
             </div>
@@ -1142,7 +1137,7 @@ async function renderPromotePage() {
             </div>
 
             <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:14px;font-size:15px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;">
-              <span>✈ Book via Telegram @bullclub_ads ($499 USDT) →</span>
+              <span>✈ Book via Telegram @bullclub_ads ($149 USDT) →</span>
             </button>
           </form>
 
@@ -1154,7 +1149,7 @@ async function renderPromotePage() {
                 <span style="background:rgba(245,166,35,0.15);color:var(--gold);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;" id="dispOrderStatus">Awaiting Payment Clearance</span>
               </div>
               <div style="font-size:1.5rem;font-weight:800;color:var(--ink);margin-bottom:6px;">
-                Amount: <span style="color:var(--up);" id="dispAmount">$499 USDT</span>
+                Amount: <span style="color:var(--up);" id="dispAmount">$149 USDT</span>
               </div>
               <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px;line-height:1.5;">
                 Your order is reserved in our system! Contact our official Telegram desk <b>@bullclub_ads</b> with your order details for instant clearance and launch.
@@ -1458,7 +1453,8 @@ async function submitPromotionOrder() {
     if (dispAmount) dispAmount.textContent = `$${res.price} USDT`;
 
     // Construct Telegram direct message
-    const tgMessage = `Hello Admin (@bullclub_ads)! I want to book promotion for my token on Bulls Traking:\n\n• Order ID: ${orderNum}\n• Token: ${payload.tokenName} (${payload.tokenSymbol})\n• Chain: ${payload.chain.toUpperCase()}\n• Contract: ${payload.contractAddress}\n• Package: ${promoteOrderState.selectedPkg} (${promoteOrderState.days} Days - $${res.price} USDT)\n\nPlease provide your payment address to clear this order.`;
+    const durationLabel = promoteOrderState.selectedPkg === '12H' ? '12 Hours' : (promoteOrderState.days === 1 ? '1 Day' : `${promoteOrderState.days} Days`);
+    const tgMessage = `Hello Admin (@bullclub_ads)! I want to book promotion for my token on Bulls Traking:\n\n• Order ID: ${orderNum}\n• Token: ${payload.tokenName} (${payload.tokenSymbol})\n• Chain: ${payload.chain.toUpperCase()}\n• Contract: ${payload.contractAddress}\n• Package: ${promoteOrderState.selectedPkg} (${durationLabel} - $${res.price} USDT)\n\nPlease provide your payment address to clear this order.`;
 
     const tgMessageText = document.getElementById('tgMessageText');
     if (tgMessageText) tgMessageText.value = tgMessage;
@@ -1467,13 +1463,6 @@ async function submitPromotionOrder() {
     if (btnOpenTg) {
       btnOpenTg.href = `https://t.me/bullclub_ads?text=${encodeURIComponent(tgMessage)}`;
     }
-
-    // Set treasury address based on chain
-    const treasuryMap = res.treasuryAddresses || {};
-    const chainKey = payload.chain === 'solana' ? 'solana' : 'bsc';
-    const chosenTreasury = treasuryMap[chainKey] || treasuryMap.bsc || '0x71C568630A7EbC4B2b122E1a22114777d1303b71';
-    const dispTreasury = document.getElementById('dispTreasuryAddr');
-    if (dispTreasury) dispTreasury.textContent = chosenTreasury;
 
     if (btn) {
       btn.style.display = 'none';
