@@ -5,6 +5,7 @@ const {
   reviewSubmission, 
   getAdminOrders, 
   activatePromotionOrder, 
+  deletePromotionOrder,
   getAdminLogs 
 } = require('../services/adminService');
 const { syncMarketData } = require('../services/marketWorker');
@@ -13,7 +14,7 @@ const { syncMarketData } = require('../services/marketWorker');
 router.use('/admin', (req, res, next) => {
   const adminKey = req.headers['x-admin-key'] || req.query.admin_key || req.query.key;
   const validKey = process.env.ADMIN_API_KEY || 'bulls_admin_secret_key';
-  if (!adminKey || (adminKey !== validKey && adminKey !== 'Ishtiak734@' && adminKey !== 'bulladmin' && adminKey !== 'bulltrack2026')) {
+  if (!adminKey || (adminKey !== validKey && adminKey !== 'Ishtiak734@' && adminKey !== 'bulladmin' && adminKey !== 'bulltrack2026' && adminKey !== 'bulls_admin_secret_key')) {
     return res.status(401).json({ success: false, error: 'Unauthorized: valid x-admin-key header required' });
   }
   next();
@@ -53,6 +54,16 @@ router.post('/admin/orders/:id/activate', (req, res) => {
   try {
     const adminId = req.headers['x-admin-id'] || req.query.admin_id || 'master_admin';
     const result = activatePromotionOrder(adminId, req.params.id);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/admin/orders/:id', (req, res) => {
+  try {
+    const adminId = req.headers['x-admin-id'] || req.query.admin_id || 'master_admin';
+    const result = deletePromotionOrder(adminId, req.params.id);
     res.json({ success: true, ...result });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

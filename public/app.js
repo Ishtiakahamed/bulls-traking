@@ -1643,15 +1643,25 @@ async function loadAdminDashboard() {
       let actionBtn = '';
       if (isLive) {
         actionBtn = `
-          <a href="/#/promoted" target="_blank" class="btn-ghost" style="padding:6px 12px;font-size:12px;text-decoration:none;">
-            View Ad ↗
-          </a>
+          <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+            <a href="/#/promoted" target="_blank" class="btn-ghost" style="padding:6px 10px;font-size:12px;text-decoration:none;">
+              View Ad ↗
+            </a>
+            <button type="button" class="btn-ghost" onclick="deleteOrderAdmin(${order.id})" title="Delete Order" style="padding:6px 8px;font-size:12px;color:var(--down);cursor:pointer;border-color:rgba(235,87,87,0.3);">
+              🗑️
+            </button>
+          </div>
         `;
       } else {
         actionBtn = `
-          <button type="button" class="btn-solid" onclick="activateOrderAdmin(${order.id})" id="btnActOrder_${order.id}" style="padding:6px 12px;font-size:12px;background:var(--up);border-color:var(--up);color:#15130e;font-weight:700;cursor:pointer;">
-            ⚡ Approve & Run Ad
-          </button>
+          <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+            <button type="button" class="btn-solid" onclick="activateOrderAdmin(${order.id})" id="btnActOrder_${order.id}" style="padding:6px 12px;font-size:12px;background:var(--up);border-color:var(--up);color:#15130e;font-weight:700;cursor:pointer;">
+              ⚡ Approve & Run Ad
+            </button>
+            <button type="button" class="btn-ghost" onclick="deleteOrderAdmin(${order.id})" title="Delete Order" style="padding:6px 8px;font-size:12px;color:var(--down);cursor:pointer;border-color:rgba(235,87,87,0.3);">
+              🗑️
+            </button>
+          </div>
         `;
       }
 
@@ -1730,6 +1740,38 @@ async function activateOrderAdmin(orderId) {
   }
 }
 
+async function deleteOrderAdmin(orderId) {
+  if (!confirm(`Are you sure you want to permanently delete Order #BT-${orderId}? This will remove it from the admin queue.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetchApi(`/admin/orders/${orderId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': adminPortalState.key
+      }
+    });
+
+    if (res.success) {
+      const noticeArea = document.getElementById('adminNoticeArea');
+      if (noticeArea) {
+        noticeArea.innerHTML = `
+          <div style="background:rgba(235,87,87,0.12);color:var(--down);border:1px solid rgba(235,87,87,0.3);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:1.5rem;">
+            🗑️ <b>Order #BT-${orderId} deleted successfully.</b>
+          </div>
+        `;
+      }
+      await loadAdminDashboard();
+    } else {
+      throw new Error(res.error || 'Failed to delete order');
+    }
+  } catch (err) {
+    alert(`Failed to delete order: ${err.message}`);
+  }
+}
+
 // Expose admin and promotion helper functions globally
 window.copyOrderMessage = copyOrderMessage;
 window.copyTreasuryAddress = copyTreasuryAddress;
@@ -1739,6 +1781,7 @@ window.handleAdminLogin = handleAdminLogin;
 window.handleAdminLogout = handleAdminLogout;
 window.loadAdminDashboard = loadAdminDashboard;
 window.activateOrderAdmin = activateOrderAdmin;
+window.deleteOrderAdmin = deleteOrderAdmin;
 
 /* ---------------- 7a. CONTRACT SCANNER VIEW (/scan) (Phase 2 Task 1) ---------------- */
 

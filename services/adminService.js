@@ -96,6 +96,28 @@ function activatePromotionOrder(adminId, orderId) {
 }
 
 /**
+ * Delete a promotion order and clean up related promotional records
+ */
+function deletePromotionOrder(adminId, orderId) {
+  const order = queryOne(`SELECT * FROM promotion_orders WHERE id = ?`, [orderId]);
+  if (!order) throw new Error('Order not found.');
+
+  if (order.token_id) {
+    execute(`DELETE FROM promotions WHERE token_id = ?`, [order.token_id]);
+    execute(`UPDATE tokens SET is_promoted = 0 WHERE id = ?`, [order.token_id]);
+  }
+
+  execute(`DELETE FROM promotion_orders WHERE id = ?`, [orderId]);
+
+  execute(`
+    INSERT INTO admin_logs (admin_id, action, entity_type, entity_id, old_value, new_value)
+    VALUES (?, 'PROMOTION_ORDER_DELETED', 'promotion_orders', ?, ?, 'deleted')
+  `, [adminId, orderId, order.order_status]);
+
+  return { success: true, orderId, message: `Order #${orderId} deleted successfully.` };
+}
+
+/**
  * Get audit logs
  */
 function getAdminLogs(limit = 100) {
@@ -107,5 +129,6 @@ module.exports = {
   reviewSubmission,
   getAdminOrders,
   activatePromotionOrder,
+  deletePromotionOrder,
   getAdminLogs
 };

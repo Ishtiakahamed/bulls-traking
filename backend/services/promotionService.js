@@ -143,8 +143,14 @@ function activatePromotionFromOrder(orderId, txHash = null) {
     throw new Error(`Promotion order #${orderId} not found.`);
   }
 
-  if (order.payment_status === 'paid' && order.order_status === 'active') {
-    return { success: true, orderId: order.id, status: 'already_active' };
+  if (order.payment_status === 'paid' && order.order_status === 'active' && order.token_id) {
+    const existingPromo = queryOne(
+      'SELECT id FROM promotions WHERE token_id = ? AND is_active = 1 AND datetime(end_at) >= datetime("now") LIMIT 1',
+      [order.token_id]
+    );
+    if (existingPromo) {
+      return { success: true, orderId: order.id, status: 'already_active' };
+    }
   }
 
   let finalTokenId = order.token_id;
