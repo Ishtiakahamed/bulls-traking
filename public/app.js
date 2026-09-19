@@ -371,8 +371,15 @@ function mergeLocalSubmissions(fetchedTokens) {
   try {
     const raw = localStorage.getItem('bt_submitted_tokens');
     if (!raw) return fetchedTokens || [];
-    const local = JSON.parse(raw);
+    let local = JSON.parse(raw);
     if (!Array.isArray(local) || local.length === 0) return fetchedTokens || [];
+
+    // Filter out mock test tokens so only authentic tokens like Kedolikswap remain
+    local = local.filter(l => {
+      const name = (l.name || '').toLowerCase();
+      return !name.includes('cyber bull') && !name.includes('solana bull') && !name.includes('bnb gold') && !name.includes('production test');
+    });
+    try { localStorage.setItem('bt_submitted_tokens', JSON.stringify(local)); } catch (_) {}
 
     const existingIds = new Set((fetchedTokens || []).map(t => String(t.id)));
     const existingCas = new Set((fetchedTokens || []).map(t => (t.contract_address || '').toLowerCase()));

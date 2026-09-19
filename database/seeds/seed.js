@@ -297,7 +297,7 @@ function runSeed(skipInit = false) {
         atl_date: '2026-08-15T00:00:00.000Z',
         market_cap_rank: 9,
         hot_score: 95.0,
-        is_submitted: 1,
+        is_submitted: 0,
         is_promoted: 1,
         is_active: 1,
         listing_status: 'LIVE',

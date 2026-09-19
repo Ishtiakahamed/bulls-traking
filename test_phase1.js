@@ -213,6 +213,30 @@ async function runAcceptanceTests() {
     console.log('✖ Test 15 — Mobile: FAILED', e.message);
   }
 
+  // Teardown / Cleanup test tokens from DB and store
+  if (submittedTokenId) {
+    try {
+      const { execute } = require('./database/db');
+      execute('DELETE FROM token_price_history WHERE token_id = ?', [submittedTokenId]);
+      execute('DELETE FROM security_scans WHERE token_id = ?', [submittedTokenId]);
+      execute('DELETE FROM token_submissions WHERE token_id = ?', [submittedTokenId]);
+      execute('DELETE FROM tokens WHERE id = ?', [submittedTokenId]);
+
+      const fs = require('fs');
+      const path = require('path');
+      const storeFile = path.join(__dirname, 'data', 'submitted_tokens.json');
+      if (fs.existsSync(storeFile)) {
+        const list = JSON.parse(fs.readFileSync(storeFile, 'utf8'));
+        const filtered = list.filter(t => t.id !== submittedTokenId && (t.name || '').toLowerCase() !== 'cyber bull protocol');
+        fs.writeFileSync(storeFile, JSON.stringify(filtered, null, 2), 'utf8');
+      }
+      try {
+        const { invalidateHomeCache } = require('./backend/controllers/homeController');
+        invalidateHomeCache();
+      } catch (_) {}
+    } catch (_) {}
+  }
+
   console.log('\n======================================================');
   console.log(`🎯 TOTAL RESULTS: ${passedCount}/15 ACCEPTANCE TESTS PASSED`);
   console.log('======================================================\n');
