@@ -1161,12 +1161,12 @@ async function renderPromotePage() {
               </p>
 
               <!-- Telegram Primary Card -->
-              <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.15rem;margin-bottom:1rem;">
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.15rem;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                  <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">1. Connect on Telegram</span>
+                  <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">Official Telegram Desk</span>
                   <span style="font-size:12px;color:#0088cc;font-weight:600;">@bullclub_ads</span>
                 </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
                   <a id="btnOpenTgChat" href="https://t.me/bullclub_ads" target="_blank" class="btn-solid" style="background:#0088cc;border-color:#0088cc;padding:10px 18px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
                     <span>✈ Open Chat with @bullclub_ads</span>
                   </a>
@@ -1176,31 +1176,12 @@ async function renderPromotePage() {
                 </div>
                 <label style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">Pre-formatted Message for Admin:</label>
                 <textarea id="tgMessageText" readonly style="width:100%;height:105px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:11px;color:var(--ink);resize:none;box-sizing:border-box;"></textarea>
-              </div>
 
-              <!-- Direct On-Chain Fallback Box -->
-              <details style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;">
-                <summary style="cursor:pointer;font-weight:600;color:var(--text-muted);">
-                  Or Pay Directly On-Chain via Treasury & Verify TxHash ▼
-                </summary>
-                <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-                  <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px;">
-                    Send USDT (BEP-20 / Solana) to platform treasury address below:
-                  </p>
-                  <label style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">Platform Treasury Address:</label>
-                  <div class="deposit-address-box" style="margin-bottom:10px;">
-                    <span id="dispTreasuryAddr">0x71C568630A7EbC4B2b122E1a22114777d1303b71</span>
-                    <button type="button" class="copy-btn" id="btnCopyTreasury" onclick="copyTreasuryAddress()">Copy 📋</button>
-                  </div>
-                  <div style="display:flex;gap:8px;">
-                    <input type="text" id="inputTxHash" placeholder="Paste TxHash or signature" style="flex:1;padding:8px 12px;font-family:monospace;font-size:12px;background:var(--bg);border:1px solid var(--border);color:var(--ink);border-radius:4px;">
-                    <button type="button" id="btnVerifyTx" class="btn-solid" onclick="verifyAndActivateOrder()" style="padding:8px 14px;white-space:nowrap;font-size:12px;">
-                      Verify TxHash
-                    </button>
-                  </div>
-                  <div id="verifyStatusMsg" style="margin-top:8px;font-size:12px;"></div>
+                <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);">
+                  <span style="color:#0088cc;font-size:14px;">💬</span>
+                  <span>Direct clearance with our admin desk: Send the message above to <b>@bullclub_ads</b> to complete manual payment and launch your campaign immediately.</span>
                 </div>
-              </details>
+              </div>
             </div>
           </div>
         </div>
@@ -1242,7 +1223,7 @@ async function renderPromotePage() {
                 <li>Exclusive Promoted Spotlight Grid</li>
                 <li>1-Click Verified DEX Trading Button</li>
                 <li>Live Social Links: Website, 𝕏, Telegram, Reddit</li>
-                <li>Instant Automated On-Chain Verification</li>
+                <li>Priority Telegram Desk Clearance & Fast Launch</li>
               </ul>
             </div>
           </div>
