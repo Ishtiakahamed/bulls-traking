@@ -348,18 +348,18 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
           </div>
         </td>
         <td class="cell-price"><b>${fmtPrice(t.price)}</b></td>
-        <td>${fmtChg(t.change_1h)}</td>
+        <td class="col-1h">${fmtChg(t.change_1h)}</td>
         <td class="cell-change">${fmtChg(t.change_24h)}</td>
-        <td>${fmtChg(t.change_7d)}</td>
-        <td>${chg6h}</td>
-        <td>${txnCount}</td>
-        <td>${lpVal}</td>
-        <td>${fmtUsd(t.volume_24h)}</td>
-        <td>${fmtUsd(t.market_cap)}</td>
-        <td class="cell-socials" onclick="event.stopPropagation();">
+        <td class="col-7d">${fmtChg(t.change_7d)}</td>
+        <td class="col-6h">${chg6h}</td>
+        <td class="col-txn">${txnCount}</td>
+        <td class="col-lp">${lpVal}</td>
+        <td class="col-vol">${fmtUsd(t.volume_24h)}</td>
+        <td class="col-mcap">${fmtUsd(t.market_cap)}</td>
+        <td class="col-socials cell-socials" onclick="event.stopPropagation();">
           ${renderSocialLinks(t)}
         </td>
-        <td>${spark}</td>
+        <td class="col-spark">${spark}</td>
       </tr>
     `;
   }).join('');
@@ -454,16 +454,16 @@ function renderPromotedCard(p) {
               <th>#</th>
               <th>Token</th>
               <th>Price</th>
-              <th>1h</th>
+              <th class="col-1h">1h</th>
               <th>24h</th>
-              <th>7d</th>
-              <th>6h</th>
-              <th>TXN</th>
-              <th>LP</th>
-              <th>24h Volume</th>
-              <th>Market Cap</th>
-              <th>Socials</th>
-              <th>Last 7 Days</th>
+              <th class="col-7d">7d</th>
+              <th class="col-6h">6h</th>
+              <th class="col-txn">TXN</th>
+              <th class="col-lp">LP</th>
+              <th class="col-vol">24h Volume</th>
+              <th class="col-mcap">Market Cap</th>
+              <th class="col-socials">Socials</th>
+              <th class="col-spark">Last 7 Days</th>
             </tr>
           </thead>
           <tbody id="homeTableBody">
@@ -660,9 +660,9 @@ async function renderTopCoins() {
         <thead>
           <tr>
             <th style="width:32px;"></th>
-            <th>Rank</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
-            <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
+            <th>Rank</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
+            <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="topTableBody">
@@ -729,9 +729,9 @@ async function renderNewCoins() {
         <thead>
           <tr>
             <th style="width:32px;"></th>
-            <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
-            <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
+            <th>#</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
+            <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="newTableBody">
@@ -798,9 +798,9 @@ async function renderHotCoins() {
         <thead>
           <tr>
             <th style="width:32px;"></th>
-            <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
-            <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
+            <th>#</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
+            <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="hotTableBody">
@@ -867,9 +867,9 @@ async function renderGainers() {
         <thead>
           <tr>
             <th style="width:32px;"></th>
-            <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
-            <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
+            <th>#</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
+            <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="gainersTableBody">
@@ -960,9 +960,9 @@ async function renderPromotedPage() {
         <thead>
           <tr>
             <th style="width:32px;"></th>
-            <th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>7d</th>
-            <th>6h</th><th>TXN</th><th>LP</th>
-            <th>24h Volume</th><th>Market Cap</th><th>Socials</th><th>Last 7 Days</th>
+            <th>#</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
+            <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="promotedTableBody">
@@ -2316,9 +2316,9 @@ async function renderNewPairs() {
             <th>Price</th>
             <th>Liquidity</th>
             <th>24h Volume</th>
-            <th>24h TXN</th>
+            <th class="col-radar-txn">24h TXN</th>
             <th>Pair Age</th>
-            <th>Ecosystem</th>
+            <th class="col-radar-eco">Ecosystem</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -2429,9 +2429,9 @@ function renderSingleRadarRow(p, idx = 0, isNew = false) {
       <td><b>${fmtPrice(p.price)}</b></td>
       <td>${fmtUsd(p.liquidity)}</td>
       <td>${fmtUsd(p.volume_24h)}</td>
-      <td>${txns}</td>
+      <td class="col-radar-txn">${txns}</td>
       <td><span class="pair-age-pill">${age}</span>${freshBadge}</td>
-      <td><span class="chain-badge chain-${escapeHtml(p.chain || '')}">${chainLabel}</span></td>
+      <td class="col-radar-eco"><span class="chain-badge chain-${escapeHtml(p.chain || '')}">${chainLabel}</span></td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;">
           <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost" style="padding:2px 8px;font-size:11px;">Scan</a>
@@ -2627,16 +2627,16 @@ async function renderWatchlistPage() {
             <th>Rank</th>
             <th>Token</th>
             <th>Price</th>
-            <th>1h</th>
+            <th class="col-1h">1h</th>
             <th>24h</th>
-            <th>7d</th>
-            <th>6h</th>
-            <th>TXN</th>
-            <th>LP</th>
-            <th>24h Volume</th>
-            <th>Market Cap</th>
-            <th>Socials</th>
-            <th>Last 7 Days</th>
+            <th class="col-7d">7d</th>
+            <th class="col-6h">6h</th>
+            <th class="col-txn">TXN</th>
+            <th class="col-lp">LP</th>
+            <th class="col-vol">24h Volume</th>
+            <th class="col-mcap">Market Cap</th>
+            <th class="col-socials">Socials</th>
+            <th class="col-spark">Last 7 Days</th>
           </tr>
         </thead>
         <tbody id="watchlistTableBody">
