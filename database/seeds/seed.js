@@ -400,6 +400,15 @@ function runSeed(skipInit = false) {
     }
   });
 
+  // Re-inject all user-submitted tokens after seeding so they are never lost
+  try {
+    const { syncSubmittedTokensIntoDb } = require('../syncStore');
+    const { db } = require('../db');
+    syncSubmittedTokensIntoDb(db);
+  } catch (syncErr) {
+    console.warn('[Seed Submitted Tokens Sync Notice]', syncErr.message);
+  }
+
   console.log('[Seed] Bulls Traking Phase 1 database seeded successfully!');
 }
 

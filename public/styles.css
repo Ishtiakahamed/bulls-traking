@@ -2854,4 +2854,12 @@ tbody tr:hover {
   }
 }
 
+/* --- RESPONSIVE TABLET & COMPACT DESKTOP (<= 960px) --- */
+@media (max-width:960px) {
+  .topbar-inner {
+    padding: 0 1rem;
+  }
+}
+
+
 

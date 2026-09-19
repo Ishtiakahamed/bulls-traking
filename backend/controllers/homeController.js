@@ -84,6 +84,11 @@ function handleGetHomeData(req, res, next) {
   }
 }
 
+function invalidateHomeCache() {
+  homeCache.clear();
+}
+
 module.exports = {
-  handleGetHomeData
+  handleGetHomeData,
+  invalidateHomeCache
 };

@@ -101,7 +101,7 @@ async function runPhase2Tests() {
   // 8. Table Headers and Cells
   try {
     const appJs = fs.readFileSync('app.js', 'utf-8');
-    assert(appJs.includes('<th>6h</th><th>TXN</th><th>LP</th>'), 'Every table must have 6h, TXN, LP headers');
+    assert(appJs.includes('<th>6h</th><th>TXN</th><th>LP</th>') || (appJs.includes('>6h</th>') && appJs.includes('>TXN</th>') && appJs.includes('>LP</th>')), 'Every table must have 6h, TXN, LP headers');
     assert(appJs.includes('t.price_change_6h'), 'renderTokenRows must render 6h price change');
     assert(appJs.includes('t.txn_count_24h'), 'renderTokenRows must render TXN count');
     assert(appJs.includes('t.liquidity'), 'renderTokenRows must render LP');

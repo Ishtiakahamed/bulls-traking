@@ -268,6 +268,34 @@ function initDatabase() {
     }
   }
 
+  // Normalize legacy/alias chain values in tokens table
+  try {
+    db.exec(`
+      UPDATE tokens SET chain = 'solana-ecosystem' WHERE chain = 'solana' OR chain = 'sol';
+      UPDATE tokens SET chain = 'binance-smart-chain' WHERE chain = 'bsc' OR chain = 'binance' OR chain = 'bnb';
+      UPDATE tokens SET chain = 'ethereum-ecosystem' WHERE chain = 'ethereum' OR chain = 'eth';
+      UPDATE tokens SET chain = 'base-ecosystem' WHERE chain = 'base';
+    `);
+  } catch (normErr) {
+    // Non-fatal
+  }
+
+  // Restore and sync all submitted tokens permanently
+  try {
+    const { syncSubmittedTokensIntoDb } = require('./syncStore');
+    syncSubmittedTokensIntoDb(db);
+  } catch (syncErr) {
+    console.warn('[DB Submitted Tokens Sync Notice]', syncErr.message);
+  }
+
+  // Initialize PostgreSQL if DATABASE_URL is configured
+  try {
+    const { isPostgresConfigured, initPostgresSchema } = require('./postgres');
+    if (isPostgresConfigured()) {
+      initPostgresSchema().catch(err => console.warn('[Postgres Init Notice]', err.message));
+    }
+  } catch (pgErr) {}
+
   console.log('[DB] Bulls Traking schema initialized.');
 }
 
