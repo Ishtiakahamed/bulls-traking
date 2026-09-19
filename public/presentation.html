@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulls Traking — Platform Pitch Deck & Presentation</title>
+  <meta name="description" content="Official Pitch Deck & Platform Overview for Bulls Traking — The Premier Real-Time Crypto Discovery and Cross-Chain Token Radar.">
+  <link rel="icon" type="image/png" href="assets/logo-transparent.png">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- THEME TOKENS --- */
+    :root {
+      --bg-page: #15130E;
+      --bg-panel: #1C1912;
+      --bg-panel-raised: #221E15;
+      --line: #35301F;
+      --line-soft: #292418;
+      --ink: #F3EEE1;
+      --ink-dim: #B8B0A0;
+      --ink-faint: #766F5F;
+      --gold: #F2A93B;
+      --gold-dim: #C98A2C;
+      --up: #7FB878;
+      --down: #D97F6E;
+      --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* --- TOP PROGRESS BAR --- */
+    .progress-bar-wrap {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 1000;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      width: 10%;
+      transition: width 0.3s ease;
+    }
+
+    /* --- TOP NAVIGATION HEADER --- */
+    .deck-header {
+      position: fixed;
+      top: 4px;
+      left: 0;
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(21, 19, 14, 0.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line-soft);
+      z-index: 900;
+    }
+    .brand-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+    }
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .brand-name span {
+      color: var(--gold);
+    }
+    .badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(127, 184, 120, 0.12);
+      border: 1px solid rgba(127, 184, 120, 0.3);
+      color: var(--up);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .badge-live::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--up);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-header {
+      background: var(--bg-panel-raised);
+      border: 1px solid var(--line);
+      color: var(--ink-dim);
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-header:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .btn-primary-header {
+      background: var(--gold);
+      color: #15130E !important;
+      border-color: var(--gold);
+    }
+    .btn-primary-header:hover {
+      background: var(--gold-dim);
+    }
+
+    /* --- SLIDES CONTAINER --- */
+    .deck-viewport {
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 2rem 5rem;
+    }
+
+    .slide {
+      position: absolute;
+      top: 5rem;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      width: 90%;
+      max-width: 1160px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      padding: 1.5rem 1rem;
+      scrollbar-width: none;
+    }
+    .slide::-webkit-scrollbar {
+      display: none;
+    }
+    .slide.is-active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* --- SLIDE CONTENT TYPOGRAPHY & LAYOUT --- */
+    .slide-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.4rem;
+      display: inline-block;
+    }
+    .slide-title {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .slide-subtitle {
+      font-size: 14px;
+      color: var(--ink-dim);
+      max-width: 760px;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1.4rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: var(--gold-dim);
+      transform: translateY(-2px);
+    }
+    .card-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 0.4rem;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: var(--ink-dim);
+      line-height: 1.5;
+    }
+
+    /* --- COVER SLIDE SPECIFIC --- */
+    .cover-wrap {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+    }
+    .cover-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(242, 169, 59, 0.12);
+      border: 1px solid rgba(242, 169, 59, 0.35);
+      color: var(--gold);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+    }
+    .cover-logo {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      margin-bottom: 1rem;
+    }
+    .cover-title {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+    .cover-title span {
+      background: linear-gradient(135deg, #F2A93B, #FBE099);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .cover-subtitle {
+      font-size: 17px;
+      color: var(--ink-dim);
+      max-width: 680px;
+      margin: 0 auto 2rem;
+      line-height: 1.5;
+    }
+    .cover-stats {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1rem;
+      border-top: 1px solid var(--line-soft);
+      padding-top: 2rem;
+      width: 100%;
+      max-width: 800px;
+    }
+    .stat-pill {
+      text-align: center;
+    }
+    .stat-pill .num {
+      font-family: var(--font-mono);
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+    .stat-pill .lbl {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-faint);
+    }
+
+    /* --- COMPARISON TABLE --- */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      background: var(--bg-panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .comp-table th, .comp-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .comp-table th {
+      background: var(--bg-panel-raised);
+      color: var(--ink-dim);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .comp-table tr:last-child td {
+      border-bottom: none;
+    }
+    .badge-x {
+      color: var(--down);
+      font-weight: 700;
+    }
+    .badge-check {
+      color: var(--up);
+      font-weight: 700;
+    }
+
+    /* --- PACKAGE CARDS --- */
+    .pkg-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .pkg-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      position: relative;
+    }
+    .pkg-box.is-popular {
+      border-color: var(--gold);
+      background: rgba(242, 169, 59, 0.05);
+    }
+    .pkg-box.is-vip {
+      border-color: #00E5FF;
+      background: rgba(0, 229, 255, 0.05);
+    }
+    .pkg-badge {
+      position: absolute;
+      top: -9px;
+      right: 12px;
+      background: var(--gold);
+      color: #15130E;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 12px;
+    }
+    .pkg-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .pkg-price {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--gold);
+      margin: 6px 0;
+    }
+    .pkg-box.is-vip .pkg-price {
+      color: #00E5FF;
+    }
+    .pkg-desc {
+      font-size: 11.5px;
+      color: var(--ink-dim);
+      margin-bottom: 10px;
+    }
+
+    /* --- BOTTOM CONTROLS FOOTER --- */
+    .deck-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(21, 19, 14, 0.85);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--line-soft);
+      z-index: 900;
+    }
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--ink-dim);
+    }
+    .slide-counter b {
+      color: var(--gold);
+    }
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-btn {
+      background: var(--bg-panel-raised);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      width: 38px;
+      height: 38px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .nav-btn:hover:not(:disabled) {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .key-hints {
+      font-size: 11px;
+      color: var(--ink-faint);
+    }
+    kbd {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+    }
+
+    /* --- RESPONSIVE MOBILE --- */
+    @media (max-width: 768px) {
+      .deck-viewport {
+        padding: 4.5rem 0.5rem 4.5rem;
+      }
+      .slide {
+        width: 95%;
+        padding: 1rem 0.5rem;
+      }
+      .cover-title {
+        font-size: 2.2rem;
+      }
+      .slide-title {
+        font-size: 1.6rem;
+      }
+      .grid-2, .grid-3, .grid-4, .pkg-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+      .key-hints {
+        display: none;
+      }
+      .cover-stats {
+        gap: 1rem;
+      }
+      .stat-pill .num {
+        font-size: 1.4rem;
+      }
+    }
+
+    /* --- PRINT TO PDF READY --- */
+    @media print {
+      body {
+        overflow: visible !important;
+        height: auto !important;
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .progress-bar-wrap, .deck-header, .deck-footer {
+        display: none !important;
+      }
+      .deck-viewport {
+        display: block !important;
+        padding: 0 !important;
+        height: auto !important;
+      }
+      .slide {
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        opacity: 1 !important;
+        page-break-after: always;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 2rem !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+
+  <!-- DECK HEADER -->
+  <header class="deck-header">
+    <div class="brand-meta">
+      <img src="assets/logo-transparent.png" alt="Bulls Traking" class="brand-logo">
+      <div class="brand-name">BULLS <span>TRAKING</span></div>
+      <span class="badge-live">LIVE PLATFORM</span>
+    </div>
+    <div class="header-actions">
+      <a href="index.html#/" class="btn-header" target="_blank">🌐 Open Terminal ↗</a>
+      <a href="index.html#/promote" class="btn-header btn-primary-header" target="_blank">★ Promote ($39+)</a>
+    </div>
+  </header>
+
+  <!-- VIEWPORT CONTAINING ALL 10 SLIDES -->
+  <main class="deck-viewport">
+
+    <!-- SLIDE 1: COVER / EXECUTIVE OVERVIEW -->
+    <section class="slide is-active" data-slide="1">
+      <div class="cover-wrap">
+        <div class="cover-badge">🐂 Official Platform Pitch Deck</div>
+        <img src="assets/logo-transparent.png" alt="Bulls Traking Logo" class="cover-logo">
+        <h1 class="cover-title">BULLS <span>TRAKING</span></h1>
+        <p class="cover-subtitle">
+          The Premier Real-Time Crypto Discovery & Cross-Chain Token Radar. Aggregating bonding curves, newly deployed liquidity pools, and verified market alpha across Solana, BSC, Base & Ethereum.
+        </p>
+        <div class="cover-stats">
+          <div class="stat-pill">
+            <div class="num">4</div>
+            <div class="lbl">Chains Monitored</div>
+          </div>
+          <div class="stat-pill">
+            <div class="num">&lt; 1s</div>
+            <div class="lbl">Ingestion Latency</div>
+          </div>
+          <div class="stat-pill">
+            <div class="num">4+</div>
+            <div class="lbl">Launchpad Pipelines</div>
+          </div>
+          <div class="stat-pill">
+            <div class="num">$39</div>
+            <div class="lbl">Entry Promotion Price</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: THE MARKET PROBLEM -->
+    <section class="slide" data-slide="2">
+      <span class="slide-tag">01 / Industry Problem</span>
+      <h2 class="slide-title">Market Fragmentation & The Memecoin Chaos</h2>
+      <p class="slide-subtitle">Modern crypto traders face extreme friction and risk trying to find early-stage gem tokens across fragmented launchpads.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <span class="card-icon">🧩</span>
+          <h3 class="card-title">Fragmented Discovery Channels</h3>
+          <p class="card-desc">Traders are forced to keep 6+ browser tabs open (Pump.fun on Solana, four.meme on BSC, DexScreener on Base). Missed alpha and high friction destroy trading edges.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🪤</span>
+          <h3 class="card-title">Scams & Honeypot Proliferation</h3>
+          <p class="card-desc">Tens of thousands of copycat tokens deploy daily with fake social links and malicious mint contracts. Legacy trackers index spam without social verification.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🐢</span>
+          <h3 class="card-title">Lagging, Heavy Frameworks</h3>
+          <p class="card-desc">Traditional multi-megabyte React trackers lag and freeze during high volatility market pumps. Mobile experiences on existing tools are clunky, broken, and unreadable.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">💸</span>
+          <h3 class="card-title">Prohibitive Advertising Costs</h3>
+          <p class="card-desc">Traditional tracker platforms charge $3,000 to $10,000+ for banner placements, completely locking out new community fair launches and emerging dev teams.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: THE BULLS TRAKING SOLUTION -->
+    <section class="slide" data-slide="3">
+      <span class="slide-tag">02 / Value Proposition</span>
+      <h2 class="slide-title">The Unified Surveillance Terminal</h2>
+      <p class="slide-subtitle">A high-performance trading floor ledger theme designed for instant execution, verified liquidity, and accessible promotion.</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <span class="card-icon">⚡</span>
+          <h3 class="card-title">Unified Multi-Chain Radar</h3>
+          <p class="card-desc">One single terminal indexes Pump.fun, four.meme, StonkFun, and DexScreener in real-time. Traders monitor Solana, BSC, Base, and Ethereum from one screen.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🛡️</span>
+          <h3 class="card-title">Strict Social Verification Gate</h3>
+          <p class="card-desc">Tokens require verifiable 𝕏 (Twitter) and Telegram links before surfacing in the radar, shielding retail liquidity from zero-effort copycat rugs.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🚀</span>
+          <h3 class="card-title">1-Click Direct DEX Execution</h3>
+          <p class="card-desc">Instant deep-linking to Raydium, PancakeSwap, Uniswap, and bonding curve launchpads. Zero delay between discovery and swap.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.25rem;background:rgba(242,169,59,0.04);border-color:var(--gold-dim);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-weight:700;color:var(--ink);font-size:15px;">Micro-Ad Sponsorship Democratization</div>
+            <div style="font-size:13px;color:var(--ink-dim);">Tiered packages starting at $39 enable any token team to gain instant homepage spotlight.</div>
+          </div>
+          <span style="font-family:var(--font-mono);color:var(--gold);font-weight:700;">$39 — $399 USDT</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: CORE PLATFORM MODULES -->
+    <section class="slide" data-slide="4">
+      <span class="slide-tag">03 / Platform Architecture</span>
+      <h2 class="slide-title">Engineered For High-Speed Intelligence</h2>
+      <p class="slide-subtitle">Each module is purpose-built to give crypto traders an asymmetric information advantage.</p>
+
+      <div class="grid-4">
+        <div class="card">
+          <span class="card-icon">🛰️</span>
+          <h3 class="card-title">New Pairs Radar</h3>
+          <p class="card-desc">Sub-second on-chain pairs stream. Filterable by <b>Latest (&lt; 24h)</b> for snipers and <b>Matured (&gt; 7d)</b> for established volume pools.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔥</span>
+          <h3 class="card-title">Hot Score Algorithm</h3>
+          <p class="card-desc">Proprietary velocity ranking that measures transaction acceleration, buy/sell ratios, and liquidity depth to rank organic momentum.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">⭐</span>
+          <h3 class="card-title">Local Batch Watchlist</h3>
+          <p class="card-desc">Zero-login client side bookmarking. Batch queries real-time pricing for all saved coins simultaneously without privacy tracking.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔍</span>
+          <h3 class="card-title">Contract Security Scan</h3>
+          <p class="card-desc">Automated honeypot detection, buy/sell tax verification, mint authority revocation status, and LP lock inspection.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: MULTI-SOURCE ON-CHAIN PIPELINE -->
+    <section class="slide" data-slide="5">
+      <span class="slide-tag">04 / Data Ingestion</span>
+      <h2 class="slide-title">Multi-Source Liquidity Pipeline</h2>
+      <p class="slide-subtitle">Automated event listeners and RPC polling pull token launches the millisecond they are minted.</p>
+
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Launchpad / Source</th>
+            <th>Chain</th>
+            <th>Detection Mechanism</th>
+            <th>Verification Pipeline</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Pump.fun</b></td>
+            <td>Solana</td>
+            <td>WebSocket Mint Listener & Bonding Curve Telemetry</td>
+            <td><span class="badge-check">✓ Required Socials Filter</span></td>
+          </tr>
+          <tr>
+            <td><b>four.meme</b></td>
+            <td>BNB Chain (BSC)</td>
+            <td>On-chain Contract Log Decoding & Factory Event Parser</td>
+            <td><span class="badge-check">✓ Telegram / X Enforced</span></td>
+          </tr>
+          <tr>
+            <td><b>StonkFun</b></td>
+            <td>BNB Chain</td>
+            <td>Direct Launchpad API Polling & Pair Age Classifier</td>
+            <td><span class="badge-check">✓ Metadata Enrichment</span></td>
+          </tr>
+          <tr>
+            <td><b>DexScreener</b></td>
+            <td>Solana, BSC, Base, ETH</td>
+            <td>Multi-Chain Aggregator Depth & Pool Analytics</td>
+            <td><span class="badge-check">✓ Multi-Market Verified</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- SLIDE 6: MONETIZATION & AD ENGINE -->
+    <section class="slide" data-slide="6">
+      <span class="slide-tag">05 / Business Model</span>
+      <h2 class="slide-title">High-Conversion Advertising Engine</h2>
+      <p class="slide-subtitle">Clear, high-converting promotion tiers backed by direct manual and automated clearance.</p>
+
+      <div class="pkg-grid">
+        <div class="pkg-box">
+          <div class="pkg-name">12 Hours</div>
+          <div class="pkg-price">$39</div>
+          <div class="pkg-desc">Quick Boost for stealth & fair launches</div>
+          <div style="font-size:11px;color:var(--up);">✓ Top Carousel Spotlight</div>
+        </div>
+        <div class="pkg-box">
+          <div class="pkg-name">1 Day</div>
+          <div class="pkg-price">$59</div>
+          <div class="pkg-desc">24h Spotlight for momentum surges</div>
+          <div style="font-size:11px;color:var(--up);">✓ Direct DEX Trade Button</div>
+        </div>
+        <div class="pkg-box is-popular">
+          <span class="pkg-badge">POPULAR</span>
+          <div class="pkg-name">7 Days</div>
+          <div class="pkg-price">$149</div>
+          <div class="pkg-desc">Full Week Multi-Ecosystem Momentum</div>
+          <div style="font-size:11px;color:var(--up);">✓ Highest ROI & Conversion</div>
+        </div>
+        <div class="pkg-box is-vip">
+          <span class="pkg-badge" style="background:#00E5FF;">VIP</span>
+          <div class="pkg-name">30 Days</div>
+          <div class="pkg-price">$399</div>
+          <div class="pkg-desc">Maximum Dominance & Long-Term Branding</div>
+          <div style="font-size:11px;color:var(--up);">✓ Priority Admin Placement</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.25rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-weight:700;color:var(--ink);">Official Telegram Clearance Desk: @bullclub_ads</div>
+            <div style="font-size:12.5px;color:var(--ink-dim);">Automated order codes (#BT-XXXX) with instant clearance via USDT (TRC20/BEP20/ERC20), SOL & BNB.</div>
+          </div>
+          <a href="https://t.me/bullclub_ads" target="_blank" class="btn-header btn-primary-header">✈ Open @bullclub_ads</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: MOBILE-FIRST EXPERIENCE -->
+    <section class="slide" data-slide="7">
+      <span class="slide-tag">06 / UX & Mobile Terminal</span>
+      <h2 class="slide-title">100% Mobile Phone Responsive</h2>
+      <p class="slide-subtitle">Over 78% of memecoin trading occurs on mobile phones. Bulls Traking is engineered mobile-first.</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <span class="card-icon">📱</span>
+          <h3 class="card-title">Compact 84px Sticky Topbar</h3>
+          <p class="card-desc">Redesigned 2-row mobile header. Brand logo + promote button on Row 1, full-width search bar on Row 2. Saves &gt;100px of viewport real estate.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">✨</span>
+          <h3 class="card-title">Zero Overlapping Columns</h3>
+          <p class="card-desc">Eliminated conflicting sticky table positioning. Smooth touch-momentum horizontal scrolling with non-essential desktop columns gracefully hidden.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🌙</span>
+          <h3 class="card-title">Universal Dark Ledger Theme</h3>
+          <p class="card-desc">Zero blinding white browser default inputs. 16px iOS zoom-proof inputs with gold focus indicators and crisp tabular numbers.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: TECHNOLOGY STACK & PERFORMANCE -->
+    <section class="slide" data-slide="8">
+      <span class="slide-tag">07 / Engineering Rigor</span>
+      <h2 class="slide-title">Zero Framework Bloat Architecture</h2>
+      <p class="slide-subtitle">Built with pure Vanilla JavaScript and CSS to deliver blazing sub-second render speeds.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-title" style="color:var(--gold);">⚡ Frontend Engine</h3>
+          <ul style="padding-left:1.2rem;font-size:13px;color:var(--ink-dim);line-height:1.8;">
+            <li><b>Vanilla ES6+ JavaScript</b>: Zero React / Webpack overhead.</li>
+            <li><b>Custom CSS Design System</b>: Trading Floor Ledger tokens with fluid responsiveness.</li>
+            <li><b>Lightweight Tabular Numbers</b>: Monospace alignment for live prices.</li>
+            <li><b>Touch Momentum</b>: Native iOS/Android swipe physics.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="card-title" style="color:var(--up);">🛡️ Backend & Infrastructure</h3>
+          <ul style="padding-left:1.2rem;font-size:13px;color:var(--ink-dim);line-height:1.8;">
+            <li><b>Node.js Microservices</b>: Modular provider feeds and hot score engine.</li>
+            <li><b>Vercel Serverless Edge</b>: Global CDN distribution with 99.99% uptime.</li>
+            <li><b>Anti-Fraud Order System</b>: Automated on-chain TX hash verification.</li>
+            <li><b>Comprehensive Testing</b>: 100% automated test suite passing across all pipelines.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: STRATEGIC ROADMAP -->
+    <section class="slide" data-slide="9">
+      <span class="slide-tag">08 / Vision & Roadmap</span>
+      <h2 class="slide-title">Strategic Growth & Expansion</h2>
+      <p class="slide-subtitle">Continuous innovation roadmap expanding from market intelligence to automated execution.</p>
+
+      <div class="grid-4">
+        <div class="card">
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--up);margin-bottom:6px;">PHASE 1 (COMPLETED)</div>
+          <h3 class="card-title">Core Radar Engine</h3>
+          <p class="card-desc">Cross-chain launchpad indexing, New Pairs radar, Watchlist batch telemetry, and full mobile optimization.</p>
+        </div>
+        <div class="card" style="border-color:var(--gold);">
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--gold);margin-bottom:6px;">PHASE 2 (CURRENT)</div>
+          <h3 class="card-title">Monetization & Ads</h3>
+          <p class="card-desc">Manual Banner Ad Engine, automated multi-chain promotion clearing, and launchpad dev onboarding.</p>
+        </div>
+        <div class="card">
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);margin-bottom:6px;">PHASE 3 (Q1 2027)</div>
+          <h3 class="card-title">Telegram Alpha Bot</h3>
+          <p class="card-desc">Direct Telegram sniper bot integration, instant channel alerts for breakout pairs, and Web3 wallet connect.</p>
+        </div>
+        <div class="card">
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);margin-bottom:6px;">PHASE 4 (Q2 2027)</div>
+          <h3 class="card-title">Smart Copy Trading</h3>
+          <p class="card-desc">Developer due diligence scoring, top smart money wallet tracking, and cross-chain bridge execution.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: PARTNERSHIP & CONTACT -->
+    <section class="slide" data-slide="10">
+      <div class="cover-wrap">
+        <div class="cover-badge" style="background:rgba(127,184,120,0.12);border-color:rgba(127,184,120,0.3);color:var(--up);">🚀 Ready To Launch</div>
+        <h2 class="cover-title">Partner With <span>Bulls Traking</span></h2>
+        <p class="cover-subtitle">
+          Join the premier crypto discovery network. Feature your token, sponsor top carousel placements, or integrate your launchpad with our high-frequency radar.
+        </p>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:2rem;">
+          <a href="index.html#/promote" target="_blank" class="btn-header btn-primary-header" style="padding:12px 24px;font-size:14px;">
+            ★ Promote Your Coin ($39+)
+          </a>
+          <a href="https://t.me/bullclub_ads" target="_blank" class="btn-header" style="padding:12px 24px;font-size:14px;">
+            ✈ Contact Ad Desk @bullclub_ads
+          </a>
+          <a href="index.html#/" target="_blank" class="btn-header" style="padding:12px 24px;font-size:14px;">
+            🌐 Launch Live Platform
+          </a>
+        </div>
+
+        <div style="font-size:12px;color:var(--ink-faint);font-family:var(--font-mono);">
+          © 2026 Bulls Traking • https://bullstraking.vercel.app • Real-time On-Chain Intelligence
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- DECK FOOTER CONTROLS -->
+  <footer class="deck-footer">
+    <div class="slide-counter">
+      Slide <b id="currentSlideNum">1</b> of <span id="totalSlideNum">10</span>
+    </div>
+
+    <div class="key-hints">
+      Use <kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd> to navigate • <kbd>F</kbd> for Fullscreen
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" id="btnPrev" title="Previous Slide (Left Arrow)" onclick="changeSlide(-1)">❮</button>
+      <button class="nav-btn" id="btnNext" title="Next Slide (Right Arrow or Space)" onclick="changeSlide(1)">❯</button>
+      <button class="nav-btn" id="btnFullscreen" title="Toggle Fullscreen (F)" onclick="toggleFullscreen()">⛶</button>
+    </div>
+  </footer>
+
+  <script>
+    let currentSlide = 1;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const elCurrent = document.getElementById('currentSlideNum');
+    const elTotal = document.getElementById('totalSlideNum');
+    const elProgressBar = document.getElementById('progressBar');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+
+    elTotal.textContent = totalSlides;
+
+    function showSlide(index) {
+      if (index < 1) index = 1;
+      if (index > totalSlides) index = totalSlides;
+      currentSlide = index;
+
+      slides.forEach((s, idx) => {
+        if (idx + 1 === currentSlide) {
+          s.classList.add('is-active');
+          s.scrollTop = 0;
+        } else {
+          s.classList.remove('is-active');
+        }
+      });
+
+      elCurrent.textContent = currentSlide;
+      elProgressBar.style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+      btnPrev.disabled = (currentSlide === 1);
+      btnNext.disabled = (currentSlide === totalSlides);
+
+      // Save position to hash
+      window.location.hash = `slide-${currentSlide}`;
+    }
+
+    function changeSlide(direction) {
+      showSlide(currentSlide + direction);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        changeSlide(1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        changeSlide(-1);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        showSlide(1);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        showSlide(totalSlides);
+      } else if (e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    // Touch Swipe Navigation for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+    window.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    window.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) {
+          // Swipe Left -> Next
+          changeSlide(1);
+        } else {
+          // Swipe Right -> Prev
+          changeSlide(-1);
+        }
+      }
+    }
+
+    // Initial hash check
+    const initialHash = window.location.hash;
+    if (initialHash && initialHash.startsWith('#slide-')) {
+      const parsedNum = parseInt(initialHash.replace('#slide-', ''), 10);
+      if (!isNaN(parsedNum) && parsedNum >= 1 && parsedNum <= totalSlides) {
+        showSlide(parsedNum);
+      } else {
+        showSlide(1);
+      }
+    } else {
+      showSlide(1);
+    }
+  </script>
+</body>
+</html>
