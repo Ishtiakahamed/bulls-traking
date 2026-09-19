@@ -1900,6 +1900,7 @@ window.activateOrderAdmin = activateOrderAdmin;
 window.deleteOrderAdmin = deleteOrderAdmin;
 window.handleLogoFileUpload = handleLogoFileUpload;
 window.toggleLogoUrlField = toggleLogoUrlField;
+window.toggleMobileMenu = toggleMobileMenu;
 
 /* ---------------- 7a. CONTRACT SCANNER VIEW (/scan) (Phase 2 Task 1) ---------------- */
 
@@ -2809,7 +2810,28 @@ function updateNavHighlight(route) {
   if (el) el.classList.add('is-active');
 }
 
+function toggleMobileMenu(forceState) {
+  const drawer = document.getElementById('mobileDrawer');
+  const overlay = document.getElementById('mobileDrawerOverlay');
+  const btn = document.getElementById('mobileMenuBtn');
+  if (!drawer || !overlay) return;
+
+  const isOpen = forceState !== undefined ? forceState : !drawer.classList.contains('is-open');
+  if (isOpen) {
+    drawer.classList.add('is-open');
+    overlay.classList.add('is-open');
+    if (btn) btn.classList.add('is-active');
+    document.body.style.overflow = 'hidden';
+  } else {
+    drawer.classList.remove('is-open');
+    overlay.classList.remove('is-open');
+    if (btn) btn.classList.remove('is-active');
+    document.body.style.overflow = '';
+  }
+}
+
 function route() {
+  toggleMobileMenu(false);
   const { path, params } = parseHash();
   if (params.has('chain')) state.chain = params.get('chain');
   if (params.has('tab')) state.tab = params.get('tab');

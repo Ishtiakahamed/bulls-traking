@@ -1969,9 +1969,177 @@ tbody tr:hover {
 }
 
 /* ==========================================================================
-   RESPONSIVE LAYOUT BREAKPOINTS
+   MOBILE NAVIGATION DRAWER & TOGGLE BUTTON
    ========================================================================== */
-@media (max-width:960px){
+.mobile-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+  border-color: var(--gold);
+}
+
+.hamburger-bar {
+  width: 18px;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 2px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-menu-btn.is-active .hamburger-bar:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.mobile-menu-btn.is-active .hamburger-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-btn.is-active .hamburger-bar:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Mobile Drawer Overlay Backdrop */
+.mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.mobile-drawer-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Slide-out Mobile Drawer */
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 290px;
+  max-width: 86vw;
+  background: #18150E;
+  border-left: 1px solid var(--line);
+  z-index: 999;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.85);
+}
+
+.mobile-drawer.is-open {
+  transform: translateX(0);
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+  background: #1C1912;
+}
+
+.mobile-drawer-close {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-drawer-close:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.mobile-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.mobile-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem 0.85rem;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+  border-radius: var(--radius);
+  border-left: 3px solid transparent;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link:active {
+  background: var(--bg-panel-raised);
+  border-left-color: var(--gold);
+  color: var(--gold);
+}
+
+.mobile-drawer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.mobile-drawer-footer {
+  margin-top: auto;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* ==========================================================================
+   COMPREHENSIVE RESPONSIVE LAYOUT BREAKPOINTS
+   ========================================================================== */
+
+/* --- TABLETS & LAPTOPS (<= 960px) --- */
+@media (max-width: 960px) {
   .topbar-inner {
     flex-wrap: wrap;
     gap: 0.75rem;
@@ -2002,4 +2170,302 @@ tbody tr:hover {
   .footer-cols {
     gap: 2rem;
   }
+  .promote-grid-layout {
+    grid-template-columns: 1fr;
+  }
 }
+
+/* --- SMARTPHONES & SMALL TABLETS (<= 768px) --- */
+@media (max-width: 768px) {
+  /* Topbar Header Re-Architecture for Mobile */
+  .topbar {
+    padding: 0;
+  }
+  .topbar-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .wordmark {
+    font-size: 1.05rem;
+    gap: 0.45rem;
+    order: 1;
+  }
+  .brand-logo {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Show Hamburger Button on Mobile */
+  .mobile-menu-btn {
+    display: flex;
+    order: 3;
+  }
+
+  /* Compact Actions beside Hamburger */
+  .util-nav {
+    order: 2;
+    width: auto;
+    gap: 0.4rem;
+  }
+  .market-status-indicator {
+    display: none; /* Hide verbose text on phone */
+  }
+  .util-nav .btn-ghost {
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .util-nav .btn-solid {
+    display: none; /* Accessible in mobile drawer and bottom */
+  }
+
+  /* Full-width Search on Mobile */
+  .search-wrap {
+    order: 4;
+    width: 100%;
+    max-width: 100%;
+    margin: 0.25rem 0 0.15rem;
+  }
+  .search-input {
+    font-size: 13px;
+    padding: 0.5rem 0.85rem;
+  }
+
+  /* Swipeable Horizontal Navigation Pills */
+  .nav-links {
+    order: 5;
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0.4rem;
+    padding: 0.35rem 0 0.2rem;
+    margin: 0;
+  }
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-item {
+    flex-shrink: 0;
+    padding: 0.4rem 0.75rem;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line-soft);
+    border-radius: 20px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .nav-item.is-active {
+    background: rgba(242, 169, 59, 0.14);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* App Container Mobile Margins */
+  .app {
+    padding: 0.75rem 0.5rem 2.5rem;
+    max-width: 100%;
+  }
+
+  /* Top Ticker Tape Mobile Adjustments */
+  .tape {
+    height: 26px;
+  }
+  .tape-item {
+    font-size: 10px;
+    gap: 0.3rem;
+  }
+
+  /* Hero Overview 2x2 Grid */
+  .hero-overview {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .hero-stat-card {
+    padding: 0.75rem 0.65rem;
+  }
+  .hero-stat-card .val {
+    font-size: 1.15rem;
+  }
+
+  /* Promoted Spotlight Swipeable Carousel */
+  .promoted-carousel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.25rem 0.25rem 0.65rem;
+    scrollbar-width: none;
+  }
+  .promoted-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  .promoted-card {
+    flex: 0 0 84%;
+    min-width: 260px;
+    max-width: 320px;
+    scroll-snap-align: start;
+    margin: 0;
+  }
+
+  /* Filter Bars & Tabs Mobile Scroll */
+  .filter-bar, .subtabs, .chain-selector {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    white-space: nowrap;
+    gap: 0.4rem;
+    padding-bottom: 4px;
+    max-width: 100%;
+  }
+  .filter-bar::-webkit-scrollbar, .subtabs::-webkit-scrollbar, .chain-selector::-webkit-scrollbar {
+    display: none;
+  }
+  .subtab, .filter-pill {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Responsive Data Tables with Sticky Left Token Column */
+  .table-wrap {
+    margin: 0 -0.5rem;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table {
+    min-width: 600px;
+  }
+
+  /* Sticky Token Column for Instant Reference */
+  thead th:nth-child(3),
+  tbody td:nth-child(3) {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: #18150F !important;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.6);
+  }
+  thead th:nth-child(3) {
+    background: #191610 !important;
+  }
+
+  /* Promote Page Mobile Layout */
+  .promote-container {
+    padding: 0.75rem 0 2rem;
+  }
+  .package-selector {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .package-card {
+    padding: 10px 8px;
+  }
+  .package-card .pkg-badge {
+    font-size: 8px;
+    padding: 1px 5px;
+  }
+
+  /* Submit Token Page Mobile Layout */
+  .form-card {
+    padding: 1.25rem 1rem !important;
+  }
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Modals on Mobile */
+  .modal-dialog, .token-modal-content {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 10px auto !important;
+    padding: 1.2rem 1rem !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Footer Mobile */
+  .footer-inner {
+    padding: 2rem 1rem;
+  }
+  .footer-cols {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+/* --- COMPACT PHONES (<= 520px) --- */
+@media (max-width: 520px) {
+  .wordmark span {
+    font-size: 1rem;
+  }
+
+  /* Hide Non-Essential Dense Desktop Columns to Keep Mobile Fast & Readable */
+  table thead th:nth-child(5), table tbody td:nth-child(5), /* 1h */
+  table thead th:nth-child(7), table tbody td:nth-child(7), /* 7d */
+  table thead th:nth-child(8), table tbody td:nth-child(8), /* 6h */
+  table thead th:nth-child(9), table tbody td:nth-child(9), /* TXN */
+  table thead th:nth-child(10), table tbody td:nth-child(10), /* LP */
+  table thead th:nth-child(14), table tbody td:nth-child(14)  /* Sparkline */
+  {
+    display: none !important;
+  }
+
+  /* Compact Token Name Cell */
+  .token-cell {
+    gap: 6px;
+  }
+  .token-avatar {
+    width: 24px;
+    height: 24px;
+  }
+  .token-name {
+    font-size: 12px;
+    max-width: 105px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .token-sym {
+    font-size: 10px;
+  }
+
+  /* Touch-Friendly Input Elements (Prevent iOS Auto-Zoom) */
+  input[type="text"],
+  input[type="url"],
+  input[type="email"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Footer 1 Column on Very Small Screens */
+  .footer-cols {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  /* Buttons Full Touch Size */
+  .btn-solid, .btn-ghost {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+

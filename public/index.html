@@ -66,8 +66,71 @@
       <a href="#/promote" class="btn-ghost" style="border-color:var(--gold);color:var(--gold);">★ Promote</a>
       <a href="#/submit" class="btn-solid">Submit Token</a>
     </div>
+
+    <!-- MOBILE MENU TOGGLE BUTTON -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation menu" onclick="toggleMobileMenu()">
+      <span class="hamburger-bar"></span>
+      <span class="hamburger-bar"></span>
+      <span class="hamburger-bar"></span>
+    </button>
   </div>
 </header>
+
+<!-- MOBILE DRAWER & BACKDROP -->
+<div id="mobileDrawerOverlay" class="mobile-drawer-overlay" onclick="toggleMobileMenu(false)"></div>
+<aside id="mobileDrawer" class="mobile-drawer" aria-label="Mobile Navigation">
+  <div class="mobile-drawer-header">
+    <div class="wordmark">
+      <img src="assets/logo-transparent.png" alt="Bulls Traking Logo" class="brand-logo">
+      <span>BULLS <span class="accent">TRAKING</span></span>
+    </div>
+    <button class="mobile-drawer-close" onclick="toggleMobileMenu(false)" aria-label="Close menu">✕</button>
+  </div>
+
+  <div class="mobile-drawer-body">
+    <div class="mobile-drawer-nav">
+      <a href="#/" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+        <span>🏠 Home</span>
+      </a>
+      <a href="#/top-coins" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+        <span>⭐ Top Coins</span>
+      </a>
+      <a href="#/new-pairs" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+        <span>⚡ New Pairs Radar</span>
+      </a>
+      <a href="#/new-coins" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+        <span>🔥 New Coins</span>
+      </a>
+      <a href="#/promoted" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+        <span>👑 Promoted Coins</span>
+      </a>
+      <a href="#/presales" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+        <span>🎯 Presales</span>
+      </a>
+    </div>
+
+    <div class="mobile-drawer-actions">
+      <a href="#/promote" class="btn-solid" style="background:var(--gold);color:#000;width:100%;text-align:center;padding:12px;font-weight:700;margin-bottom:8px;box-sizing:border-box;display:block;" onclick="toggleMobileMenu(false)">
+        ★ Promote Coin ($39+)
+      </a>
+      <a href="#/submit" class="btn-ghost" style="width:100%;text-align:center;padding:12px;border:1px solid var(--border);box-sizing:border-box;display:block;" onclick="toggleMobileMenu(false)">
+        + Submit Token Free
+      </a>
+    </div>
+
+    <div class="mobile-drawer-footer">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">Official Ad Desk</div>
+      <a href="https://t.me/bullclub_ads" target="_blank" style="color:#0088cc;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+        ✈ Telegram: @bullclub_ads
+      </a>
+      <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);">
+        <a href="#/admin" style="font-size:11px;color:var(--text-faint);text-decoration:none;" onclick="toggleMobileMenu(false)">
+          🔒 Admin Portal
+        </a>
+      </div>
+    </div>
+  </div>
+</aside>
 
 <!-- MAIN CONTENT WRAPPER -->
 <main id="app" class="app"></main>
