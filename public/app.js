@@ -481,6 +481,79 @@ function renderHomeSkeleton() {
   `;
 }
 
+/* ---------------- Banner Ads helpers ---------------- */
+
+function trackBannerClick(bannerId) {
+  if (!bannerId) return;
+  fetchApi('/banners/click/' + bannerId, { method: 'POST' }).catch(() => {});
+}
+
+function renderBannerAd(banner, slotPlacement = 'top_banner') {
+  if (!banner) {
+    const isHeader = slotPlacement === 'top_banner';
+    const fallbackPrice = isHeader ? '$199/7D' : '$299/7D';
+    const title = isHeader ? '🚀 Bulls Traking Header Leaderboard — Reach 100K+ Active Traders' : '⚡ Bulls Traking In-Feed Spotlight — High-Converting Sponsor Placement';
+    const desc = isHeader 
+      ? 'Dominate top-of-page visibility across all crypto traders and investors. Guaranteed impressions.' 
+      : 'Showcase your Web3 project, token, launchpad or DEX to thousands of daily crypto traders.';
+    return `
+      <div class="banner-ad-wrapper ${slotPlacement}">
+        <div class="banner-ad-card banner-ad-placeholder">
+          <div class="banner-ad-badge">ADVERTISEMENT</div>
+          <div class="banner-ad-left">
+            <div class="banner-ad-icon">📢</div>
+            <div class="banner-ad-info">
+              <div class="banner-ad-title">${escapeHtml(title)}</div>
+              <div class="banner-ad-desc">${escapeHtml(desc)}</div>
+            </div>
+          </div>
+          <a href="#/promote?type=banner" class="banner-ad-cta">Advertise Here (${fallbackPrice}) →</a>
+        </div>
+      </div>
+    `;
+  }
+
+  const isPlaceholder = !!banner.is_placeholder;
+  const targetUrl = banner.target_url || '#/promote?type=banner';
+  const ctaText = banner.cta_text || (isPlaceholder ? `Advertise Here ($${banner.price || 199}/7D) →` : 'Learn More →');
+  const title = banner.title || (isPlaceholder ? 'Promote Your Web3 Project' : 'Sponsored Partner');
+  const desc = banner.description || (isPlaceholder ? 'Guaranteed prime placement viewed by multi-chain traders across Solana, BSC, Base & ETH.' : '');
+  const bannerImg = banner.banner_image || banner.image_url;
+  const clickHandler = banner.id ? `onclick="trackBannerClick(${banner.id})"` : '';
+  const isExternal = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
+  const targetAttr = isExternal ? 'target="_blank" rel="noopener sponsored"' : '';
+
+  // If full banner image without text is uploaded
+  if (bannerImg && !banner.title && !banner.description) {
+    return `
+      <div class="banner-ad-wrapper ${slotPlacement}">
+        <a href="${escapeHtml(targetUrl)}" ${targetAttr} class="banner-ad-image-mode" ${clickHandler}>
+          <div class="banner-ad-badge">SPONSORED</div>
+          <img src="${escapeHtml(bannerImg)}" alt="${escapeHtml(title)}" class="banner-img" />
+        </a>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="banner-ad-wrapper ${slotPlacement}">
+      <div class="banner-ad-card ${isPlaceholder ? 'banner-ad-placeholder' : ''}">
+        <div class="banner-ad-badge">${isPlaceholder ? 'ADVERTISEMENT' : 'SPONSORED'}</div>
+        <div class="banner-ad-left">
+          ${bannerImg ? `<img src="${escapeHtml(bannerImg)}" alt="${escapeHtml(title)}" class="banner-ad-icon-img" onerror="this.style.display='none'" />` : `<div class="banner-ad-icon">${isPlaceholder ? '📢' : '⚡'}</div>`}
+          <div class="banner-ad-info">
+            <div class="banner-ad-title">${escapeHtml(title)}</div>
+            ${desc ? `<div class="banner-ad-desc">${escapeHtml(desc)}</div>` : ''}
+          </div>
+        </div>
+        <a href="${escapeHtml(targetUrl)}" ${targetAttr} class="banner-ad-cta" ${clickHandler}>
+          ${escapeHtml(ctaText)}
+        </a>
+      </div>
+    </div>
+  `;
+}
+
 function buildHomeUI(data) {
   updateMarketStatus(data.marketStats);
   if (data.trending && data.trending.length > 0) {
@@ -520,8 +593,13 @@ function buildHomeUI(data) {
   }
 
   const promotedCards = (data.promoted || []).map(renderPromotedCard).join('');
+  const topBannerHtml = renderBannerAd(data.banners?.top_banner, 'top_banner');
+  const homeBannerHtml = renderBannerAd(data.banners?.homepage_banner, 'homepage_banner');
 
   app.innerHTML = `
+    <!-- TOP HEADER LEADERBOARD BANNER -->
+    ${topBannerHtml}
+
     <!-- PROMOTED TOKENS SECTION -->
     ${data.promoted && data.promoted.length > 0 ? `
       <section class="promoted-section">
@@ -529,6 +607,9 @@ function buildHomeUI(data) {
         <div class="promoted-grid">${promotedCards}</div>
       </section>
     ` : ''}
+
+    <!-- HOMEPAGE IN-FEED BANNER -->
+    ${homeBannerHtml}
 
     <!-- TABS & CHAIN CONTROLS -->
     <div class="controls-bar">
@@ -1106,241 +1187,479 @@ let promoteOrderState = {
   activeOrder: null
 };
 
-async function renderPromotePage() {
-  document.title = 'Promote Your Token | Bulls Traking';
+let bannerOrderState = {
+  selectedPkg: 'banner_top_7d',
+  price: 199,
+  days: 7,
+  placement: 'top_banner',
+  activeOrder: null
+};
+
+function switchPromoteMode(mode) {
+  const tokenSec = document.getElementById('promoteTokenSection');
+  const bannerSec = document.getElementById('promoteBannerSection');
+  const tabSpot = document.getElementById('tabSpotlightBtn');
+  const tabBan = document.getElementById('tabBannerBtn');
+
+  if (mode === 'banner') {
+    if (tokenSec) tokenSec.style.display = 'none';
+    if (bannerSec) bannerSec.style.display = 'block';
+    if (tabSpot) {
+      tabSpot.style.background = 'var(--bg-panel)';
+      tabSpot.style.color = 'var(--ink-dim)';
+      tabSpot.style.borderColor = 'var(--line)';
+    }
+    if (tabBan) {
+      tabBan.style.background = 'var(--gold)';
+      tabBan.style.color = '#000';
+      tabBan.style.borderColor = 'var(--gold)';
+    }
+  } else {
+    if (tokenSec) tokenSec.style.display = 'block';
+    if (bannerSec) bannerSec.style.display = 'none';
+    if (tabSpot) {
+      tabSpot.style.background = 'var(--gold)';
+      tabSpot.style.color = '#000';
+      tabSpot.style.borderColor = 'var(--gold)';
+    }
+    if (tabBan) {
+      tabBan.style.background = 'var(--bg-panel)';
+      tabBan.style.color = 'var(--ink-dim)';
+      tabBan.style.borderColor = 'var(--line)';
+    }
+  }
+}
+window.switchPromoteMode = switchPromoteMode;
+
+async function renderPromotePage(initialType = 'token') {
+  document.title = 'Promote & Advertise | Bulls Traking';
   promoteOrderState.selectedPkg = '7D';
   promoteOrderState.price = 149;
   promoteOrderState.days = 7;
   promoteOrderState.activeOrder = null;
 
+  bannerOrderState.selectedPkg = 'banner_top_7d';
+  bannerOrderState.price = 199;
+  bannerOrderState.days = 7;
+  bannerOrderState.placement = 'top_banner';
+  bannerOrderState.activeOrder = null;
+
+  const isBannerMode = initialType === 'banner';
+
   app.innerHTML = `
     <div class="promote-container">
-      <div class="page-head" style="text-align:center;margin-bottom:2rem;">
-        <span style="display:inline-block;background:rgba(245,166,35,0.12);color:var(--gold);border:1px solid rgba(245,166,35,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:8px;">SPONSORED SPOTLIGHT</span>
-        <h1 style="font-family:var(--display);margin:0 0 .5rem;font-size:2rem;">Promote Your Token</h1>
-        <p style="color:var(--text-muted);font-size:14px;max-width:620px;margin:0 auto;">
-          Get featured at the top of Bulls Traking homepage, drive instant verified 1-click DEX trading volume, and gain spotlight across all chains with automated on-chain verification.
+      <div class="page-head" style="text-align:center;margin-bottom:1.5rem;">
+        <span style="display:inline-block;background:rgba(242,169,59,0.12);color:var(--gold);border:1px solid rgba(242,169,59,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:8px;">OFFICIAL ADVERTISING SUITE</span>
+        <h1 style="font-family:var(--font-display);margin:0 0 .5rem;font-size:2rem;color:var(--ink);">Promote & Advertise on Bulls Traking</h1>
+        <p style="color:var(--ink-dim);font-size:14px;max-width:640px;margin:0 auto;">
+          Drive instant verified trading volume, reach 100K+ multi-chain crypto traders across Solana, BSC, Base & Ethereum with guaranteed placement.
         </p>
       </div>
 
-      <div class="promote-grid-layout">
-        <!-- FORM COLUMN -->
-        <div class="promote-col-form">
-          <form id="promoteForm" class="promote-form" onsubmit="event.preventDefault(); submitPromotionOrder();">
-            
-            <h3 style="margin:0 0 1rem;font-size:1.1rem;color:var(--ink);">1. Token Information</h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="pName">Token Name *</label>
-                <input type="text" id="pName" placeholder="e.g. Bulls Protocol" required>
-              </div>
-              <div class="form-group">
-                <label for="pSymbol">Token Symbol *</label>
-                <input type="text" id="pSymbol" placeholder="e.g. BULL" required>
-              </div>
-            </div>
+      <!-- TYPE SWITCHER TABS -->
+      <div class="promote-type-tabs" style="display:flex;justify-content:center;gap:12px;margin-bottom:2rem;flex-wrap:wrap;">
+        <button type="button" id="tabSpotlightBtn" class="btn-solid" onclick="switchPromoteMode('token')" style="${!isBannerMode ? 'background:var(--gold);color:#000;border-color:var(--gold);' : 'background:var(--bg-panel);border:1px solid var(--line);color:var(--ink-dim);'}padding:10px 22px;font-size:14px;font-weight:700;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;">
+          🪙 Token Spotlight ($39 - $399)
+        </button>
+        <button type="button" id="tabBannerBtn" class="btn-solid" onclick="switchPromoteMode('banner')" style="${isBannerMode ? 'background:var(--gold);color:#000;border-color:var(--gold);' : 'background:var(--bg-panel);border:1px solid var(--line);color:var(--ink-dim);'}padding:10px 22px;font-size:14px;font-weight:700;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;">
+          📢 Banner Ads Placement ($199 - $599)
+        </button>
+      </div>
 
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="pChain">Network Chain *</label>
-                <select id="pChain" required>
-                  <option value="bsc" selected>BNB Chain (BSC)</option>
-                  <option value="solana">Solana</option>
-                  <option value="ethereum">Ethereum</option>
-                  <option value="base">Base</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="pContract">Contract Address (CA) *</label>
-                <input type="text" id="pContract" placeholder="Token mint or contract address" required>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Token Logo * <span style="font-size:11px;color:var(--text-faint);">(PNG, JPG, WebP, SVG)</span></label>
+      <!-- SECTION 1: TOKEN SPOTLIGHT -->
+      <div id="promoteTokenSection" style="display:${isBannerMode ? 'none' : 'block'};">
+        <div class="promote-grid-layout">
+          <!-- FORM COLUMN -->
+          <div class="promote-col-form">
+            <form id="promoteForm" class="promote-form" onsubmit="event.preventDefault(); submitPromotionOrder();">
               
-              <!-- Direct File Upload Dropzone -->
-              <div id="logoUploadDropzone" style="border:2px dashed var(--border);border-radius:10px;padding:1.25rem;text-align:center;background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s ease;" onclick="document.getElementById('pLogoFileInput').click()">
-                <input type="file" id="pLogoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;" onchange="handleLogoFileUpload(event)">
+              <h3 style="margin:0 0 1rem;font-size:1.1rem;color:var(--ink);">1. Token Information</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="pName">Token Name *</label>
+                  <input type="text" id="pName" placeholder="e.g. Bulls Protocol" required>
+                </div>
+                <div class="form-group">
+                  <label for="pSymbol">Token Symbol *</label>
+                  <input type="text" id="pSymbol" placeholder="e.g. BULL" required>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="pChain">Network Chain *</label>
+                  <select id="pChain" required>
+                    <option value="bsc" selected>BNB Chain (BSC)</option>
+                    <option value="solana">Solana</option>
+                    <option value="ethereum">Ethereum</option>
+                    <option value="base">Base</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="pContract">Contract Address (CA) *</label>
+                  <input type="text" id="pContract" placeholder="Token mint or contract address" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Token Logo * <span style="font-size:11px;color:var(--text-faint);">(PNG, JPG, WebP, SVG)</span></label>
                 
-                <div id="logoUploadPlaceholder">
-                  <div style="margin-bottom:6px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-                  <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;">
-                    Click to Upload Token Logo File <span style="color:var(--gold);">or Drag & Drop</span>
+                <!-- Direct File Upload Dropzone -->
+                <div id="logoUploadDropzone" style="border:2px dashed var(--border);border-radius:10px;padding:1.25rem;text-align:center;background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s ease;" onclick="document.getElementById('pLogoFileInput').click()">
+                  <input type="file" id="pLogoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;" onchange="handleLogoFileUpload(event)">
+                  
+                  <div id="logoUploadPlaceholder">
+                    <div style="margin-bottom:6px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                    <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;">
+                      Click to Upload Token Logo File <span style="color:var(--gold);">or Drag & Drop</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);">
+                      Supports PNG, JPG, WebP, SVG up to 5MB
+                    </div>
                   </div>
-                  <div style="font-size:11px;color:var(--text-muted);">
-                    Supports PNG, JPG, WebP, SVG up to 5MB
-                  </div>
-                </div>
 
-                <!-- Active Uploaded Thumbnail & Info (Hidden Initially) -->
-                <div id="logoUploadPreviewWrap" style="display:none;align-items:center;justify-content:center;gap:12px;">
-                  <img id="logoUploadThumb" src="" alt="Logo preview" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);box-shadow:0 0 10px rgba(245,166,35,0.3);">
-                  <div style="text-align:left;">
-                    <div id="logoUploadFileName" style="font-size:13px;font-weight:700;color:var(--ink);">logo.png</div>
-                    <div style="font-size:11px;color:var(--up);font-weight:600;">✓ Logo Selected & Ready <span style="color:var(--text-muted);font-weight:normal;margin-left:6px;text-decoration:underline;cursor:pointer;">(Change file)</span></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Or enter URL toggle -->
-              <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
-                <button type="button" class="btn-ghost" onclick="toggleLogoUrlField()" style="font-size:11px;padding:2px 6px;text-decoration:underline;cursor:pointer;border:none;background:none;color:var(--text-muted);">
-                  Or enter Image URL manually
-                </button>
-                <span id="logoUploadStatus" style="font-size:11px;color:var(--text-muted);"></span>
-              </div>
-
-              <div id="logoUrlFieldWrap" style="display:none;margin-top:8px;">
-                <input type="text" id="pLogo" placeholder="https://yourdomain.com/logo.png or uploaded image URL" style="font-size:12px;width:100%;box-sizing:border-box;">
-              </div>
-            </div>
-
-            <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">2. Social Links <span style="font-size:11px;color:var(--text-faint);font-weight:normal;">(Optional — only provided links will display icons)</span></h3>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="pWeb">Official Website</label>
-                <input type="text" id="pWeb" placeholder="https://yourproject.com">
-              </div>
-              <div class="form-group">
-                <label for="pX">X (Twitter) URL</label>
-                <input type="text" id="pX" placeholder="https://x.com/yourproject">
-              </div>
-            </div>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="pTg">Telegram Community</label>
-                <input type="text" id="pTg" placeholder="https://t.me/yourcommunity">
-              </div>
-              <div class="form-group">
-                <label for="pReddit">Reddit Community</label>
-                <input type="text" id="pReddit" placeholder="https://reddit.com/r/yourproject">
-              </div>
-            </div>
-
-            <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">3. Select Promotion Package</h3>
-            <div class="package-selector" id="pkgSelector">
-              <div class="package-card" data-key="12H" data-price="39" data-days="0.5">
-                <div style="font-weight:700;font-size:14px;color:var(--ink);">12 Hours</div>
-                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$39</div>
-                <div style="font-size:11px;color:var(--text-muted);">Quick Boost</div>
-              </div>
-              <div class="package-card" data-key="1D" data-price="59" data-days="1">
-                <div style="font-weight:700;font-size:14px;color:var(--ink);">1 Day</div>
-                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$59</div>
-                <div style="font-size:11px;color:var(--text-muted);">24h Spotlight</div>
-              </div>
-              <div class="package-card is-selected" data-key="7D" data-price="149" data-days="7">
-                <span class="pkg-badge">POPULAR</span>
-                <div style="font-weight:700;font-size:14px;color:var(--ink);">7 Days</div>
-                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$149</div>
-                <div style="font-size:11px;color:var(--text-muted);">Full Week Momentum</div>
-              </div>
-              <div class="package-card" data-key="30D" data-price="399" data-days="30">
-                <span class="pkg-badge" style="background:#00E5FF;">VIP</span>
-                <div style="font-weight:700;font-size:14px;color:var(--ink);">30 Days</div>
-                <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$399</div>
-                <div style="font-size:11px;color:var(--text-muted);">Maximum Dominance</div>
-              </div>
-            </div>
-
-            <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">4. Payment & Activation</h3>
-            <div style="background:rgba(0,136,204,0.08);border:1px solid rgba(0,136,204,0.25);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#0088cc" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-                <div>
-                  <div style="color:var(--ink);font-size:13px;font-weight:700;">Official Telegram Ad Desk: <a href="https://t.me/bullclub_ads" target="_blank" style="color:#0088cc;text-decoration:underline;">@bullclub_ads</a></div>
-                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
-                    Fast direct clearance via official Telegram desk. Accepted: USDT (BEP20 / TRC20 / ERC20), SOL, BNB or On-Chain.
+                  <!-- Active Uploaded Thumbnail & Info (Hidden Initially) -->
+                  <div id="logoUploadPreviewWrap" style="display:none;align-items:center;justify-content:center;gap:12px;">
+                    <img id="logoUploadThumb" src="" alt="Logo preview" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);box-shadow:0 0 10px rgba(245,166,35,0.3);">
+                    <div style="text-align:left;">
+                      <div id="logoUploadFileName" style="font-size:13px;font-weight:700;color:var(--ink);">logo.png</div>
+                      <div style="font-size:11px;color:var(--up);font-weight:600;">✓ Logo Selected & Ready <span style="color:var(--text-muted);font-weight:normal;margin-left:6px;text-decoration:underline;cursor:pointer;">(Change file)</span></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:13px 12px;font-size:14px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;white-space:normal;text-align:center;box-sizing:border-box;">
-              <span style="white-space:normal;word-break:break-word;">Book via Telegram @bullclub_ads ($149 USDT) →</span>
-            </button>
-          </form>
-
-          <!-- ORDER PAYMENT / TELEGRAM CLEARANCE MODAL -->
-          <div id="paymentArea" style="display:none;margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.5rem;">
-            <div style="background:rgba(0,136,204,0.06);border:1px solid rgba(0,136,204,0.3);border-radius:10px;padding:1.4rem;margin-bottom:1rem;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
-                <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">PROMOTION ORDER <span id="dispOrderId" style="color:#0088cc;">#BT-1000</span></span>
-                <span style="background:rgba(245,166,35,0.15);color:var(--gold);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;" id="dispOrderStatus">Awaiting Payment Clearance</span>
-              </div>
-              <div style="font-size:1.5rem;font-weight:800;color:var(--ink);margin-bottom:6px;">
-                Amount: <span style="color:var(--up);" id="dispAmount">$149 USDT</span>
-              </div>
-              <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px;line-height:1.5;">
-                Your order is reserved in our system! Contact our official Telegram desk <b>@bullclub_ads</b> with your order details for instant clearance and launch.
-              </p>
-
-              <!-- Telegram Primary Card -->
-              <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.15rem;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                  <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">Official Telegram Desk</span>
-                  <span style="font-size:12px;color:#0088cc;font-weight:600;">@bullclub_ads</span>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-                  <a id="btnOpenTgChat" href="https://t.me/bullclub_ads" target="_blank" class="btn-solid" style="background:#0088cc;border-color:#0088cc;padding:10px 18px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
-                    <span>Open Chat with @bullclub_ads →</span>
-                  </a>
-                  <button type="button" class="btn-subtle" onclick="copyOrderMessage()" style="padding:10px 14px;font-size:13px;cursor:pointer;">
-                    Copy Order Message
+                <!-- Or enter URL toggle -->
+                <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+                  <button type="button" class="btn-ghost" onclick="toggleLogoUrlField()" style="font-size:11px;padding:2px 6px;text-decoration:underline;cursor:pointer;border:none;background:none;color:var(--text-muted);">
+                    Or enter Image URL manually
                   </button>
+                  <span id="logoUploadStatus" style="font-size:11px;color:var(--text-muted);"></span>
                 </div>
-                <label style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">Pre-formatted Message for Admin:</label>
-                <textarea id="tgMessageText" readonly style="width:100%;height:105px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:11px;color:var(--ink);resize:none;box-sizing:border-box;"></textarea>
 
-                <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);">
-                  <span style="color:#0088cc;font-weight:700;">Note:</span>
-                  <span>Direct clearance with our admin desk: Send the message above to <b>@bullclub_ads</b> to complete manual payment and launch your campaign immediately.</span>
+                <div id="logoUrlFieldWrap" style="display:none;margin-top:8px;">
+                  <input type="text" id="pLogo" placeholder="https://yourdomain.com/logo.png or uploaded image URL" style="font-size:12px;width:100%;box-sizing:border-box;">
+                </div>
+              </div>
+
+              <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">2. Social Links <span style="font-size:11px;color:var(--text-faint);font-weight:normal;">(Optional — only provided links will display icons)</span></h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="pWeb">Official Website</label>
+                  <input type="text" id="pWeb" placeholder="https://yourproject.com">
+                </div>
+                <div class="form-group">
+                  <label for="pX">X (Twitter) URL</label>
+                  <input type="text" id="pX" placeholder="https://x.com/yourproject">
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="pTg">Telegram Community</label>
+                  <input type="text" id="pTg" placeholder="https://t.me/yourcommunity">
+                </div>
+                <div class="form-group">
+                  <label for="pReddit">Reddit Community</label>
+                  <input type="text" id="pReddit" placeholder="https://reddit.com/r/yourproject">
+                </div>
+              </div>
+
+              <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">3. Select Promotion Package</h3>
+              <div class="package-selector" id="pkgSelector">
+                <div class="package-card" data-key="12H" data-price="39" data-days="0.5">
+                  <div style="font-weight:700;font-size:14px;color:var(--ink);">12 Hours</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$39</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Quick Boost</div>
+                </div>
+                <div class="package-card" data-key="1D" data-price="59" data-days="1">
+                  <div style="font-weight:700;font-size:14px;color:var(--ink);">1 Day</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$59</div>
+                  <div style="font-size:11px;color:var(--text-muted);">24h Spotlight</div>
+                </div>
+                <div class="package-card is-selected" data-key="7D" data-price="149" data-days="7">
+                  <span class="pkg-badge">POPULAR</span>
+                  <div style="font-weight:700;font-size:14px;color:var(--ink);">7 Days</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$149</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Full Week Momentum</div>
+                </div>
+                <div class="package-card" data-key="30D" data-price="399" data-days="30">
+                  <span class="pkg-badge" style="background:#00E5FF;">VIP</span>
+                  <div style="font-weight:700;font-size:14px;color:var(--ink);">30 Days</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$399</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Maximum Dominance</div>
+                </div>
+              </div>
+
+              <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">4. Payment & Activation</h3>
+              <div style="background:rgba(0,136,204,0.08);border:1px solid rgba(0,136,204,0.25);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#0088cc" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                  <div>
+                    <div style="color:var(--ink);font-size:13px;font-weight:700;">Official Telegram Ad Desk: <a href="https://t.me/bullclub_ads" target="_blank" style="color:#0088cc;text-decoration:underline;">@bullclub_ads</a></div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+                      Fast direct clearance via official Telegram desk. Accepted: USDT (BEP20 / TRC20 / ERC20), SOL, BNB or On-Chain.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:13px 12px;font-size:14px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;white-space:normal;text-align:center;box-sizing:border-box;">
+                <span style="white-space:normal;word-break:break-word;">Book via Telegram @bullclub_ads ($149 USDT) →</span>
+              </button>
+            </form>
+
+            <!-- ORDER PAYMENT / TELEGRAM CLEARANCE MODAL -->
+            <div id="paymentArea" style="display:none;margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.5rem;">
+              <div style="background:rgba(0,136,204,0.06);border:1px solid rgba(0,136,204,0.3);border-radius:10px;padding:1.4rem;margin-bottom:1rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+                  <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">PROMOTION ORDER <span id="dispOrderId" style="color:#0088cc;">#BT-1000</span></span>
+                  <span style="background:rgba(245,166,35,0.15);color:var(--gold);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;" id="dispOrderStatus">Awaiting Payment Clearance</span>
+                </div>
+                <div style="font-size:1.5rem;font-weight:800;color:var(--ink);margin-bottom:6px;">
+                  Amount: <span style="color:var(--up);" id="dispAmount">$149 USDT</span>
+                </div>
+                <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px;line-height:1.5;">
+                  Your order is reserved in our system! Contact our official Telegram desk <b>@bullclub_ads</b> with your order details for instant clearance and launch.
+                </p>
+
+                <!-- Telegram Primary Card -->
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.15rem;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">Official Telegram Desk</span>
+                    <span style="font-size:12px;color:#0088cc;font-weight:600;">@bullclub_ads</span>
+                  </div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                    <a id="btnOpenTgChat" href="https://t.me/bullclub_ads" target="_blank" class="btn-solid" style="background:#0088cc;border-color:#0088cc;padding:10px 18px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
+                      <span>Open Chat with @bullclub_ads →</span>
+                    </a>
+                    <button type="button" class="btn-subtle" onclick="copyOrderMessage()" style="padding:10px 14px;font-size:13px;cursor:pointer;">
+                      Copy Order Message
+                    </button>
+                  </div>
+                  <label style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">Pre-formatted Message for Admin:</label>
+                  <textarea id="tgMessageText" readonly style="width:100%;height:105px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:11px;color:var(--ink);resize:none;box-sizing:border-box;"></textarea>
+
+                  <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);">
+                    <span style="color:#0088cc;font-weight:700;">Note:</span>
+                    <span>Direct clearance with our admin desk: Send the message above to <b>@bullclub_ads</b> to complete manual payment and launch your campaign immediately.</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- PREVIEW COLUMN -->
-        <div class="promote-col-preview">
-          <div style="position:sticky;top:20px;">
-            <h3 style="margin:0 0 .75rem;font-size:1.05rem;color:var(--ink);">Live Promoted Card Preview</h3>
-            <p style="font-size:12px;color:var(--text-muted);margin:0 0 1rem;">This is how your promoted token will look on the homepage.</p>
-            
-            <div id="previewCardWrap">
-              <div class="promoted-card" style="border:1px solid var(--gold);box-shadow:0 0 15px rgba(245,166,35,0.15);">
-                <div class="promoted-meta">
-                  <img id="prevLogo" class="promoted-logo" src="assets/logo-transparent.png" alt="Preview Logo" onerror="this.onerror=null; this.src='assets/logo-transparent.png';">
-                  <div>
-                    <div class="promoted-name">
-                      <span id="prevName">Token Name</span> <span class="badge-promoted">PROMOTED</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
-                      <span id="prevChain" style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">BSC</span>
-                      <a id="prevTradeBtn" href="#" target="_blank" class="btn-promoted-trade" title="Trade directly on DEX">Trade ↗</a>
+          <!-- PREVIEW COLUMN -->
+          <div class="promote-col-preview">
+            <div style="position:sticky;top:20px;">
+              <h3 style="margin:0 0 .75rem;font-size:1.05rem;color:var(--ink);">Live Promoted Card Preview</h3>
+              <p style="font-size:12px;color:var(--text-muted);margin:0 0 1rem;">This is how your promoted token will look on the homepage.</p>
+              
+              <div id="previewCardWrap">
+                <div class="promoted-card" style="border:1px solid var(--gold);box-shadow:0 0 15px rgba(245,166,35,0.15);">
+                  <div class="promoted-meta">
+                    <img id="prevLogo" class="promoted-logo" src="assets/logo-transparent.png" alt="Preview Logo" onerror="this.onerror=null; this.src='assets/logo-transparent.png';">
+                    <div>
+                      <div class="promoted-name">
+                        <span id="prevName">Token Name</span> <span class="badge-promoted">PROMOTED</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                        <span id="prevChain" style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">BSC</span>
+                        <a id="prevTradeBtn" href="#" target="_blank" class="btn-promoted-trade" title="Trade directly on DEX">Trade ↗</a>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div style="text-align:right;">
-                  <div class="promoted-price">$0.000100</div>
-                  <div style="color:var(--up);">+12.4%</div>
-                  <div id="prevSocials" style="margin-top:4px;display:flex;justify-content:flex-end;gap:3px;">
-                    <span style="color:var(--text-faint);font-size:11px;">—</span>
+                  <div style="text-align:right;">
+                    <div class="promoted-price">$0.000100</div>
+                    <div style="color:var(--up);">+12.4%</div>
+                    <div id="prevSocials" style="margin-top:4px;display:flex;justify-content:flex-end;gap:3px;">
+                      <span style="color:var(--text-faint);font-size:11px;">—</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div style="margin-top:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;">
-              <h4 style="margin:0 0 .5rem;font-size:12px;color:var(--ink);text-transform:uppercase;letter-spacing:0.5px;">Package Inclusions:</h4>
-              <ul style="margin:0;padding-left:1.2rem;font-size:12px;color:var(--text-muted);line-height:1.6;">
-                <li>Top Homepage Carousel Placement</li>
-                <li>Exclusive Promoted Spotlight Grid</li>
-                <li>1-Click Verified DEX Trading Button</li>
-                <li>Live Social Links: Website, 𝕏, Telegram, Reddit</li>
-                <li>Priority Telegram Desk Clearance & Fast Launch</li>
-              </ul>
+              <div style="margin-top:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+                <h4 style="margin:0 0 .5rem;font-size:12px;color:var(--ink);text-transform:uppercase;letter-spacing:0.5px;">Package Inclusions:</h4>
+                <ul style="margin:0;padding-left:1.2rem;font-size:12px;color:var(--text-muted);line-height:1.6;">
+                  <li>Top Homepage Carousel Placement</li>
+                  <li>Exclusive Promoted Spotlight Grid</li>
+                  <li>1-Click Verified DEX Trading Button</li>
+                  <li>Live Social Links: Website, 𝕏, Telegram, Reddit</li>
+                  <li>Priority Telegram Desk Clearance & Fast Launch</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: BANNER ADVERTISING -->
+      <div id="promoteBannerSection" style="display:${isBannerMode ? 'block' : 'none'};">
+        <div class="promote-grid-layout">
+          <!-- BANNER FORM COLUMN -->
+          <div class="promote-col-form">
+            <form id="bannerForm" class="promote-form" onsubmit="event.preventDefault(); submitBannerOrder();">
+              <h3 style="margin:0 0 1rem;font-size:1.1rem;color:var(--ink);">1. Campaign Information</h3>
+              <div class="form-group">
+                <label for="bTitle">Campaign / Brand Title *</label>
+                <input type="text" id="bTitle" placeholder="e.g. DexSwap — Zero Slippage Meme Trading" required>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="bTargetUrl">Destination Website / DEX URL *</label>
+                  <input type="url" id="bTargetUrl" placeholder="https://yourdomain.com or DEX link" required>
+                </div>
+                <div class="form-group">
+                  <label for="bCtaText">CTA Button Text *</label>
+                  <input type="text" id="bCtaText" placeholder="e.g. Trade Now →" value="Trade Now →" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="bDesc">Short Subtitle / Description (Optional)</label>
+                <input type="text" id="bDesc" placeholder="e.g. Instant multi-chain swaps, deep liquidity & verified contracts.">
+              </div>
+
+              <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">2. Banner Creative / Logo Image *</h3>
+              <div class="form-group">
+                <div id="bannerUploadDropzone" style="border:2px dashed var(--line);border-radius:10px;padding:1.25rem;text-align:center;background:var(--bg-panel-raised);cursor:pointer;transition:all 0.2s ease;" onclick="document.getElementById('bLogoFileInput').click()">
+                  <input type="file" id="bLogoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;" onchange="handleBannerFileUpload(event)">
+                  <div id="bannerUploadPlaceholder">
+                    <div style="margin-bottom:6px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                    <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;">
+                      Click to Upload Creative Graphic <span style="color:var(--gold);">or Drag & Drop</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--ink-dim);">
+                      Supports 728x90, 970x90, or project logo icon (PNG, JPG, WebP, SVG up to 5MB)
+                    </div>
+                  </div>
+                  <div id="bannerUploadPreviewWrap" style="display:none;align-items:center;justify-content:center;gap:12px;">
+                    <img id="bannerUploadThumb" src="" alt="Banner preview" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:2px solid var(--gold);">
+                    <div style="text-align:left;">
+                      <div id="bannerUploadFileName" style="font-size:13px;font-weight:700;color:var(--ink);">creative.png</div>
+                      <div style="font-size:11px;color:var(--up);font-weight:600;">✓ Creative Ready <span style="color:var(--ink-dim);font-weight:normal;margin-left:6px;text-decoration:underline;cursor:pointer;">(Change)</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+                  <button type="button" class="btn-ghost" onclick="toggleBannerUrlField()" style="font-size:11px;padding:2px 6px;text-decoration:underline;cursor:pointer;border:none;background:none;color:var(--ink-dim);">
+                    Or enter Image URL manually
+                  </button>
+                  <span id="bannerUploadStatus" style="font-size:11px;color:var(--ink-dim);"></span>
+                </div>
+                <div id="bannerUrlFieldWrap" style="display:none;margin-top:8px;">
+                  <input type="text" id="bImageUrl" placeholder="https://yourdomain.com/banner.png" style="font-size:12px;width:100%;box-sizing:border-box;">
+                </div>
+              </div>
+
+              <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">3. Select Banner Placement & Duration</h3>
+              <div class="package-selector" id="bPkgSelector">
+                <div class="package-card is-selected" data-key="banner_top_7d" data-placement="top_banner" data-price="199" data-days="7">
+                  <div style="font-weight:700;font-size:13px;color:var(--ink);">Top Header</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$199</div>
+                  <div style="font-size:11px;color:var(--ink-dim);">7 Days Leaderboard</div>
+                </div>
+                <div class="package-card" data-key="banner_home_7d" data-placement="homepage_banner" data-price="299" data-days="7">
+                  <span class="pkg-badge">POPULAR</span>
+                  <div style="font-weight:700;font-size:13px;color:var(--ink);">In-Feed Spotlight</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$299</div>
+                  <div style="font-size:11px;color:var(--ink-dim);">7 Days High-Converting</div>
+                </div>
+                <div class="package-card" data-key="banner_bundle_30d" data-placement="top_banner" data-price="599" data-days="30">
+                  <span class="pkg-badge" style="background:#00E5FF;">VIP</span>
+                  <div style="font-weight:700;font-size:13px;color:var(--ink);">VIP Domination</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$599</div>
+                  <div style="font-size:11px;color:var(--ink-dim);">30 Days Full Domination</div>
+                </div>
+              </div>
+
+              <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">4. Payment & Activation</h3>
+              <div style="background:rgba(0,136,204,0.08);border:1px solid rgba(0,136,204,0.25);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#0088cc" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                  <div>
+                    <div style="color:var(--ink);font-size:13px;font-weight:700;">Official Telegram Ad Desk: <a href="https://t.me/bullclub_ads" target="_blank" style="color:#0088cc;text-decoration:underline;">@bullclub_ads</a></div>
+                    <div style="font-size:12px;color:var(--ink-dim);margin-top:2px;">
+                      Fast direct clearance via official Telegram desk. Accepted: USDT (BEP20 / TRC20 / ERC20), SOL, BNB or On-Chain.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" id="btnCreateBannerOrder" class="btn-solid" style="width:100%;padding:13px 12px;font-size:14px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;white-space:normal;text-align:center;box-sizing:border-box;">
+                <span style="white-space:normal;word-break:break-word;">Book via Telegram @bullclub_ads ($199 USDT) →</span>
+              </button>
+            </form>
+
+            <!-- BANNER ORDER PAYMENT / TELEGRAM CLEARANCE MODAL -->
+            <div id="bannerPaymentArea" style="display:none;margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1.5rem;">
+              <div style="background:rgba(0,136,204,0.06);border:1px solid rgba(0,136,204,0.3);border-radius:10px;padding:1.4rem;margin-bottom:1rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+                  <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">BANNER AD ORDER <span id="dispBannerOrderId" style="color:#0088cc;">#BT-BN-100</span></span>
+                  <span style="background:rgba(242,169,59,0.15);color:var(--gold);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;">Awaiting Payment Clearance</span>
+                </div>
+                <div style="font-size:1.5rem;font-weight:800;color:var(--ink);margin-bottom:6px;">
+                  Amount: <span style="color:var(--up);" id="dispBannerAmount">$199 USDT</span>
+                </div>
+                <p style="font-size:13px;color:var(--ink-dim);margin:0 0 14px;line-height:1.5;">
+                  Your banner slot is reserved in our ad engine! Contact our official Telegram desk <b>@bullclub_ads</b> with your order details for instant clearance and live activation.
+                </p>
+
+                <div style="background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:1.15rem;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <span style="font-size:12px;font-weight:700;color:var(--ink);text-transform:uppercase;">Official Telegram Desk</span>
+                    <span style="font-size:12px;color:#0088cc;font-weight:600;">@bullclub_ads</span>
+                  </div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                    <a id="btnOpenBannerTgChat" href="https://t.me/bullclub_ads" target="_blank" class="btn-solid" style="background:#0088cc;border-color:#0088cc;padding:10px 18px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
+                      <span>Open Chat with @bullclub_ads →</span>
+                    </a>
+                    <button type="button" class="btn-subtle" onclick="copyBannerOrderMessage()" style="padding:10px 14px;font-size:13px;cursor:pointer;">
+                      Copy Order Message
+                    </button>
+                  </div>
+                  <label style="font-size:11px;color:var(--ink-faint);display:block;margin-bottom:4px;">Pre-formatted Message for Admin:</label>
+                  <textarea id="tgBannerMessageText" readonly style="width:100%;height:105px;background:var(--bg-page);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:11px;color:var(--ink);resize:none;box-sizing:border-box;"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BANNER PREVIEW COLUMN -->
+          <div class="promote-col-preview">
+            <div style="position:sticky;top:20px;">
+              <h3 style="margin:0 0 .75rem;font-size:1.05rem;color:var(--ink);">Live Banner Ad Preview</h3>
+              <p style="font-size:12px;color:var(--ink-dim);margin:0 0 1rem;">This is how your banner ad appears live across Bulls Traking.</p>
+
+              <div id="prevBannerWrap" style="margin-bottom:1.5rem;">
+                <!-- Live Banner Rendered Here -->
+                <div class="banner-ad-wrapper top_banner">
+                  <div class="banner-ad-card" style="border:1px solid var(--gold);box-shadow:0 0 16px rgba(242,169,59,0.18);">
+                    <div class="banner-ad-badge">SPONSORED</div>
+                    <div class="banner-ad-left">
+                      <div class="banner-ad-icon" id="prevBannerIcon">⚡</div>
+                      <img id="prevBannerImg" src="" alt="Banner logo" class="banner-ad-icon-img" style="display:none;" />
+                      <div class="banner-ad-info">
+                        <div class="banner-ad-title" id="prevBannerTitle">DexSwap — Zero Slippage Meme Trading</div>
+                        <div class="banner-ad-desc" id="prevBannerDesc">Instant multi-chain swaps, deep liquidity & verified contracts.</div>
+                      </div>
+                    </div>
+                    <a id="prevBannerCta" href="#" target="_blank" class="banner-ad-cta">Trade Now →</a>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:1rem;">
+                <h4 style="margin:0 0 .5rem;font-size:12px;color:var(--ink);text-transform:uppercase;letter-spacing:0.5px;">Banner Inclusions:</h4>
+                <ul style="margin:0;padding-left:1.2rem;font-size:12px;color:var(--ink-dim);line-height:1.6;">
+                  <li>High-conversion prime placement (Header or In-Feed)</li>
+                  <li>Multi-device responsive (Desktop, Tablet, Mobile)</li>
+                  <li>Live click attribution & impression metrics</li>
+                  <li>Direct link to your Web3 app, token, or DEX pair</li>
+                  <li>Priority Telegram desk verification & fast launch</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -1349,6 +1668,7 @@ async function renderPromotePage() {
   `;
 
   initPromotePreviewHandlers();
+  initBannerHandlers();
 }
 
 function initPromotePreviewHandlers() {
@@ -1609,6 +1929,237 @@ function copyOrderMessage() {
     prompt('Copy order details:', text);
   });
 }
+
+/* ---------------- Banner Advertising Handlers ---------------- */
+
+function initBannerHandlers() {
+  const bTitle = document.getElementById('bTitle');
+  const bTargetUrl = document.getElementById('bTargetUrl');
+  const bCtaText = document.getElementById('bCtaText');
+  const bDesc = document.getElementById('bDesc');
+  const bImageUrl = document.getElementById('bImageUrl');
+
+  const prevBannerTitle = document.getElementById('prevBannerTitle');
+  const prevBannerDesc = document.getElementById('prevBannerDesc');
+  const prevBannerCta = document.getElementById('prevBannerCta');
+  const prevBannerImg = document.getElementById('prevBannerImg');
+  const prevBannerIcon = document.getElementById('prevBannerIcon');
+  const btnCreateBannerOrder = document.getElementById('btnCreateBannerOrder');
+
+  function updateBannerPreview() {
+    if (prevBannerTitle) {
+      prevBannerTitle.textContent = bTitle ? (bTitle.value.trim() || 'DexSwap — Zero Slippage Meme Trading') : 'Campaign Title';
+    }
+    if (prevBannerDesc) {
+      const descVal = bDesc ? bDesc.value.trim() : '';
+      prevBannerDesc.textContent = descVal || 'Instant multi-chain swaps, deep liquidity & verified contracts.';
+      prevBannerDesc.style.display = 'block';
+    }
+    if (prevBannerCta) {
+      prevBannerCta.textContent = bCtaText ? (bCtaText.value.trim() || 'Trade Now →') : 'Trade Now →';
+      prevBannerCta.href = bTargetUrl ? (bTargetUrl.value.trim() || '#') : '#';
+    }
+    if (bImageUrl && bImageUrl.value.trim()) {
+      if (prevBannerImg) {
+        prevBannerImg.src = bImageUrl.value.trim();
+        prevBannerImg.style.display = 'block';
+      }
+      if (prevBannerIcon) prevBannerIcon.style.display = 'none';
+    } else {
+      if (prevBannerImg) prevBannerImg.style.display = 'none';
+      if (prevBannerIcon) prevBannerIcon.style.display = 'flex';
+    }
+  }
+
+  [bTitle, bTargetUrl, bCtaText, bDesc, bImageUrl].forEach(el => {
+    if (el) el.addEventListener('input', updateBannerPreview);
+  });
+
+  // Banner package selector
+  const bCards = document.querySelectorAll('#bPkgSelector .package-card');
+  bCards.forEach(card => {
+    card.addEventListener('click', () => {
+      bCards.forEach(c => c.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      bannerOrderState.selectedPkg = card.dataset.key;
+      bannerOrderState.placement = card.dataset.placement || 'top_banner';
+      bannerOrderState.price = Number(card.dataset.price);
+      bannerOrderState.days = Number(card.dataset.days);
+      if (btnCreateBannerOrder) {
+        btnCreateBannerOrder.innerHTML = `<span>Book via Telegram @bullclub_ads ($${bannerOrderState.price} USDT) →</span>`;
+      }
+      const dispBannerAmount = document.getElementById('dispBannerAmount');
+      if (dispBannerAmount) dispBannerAmount.textContent = `$${bannerOrderState.price} USDT`;
+    });
+  });
+
+  // Dropzone drag & drop support
+  const bDropzone = document.getElementById('bannerUploadDropzone');
+  if (bDropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      bDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        bDropzone.style.borderColor = 'var(--gold)';
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      bDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        bDropzone.style.borderColor = 'var(--line)';
+      }, false);
+    });
+
+    bDropzone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const file = dt?.files?.[0];
+      if (file) processBannerFile(file);
+    }, false);
+  }
+}
+
+function handleBannerFileUpload(e) {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+  processBannerFile(file);
+}
+window.handleBannerFileUpload = handleBannerFileUpload;
+
+function processBannerFile(file) {
+  if (!file.type.startsWith('image/')) {
+    alert('Please select a valid image file (PNG, JPG, WebP, SVG).');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Image size exceeds 5MB limit.');
+    return;
+  }
+
+  const reader = new FileReader();
+  const statusEl = document.getElementById('bannerUploadStatus');
+  if (statusEl) statusEl.textContent = 'Processing image…';
+
+  reader.onload = function(evt) {
+    const dataUrl = evt.target.result;
+    const thumb = document.getElementById('bannerUploadThumb');
+    const placeholder = document.getElementById('bannerUploadPlaceholder');
+    const previewWrap = document.getElementById('bannerUploadPreviewWrap');
+    const fileNameEl = document.getElementById('bannerUploadFileName');
+    const bImageUrl = document.getElementById('bImageUrl');
+    const prevBannerImg = document.getElementById('prevBannerImg');
+    const prevBannerIcon = document.getElementById('prevBannerIcon');
+
+    if (thumb) thumb.src = dataUrl;
+    if (placeholder) placeholder.style.display = 'none';
+    if (previewWrap) previewWrap.style.display = 'flex';
+    if (fileNameEl) fileNameEl.textContent = file.name;
+    if (bImageUrl) bImageUrl.value = dataUrl;
+    if (prevBannerImg) {
+      prevBannerImg.src = dataUrl;
+      prevBannerImg.style.display = 'block';
+    }
+    if (prevBannerIcon) prevBannerIcon.style.display = 'none';
+    if (statusEl) statusEl.innerHTML = '<span style="color:var(--up);">✓ Ready</span>';
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function toggleBannerUrlField() {
+  const wrap = document.getElementById('bannerUrlFieldWrap');
+  if (wrap) {
+    wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+    if (wrap.style.display === 'block') {
+      document.getElementById('bImageUrl')?.focus();
+    }
+  }
+}
+window.toggleBannerUrlField = toggleBannerUrlField;
+
+async function submitBannerOrder() {
+  const btn = document.getElementById('btnCreateBannerOrder');
+  const title = document.getElementById('bTitle')?.value.trim();
+  const targetUrl = document.getElementById('bTargetUrl')?.value.trim();
+  const imageUrl = document.getElementById('bImageUrl')?.value.trim() || 'assets/logo-transparent.png';
+  const ctaText = document.getElementById('bCtaText')?.value.trim() || 'Trade Now →';
+
+  if (!title || !targetUrl) {
+    alert('Please provide both a Campaign Title and Destination URL.');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Booking Banner Campaign…';
+  }
+
+  try {
+    const payload = {
+      title,
+      targetUrl,
+      bannerImage: imageUrl,
+      placement: bannerOrderState.placement,
+      durationDays: bannerOrderState.days,
+      price: bannerOrderState.price
+    };
+
+    const res = await fetchApi('/banners/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.success || !res.data) throw new Error(res.error || 'Failed to register banner order.');
+
+    bannerOrderState.activeOrder = res.data;
+    const paymentArea = document.getElementById('bannerPaymentArea');
+    if (paymentArea) paymentArea.style.display = 'block';
+
+    const orderNum = `#BT-BN-${res.data.id}`;
+    const dispOrderId = document.getElementById('dispBannerOrderId');
+    if (dispOrderId) dispOrderId.textContent = orderNum;
+
+    const dispAmount = document.getElementById('dispBannerAmount');
+    if (dispAmount) dispAmount.textContent = `$${res.data.price} USDT`;
+
+    const slotName = bannerOrderState.placement === 'top_banner' ? (bannerOrderState.days === 30 ? 'Monthly VIP Leaderboard' : 'Top Header Leaderboard') : 'Homepage In-Feed Spotlight';
+
+    const tgMessage = `Hello Admin (@bullclub_ads)! I want to book a Banner Advertisement on Bulls Traking:\n\n• Order ID: ${orderNum}\n• Campaign: ${payload.title}\n• Slot Placement: ${slotName}\n• Duration: ${payload.durationDays} Days ($${payload.price} USDT)\n• Target URL: ${payload.targetUrl}\n• CTA Text: ${ctaText}\n\nPlease provide your payment address to verify and activate this banner placement.`;
+
+    const tgMessageText = document.getElementById('tgBannerMessageText');
+    if (tgMessageText) tgMessageText.value = tgMessage;
+
+    const btnOpenTg = document.getElementById('btnOpenBannerTgChat');
+    if (btnOpenTg) {
+      btnOpenTg.href = `https://t.me/bullclub_ads?text=${encodeURIComponent(tgMessage)}`;
+    }
+
+    if (btn) btn.style.display = 'none';
+
+    paymentArea.scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    alert('Error booking banner: ' + err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<span>Book via Telegram @bullclub_ads ($${bannerOrderState.price} USDT) →</span>`;
+    }
+  }
+}
+window.submitBannerOrder = submitBannerOrder;
+
+function copyBannerOrderMessage() {
+  const text = document.getElementById('tgBannerMessageText')?.value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Banner order message copied to clipboard! Send this message to @bullclub_ads on Telegram.');
+  }).catch(() => {
+    prompt('Copy banner order details:', text);
+  });
+}
+window.copyBannerOrderMessage = copyBannerOrderMessage;
+
 
 function copyTreasuryAddress() {
   const addr = document.getElementById('dispTreasuryAddr')?.textContent;
@@ -3056,7 +3607,7 @@ function route() {
   } else if (path === '/promoted') {
     renderPromotedPage();
   } else if (path === '/promote') {
-    renderPromotePage();
+    renderPromotePage(params.get('type'));
   } else if (path === '/admin') {
     renderAdminPage();
   } else if (path === '/presales') {

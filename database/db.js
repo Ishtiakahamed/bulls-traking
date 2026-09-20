@@ -241,6 +241,62 @@ function initDatabase() {
     console.warn('[DB Promotion Migration Notice]', promoMigErr.message);
   }
 
+  // Banner Advertising Engine Migration
+  try {
+    const bannerMigrationPath = path.join(__dirname, 'migrations', '006_banner_advertising.sql');
+    if (fs.existsSync(bannerMigrationPath)) {
+      const bannerSql = fs.readFileSync(bannerMigrationPath, 'utf-8');
+      db.exec(bannerSql);
+    }
+
+    // Ensure default banner slots exist
+    const slotCount = db.prepare('SELECT COUNT(*) as count FROM banner_slots').get();
+    if (!slotCount || slotCount.count === 0) {
+      db.exec(`
+        INSERT OR IGNORE INTO banner_slots (id, slot_name, position, dimensions, price_per_week, is_active) VALUES
+        (1, 'Top Header Leaderboard', 'top_banner', '728x90', 199.00, 1),
+        (2, 'Homepage In-Feed Spotlight', 'homepage_banner', '970x90', 299.00, 1),
+        (3, 'New Pairs Radar Banner', 'radar_banner', '728x90', 149.00, 1);
+      `);
+    }
+
+    // Ensure sample active banner orders exist for demonstration & tests
+    const bannerCount = db.prepare('SELECT COUNT(*) as count FROM banner_orders').get();
+    if (!bannerCount || bannerCount.count === 0) {
+      db.exec(`
+        INSERT INTO banner_orders (
+          title, banner_image, target_url, placement, duration, start_at, end_at, price, payment_status, approval_status
+        ) VALUES
+        (
+          'Bulls Traking Official Telegram Desk',
+          'assets/logo-transparent.png',
+          'https://t.me/bullclub_ads',
+          'top_banner',
+          30,
+          datetime('now', '-1 day'),
+          datetime('now', '+29 days'),
+          199.00,
+          'completed',
+          'approved'
+        ),
+        (
+          'Promote Your Token — Reach 100K+ Crypto Traders',
+          'assets/logo-transparent.png',
+          '#/promote',
+          'homepage_banner',
+          30,
+          datetime('now', '-1 day'),
+          datetime('now', '+29 days'),
+          299.00,
+          'completed',
+          'approved'
+        );
+      `);
+    }
+  } catch (bannerMigErr) {
+    console.warn('[DB Banner Migration Notice]', bannerMigErr.message);
+  }
+
   // Auto-seed initial tokens if table is empty (e.g. on clean serverless start)
   if (!isSeeding) {
     try {

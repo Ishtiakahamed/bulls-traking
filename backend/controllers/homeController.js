@@ -6,6 +6,7 @@ const {
   getTrendingCoins
 } = require('../services/tokenService');
 const { getActivePromotions } = require('../services/promotionService');
+const { getActiveBanners } = require('../services/bannerService');
 const { getSyncStatus } = require('../workers/syncWorker');
 const { queryOne } = require('../../database/db');
 
@@ -57,6 +58,7 @@ function handleGetHomeData(req, res, next) {
         gainers: gainersRes.tokens,
         topCoins: topCoinsRes.tokens,
         promoted,
+        banners: getActiveBanners(),
         pagination: {
           page,
           limit,

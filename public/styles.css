@@ -523,6 +523,166 @@ td:nth-child(4), td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child
   min-height: 75vh;
 }
 
+/* ==========================================================================
+   BANNER ADVERTISING ENGINE (Top Leaderboard & In-Feed Spotlight)
+   ========================================================================== */
+.banner-ad-wrapper {
+  width: 100%;
+  margin: 0 0 1.25rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.banner-ad-card {
+  width: 100%;
+  max-width: 970px;
+  min-height: 75px;
+  background: linear-gradient(135deg, rgba(28, 25, 18, 0.95), rgba(34, 30, 21, 0.98));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.25rem;
+  gap: 1rem;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.banner-ad-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 20px rgba(242, 169, 59, 0.15);
+  transform: translateY(-1px);
+}
+
+.banner-ad-badge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: rgba(242, 169, 59, 0.14);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  border: 1px solid rgba(242, 169, 59, 0.4);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 2;
+}
+
+.banner-ad-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.banner-ad-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(242, 169, 59, 0.1);
+  border: 1px solid rgba(242, 169, 59, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.banner-ad-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.banner-ad-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.banner-ad-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.banner-ad-desc {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.banner-ad-cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(242, 169, 59, 0.14);
+  color: var(--gold);
+  border: 1px solid rgba(242, 169, 59, 0.55);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.banner-ad-card:hover .banner-ad-cta {
+  background: var(--gold);
+  color: var(--bg-page);
+  box-shadow: 0 0 12px rgba(242, 169, 59, 0.4);
+}
+
+/* Graphical Banner Mode (Image-based) */
+.banner-ad-image-mode {
+  padding: 0;
+  min-height: 80px;
+  max-height: 100px;
+}
+
+.banner-ad-img {
+  width: 100%;
+  height: 100%;
+  max-height: 95px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Fallback Booking Placeholder Banner */
+.banner-ad-placeholder {
+  background: linear-gradient(135deg, rgba(34, 30, 21, 0.7), rgba(28, 25, 18, 0.9));
+  border: 1px dashed rgba(242, 169, 59, 0.45);
+}
+
+.banner-ad-placeholder:hover {
+  border-color: var(--gold);
+  border-style: solid;
+}
+
 /* Hero Market Stats Strip */
 .hero-overview {
   display: grid;
@@ -2480,6 +2640,39 @@ tbody tr:hover {
     gap: 0.3rem !important;
   }
 
+  /* Mobile Banner Ads */
+  .banner-ad-wrapper {
+    margin: 0 0 0.85rem 0 !important;
+  }
+  .banner-ad-card {
+    padding: 0.55rem 0.75rem !important;
+    min-height: 58px !important;
+    gap: 0.5rem !important;
+  }
+  .banner-ad-icon {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 8px !important;
+  }
+  .banner-ad-icon img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .banner-ad-title {
+    font-size: 11.5px !important;
+  }
+  .banner-ad-desc {
+    font-size: 10px !important;
+  }
+  .banner-ad-cta {
+    padding: 4px 8px !important;
+    font-size: 9.5px !important;
+  }
+  .banner-ad-badge {
+    font-size: 7.5px !important;
+    padding: 0 4px !important;
+  }
+
   /* Hero Overview 2x2 Grid */
   .hero-overview {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -3164,6 +3357,201 @@ tbody tr:hover {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* =========================================================================
+   BANNER ADVERTISING ENGINE (LEDGER THEMED)
+   ========================================================================= */
+
+.banner-ad-wrapper {
+  width: 100%;
+  margin: 0.75rem 0 1.25rem 0;
+  box-sizing: border-box;
+}
+
+.banner-ad-wrapper.top_banner {
+  margin-top: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.banner-ad-wrapper.homepage_banner {
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.banner-ad-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.9rem 1.25rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.banner-ad-card:hover {
+  border-color: var(--gold-dim);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.banner-ad-badge {
+  position: absolute;
+  top: -8px;
+  right: 14px;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--line);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.banner-ad-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.banner-ad-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.banner-ad-icon-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.banner-ad-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.banner-ad-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.banner-ad-desc {
+  font-size: 12px;
+  color: var(--ink-dim);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.banner-ad-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.banner-ad-cta:hover {
+  background: var(--gold);
+  color: #000;
+  box-shadow: 0 0 10px rgba(242, 169, 59, 0.3);
+}
+
+.banner-ad-placeholder {
+  border-style: dashed;
+  border-color: rgba(242, 169, 59, 0.4);
+  background: rgba(242, 169, 59, 0.03);
+}
+
+.banner-ad-image-mode {
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.banner-ad-image-mode:hover {
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+
+.banner-ad-image-mode .banner-img {
+  width: 100%;
+  height: auto;
+  max-height: 100px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Banner Ad Mobile Responsiveness */
+@media (max-width: 768px) {
+  .banner-ad-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+    gap: 0.75rem;
+  }
+  .banner-ad-left {
+    width: 100%;
+  }
+  .banner-ad-title {
+    white-space: normal;
+    font-size: 13px;
+  }
+  .banner-ad-desc {
+    white-space: normal;
+    font-size: 11.5px;
+  }
+  .banner-ad-cta {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px;
+  }
+  .banner-ad-badge {
+    top: 6px;
+    right: 8px;
+  }
+}
+
 
 
 
