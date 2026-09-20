@@ -1,4 +1,4 @@
-const { query, execute, transaction } = require('../../database/db');
+const { query, queryOne, execute, transaction } = require('../../database/db');
 const { marketDataProvider } = require('../providers');
 const { calculateHotScore } = require('../services/hotScoreService');
 const config = require('../../config/default');

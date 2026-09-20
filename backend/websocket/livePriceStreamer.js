@@ -4,10 +4,21 @@ const { broadcast } = require('./wsServer');
 
 // Supported real-time symbol mappings from public exchange stream
 const SYMBOL_MAP = {
-  'SOLUSDT': 'SOL',
+  'BTCUSDT': 'BTC',
   'ETHUSDT': 'ETH',
   'BNBUSDT': 'BNB',
-  'BTCUSDT': 'BTC',
+  'SOLUSDT': 'SOL',
+  'XRPUSDT': 'XRP',
+  'DOGEUSDT': 'DOGE',
+  'ADAUSDT': 'ADA',
+  'TRXUSDT': 'TRX',
+  'LINKUSDT': 'LINK',
+  'AVAXUSDT': 'AVAX',
+  'SUIUSDT': 'SUI',
+  'NEARUSDT': 'NEAR',
+  'PEPEUSDT': 'PEPE',
+  'SHIBUSDT': 'SHIB',
+  'LTCUSDT': 'LTC',
   'WIFUSDT': 'WIF',
   'BONKUSDT': 'BONK',
   'CAKEUSDT': 'CAKE'
@@ -43,24 +54,26 @@ function startLivePriceStreamer() {
           const change24h = openPrice > 0 ? ((currentPrice - openPrice) / openPrice) * 100 : 0;
           const volume24h = parseFloat(item.q || 0); // quote volume
 
-          // Update database token record
-          const token = queryOne(`SELECT id, price FROM tokens WHERE symbol = ? AND is_active = 1`, [targetSymbol]);
-          if (token) {
-            const oldPrice = token.price;
+          // Update database token records
+          const matchingTokens = query(`SELECT id, price FROM tokens WHERE UPPER(symbol) = ? AND is_active = 1`, [targetSymbol]);
+          if (matchingTokens && matchingTokens.length > 0) {
+            const oldPrice = matchingTokens[0].price;
             const priceDirection = currentPrice >= oldPrice ? 'up' : 'down';
 
-            execute(`
-              UPDATE tokens SET 
-                price = ?, change_24h = ?,
-                last_data_sync = CURRENT_TIMESTAMP
-              WHERE id = ?
-            `, [currentPrice, change24h, token.id]);
+            for (const tok of matchingTokens) {
+              execute(`
+                UPDATE tokens SET 
+                  price = ?, change_24h = ?,
+                  last_data_sync = CURRENT_TIMESTAMP
+                WHERE id = ?
+              `, [currentPrice, change24h, tok.id]);
+            }
 
             // Broadcast real-time price tick to all connected frontend clients
             broadcast({
               type: 'PRICE_UPDATE',
               data: {
-                tokenId: token.id,
+                tokenId: matchingTokens[0].id,
                 symbol: targetSymbol,
                 price: currentPrice,
                 change24h: change24h,

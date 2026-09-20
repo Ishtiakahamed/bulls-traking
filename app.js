@@ -13,7 +13,7 @@ const CHAINS = {
 const app = document.getElementById('app');
 let state = {
   chain: 'all',
-  tab: 'trending',
+  tab: 'top',
   page: 1,
   limit: 25,
   homeData: null
@@ -404,7 +404,7 @@ function mergeLocalSubmissions(fetchedTokens) {
 }
 
 let homeState = {
-  tab: 'trending',
+  tab: 'top',
   page: 1,
   limit: 20,
   chain: 'all',
@@ -473,7 +473,6 @@ function renderPromotedCard(p) {
       <!-- TABS & CHAIN CONTROLS -->
       <div class="controls-bar">
         <div class="subtabs" id="homeTabs">
-          <span class="subtab ${homeState.tab === 'trending' ? 'is-active' : ''}" data-tab="trending">Trending</span>
           <span class="subtab ${homeState.tab === 'top' ? 'is-active' : ''}" data-tab="top">Top Coins</span>
           <span class="subtab ${homeState.tab === 'new' ? 'is-active' : ''}" data-tab="new">New Coins</span>
           <span class="subtab ${homeState.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">Hot Coins</span>
@@ -2996,12 +2995,93 @@ function route() {
   }
 }
 
-/* ---------------- real-time websocket client ---------------- */
+/* ---------------- real-time price & websocket streaming ---------------- */
 
 let wsClient = null;
 let wsReconnectTimer = null;
+const lastKnownPrices = {};
+
+const BINANCE_STREAM_MAP = {
+  'BTCUSDT': 'BTC',
+  'ETHUSDT': 'ETH',
+  'BNBUSDT': 'BNB',
+  'SOLUSDT': 'SOL',
+  'XRPUSDT': 'XRP',
+  'DOGEUSDT': 'DOGE',
+  'ADAUSDT': 'ADA',
+  'TRXUSDT': 'TRX',
+  'LINKUSDT': 'LINK',
+  'AVAXUSDT': 'AVAX',
+  'SUIUSDT': 'SUI',
+  'NEARUSDT': 'NEAR',
+  'PEPEUSDT': 'PEPE',
+  'SHIBUSDT': 'SHIB',
+  'LTCUSDT': 'LTC',
+  'WIFUSDT': 'WIF',
+  'BONKUSDT': 'BONK'
+};
+
+function initDirectBinanceStream() {
+  try {
+    if (wsClient) {
+      try { wsClient.close(); } catch (_) {}
+    }
+    const binanceUrl = 'wss://stream.binance.com:9443/ws/!miniTicker@arr';
+    wsClient = new WebSocket(binanceUrl);
+
+    wsClient.onopen = () => {
+      console.log('[WebSocket] Connected directly to Live Exchange Price Stream');
+      const statusElem = document.getElementById('marketStatus');
+      if (statusElem) {
+        statusElem.className = 'market-status-indicator';
+        statusElem.innerHTML = '<span class="live-pulse"></span> Market Live Stream';
+      }
+    };
+
+    wsClient.onmessage = (event) => {
+      try {
+        const tickers = JSON.parse(event.data);
+        if (!Array.isArray(tickers)) return;
+        for (const item of tickers) {
+          const sym = BINANCE_STREAM_MAP[item.s];
+          if (sym) {
+            const currentPrice = parseFloat(item.c);
+            const openPrice = parseFloat(item.o);
+            const change24h = openPrice > 0 ? ((currentPrice - openPrice) / openPrice) * 100 : null;
+            const prevPrice = lastKnownPrices[sym] || currentPrice;
+            lastKnownPrices[sym] = currentPrice;
+            handleLivePriceUpdate({
+              symbol: sym,
+              price: currentPrice,
+              change24h: change24h,
+              direction: currentPrice >= prevPrice ? 'up' : 'down'
+            });
+          }
+        }
+      } catch (_) {}
+    };
+
+    wsClient.onclose = () => {
+      if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+      wsReconnectTimer = setTimeout(initDirectBinanceStream, 4000);
+    };
+
+    wsClient.onerror = () => {
+      try { wsClient.close(); } catch (_) {}
+    };
+  } catch (e) {
+    if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
+    wsReconnectTimer = setTimeout(initDirectBinanceStream, 5000);
+  }
+}
 
 function initWebSocket() {
+  const isVercel = location.hostname.includes('vercel.app');
+  if (isVercel) {
+    // Vercel serverless environment does not support persistent WebSockets, connect directly to public exchange stream
+    return initDirectBinanceStream();
+  }
+
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${protocol}//${location.host}/ws`;
 
@@ -3032,36 +3112,22 @@ function initWebSocket() {
 
     wsClient.onclose = () => {
       const statusElem = document.getElementById('marketStatus');
-      if (location.hostname.includes('vercel.app')) {
-        if (statusElem) {
-          statusElem.className = 'market-status-indicator';
-          statusElem.innerHTML = '<span class="live-pulse"></span> Market Data Live';
-        }
-        return; // Don't infinite-loop reconnect on serverless Vercel
-      }
       if (statusElem) {
         statusElem.className = 'market-status-indicator delayed';
-        statusElem.textContent = '● Reconnecting Feed…';
+        statusElem.textContent = '● Connecting Stream…';
       }
       if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
-      wsReconnectTimer = setTimeout(initWebSocket, 3000);
+      // Fallback to direct Binance stream if backend ws unavailable
+      wsReconnectTimer = setTimeout(() => {
+        initDirectBinanceStream();
+      }, 3000);
     };
 
     wsClient.onerror = () => {
-      if (location.hostname.includes('vercel.app')) {
-        const statusElem = document.getElementById('marketStatus');
-        if (statusElem) {
-          statusElem.className = 'market-status-indicator';
-          statusElem.innerHTML = '<span class="live-pulse"></span> Market Data Live';
-        }
-      }
       wsClient.close();
     };
   } catch (err) {
-    if (!location.hostname.includes('vercel.app')) {
-      if (wsReconnectTimer) clearTimeout(wsReconnectTimer);
-      wsReconnectTimer = setTimeout(initWebSocket, 4000);
-    }
+    initDirectBinanceStream();
   }
 }
 
