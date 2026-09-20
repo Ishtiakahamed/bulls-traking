@@ -444,7 +444,7 @@ function renderPromotedCard(p) {
           </div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
             <span style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(chainName)}</span>
-            ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">🚀 Trade ↗</a>` : ''}
+            ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">Trade ↗</a>` : ''}
           </div>
         </div>
       </div>
@@ -967,7 +967,7 @@ async function renderPromotedPage() {
       </div>
       <div>
         <a href="#/promote" class="btn-solid" style="display:inline-flex;align-items:center;gap:6px;">
-          <span>★ Promote Your Coin</span>
+          <span>Promote Your Coin</span>
         </a>
       </div>
     </div>
@@ -1031,7 +1031,7 @@ async function renderPromotePage() {
   app.innerHTML = `
     <div class="promote-container">
       <div class="page-head" style="text-align:center;margin-bottom:2rem;">
-        <span style="display:inline-block;background:rgba(245,166,35,0.12);color:var(--gold);border:1px solid rgba(245,166,35,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:8px;">★ SPONSORED SPOTLIGHT</span>
+        <span style="display:inline-block;background:rgba(245,166,35,0.12);color:var(--gold);border:1px solid rgba(245,166,35,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:8px;">SPONSORED SPOTLIGHT</span>
         <h1 style="font-family:var(--display);margin:0 0 .5rem;font-size:2rem;">Promote Your Token</h1>
         <p style="color:var(--text-muted);font-size:14px;max-width:620px;margin:0 auto;">
           Get featured at the top of Bulls Traking homepage, drive instant verified 1-click DEX trading volume, and gain spotlight across all chains with automated on-chain verification.
@@ -1079,7 +1079,7 @@ async function renderPromotePage() {
                 <input type="file" id="pLogoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none;" onchange="handleLogoFileUpload(event)">
                 
                 <div id="logoUploadPlaceholder">
-                  <div style="font-size:2rem;margin-bottom:4px;">🖼️</div>
+                  <div style="margin-bottom:6px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
                   <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;">
                     Click to Upload Token Logo File <span style="color:var(--gold);">or Drag & Drop</span>
                   </div>
@@ -1101,7 +1101,7 @@ async function renderPromotePage() {
               <!-- Or enter URL toggle -->
               <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
                 <button type="button" class="btn-ghost" onclick="toggleLogoUrlField()" style="font-size:11px;padding:2px 6px;text-decoration:underline;cursor:pointer;border:none;background:none;color:var(--text-muted);">
-                  🔗 Or enter Image URL manually
+                  Or enter Image URL manually
                 </button>
                 <span id="logoUploadStatus" style="font-size:11px;color:var(--text-muted);"></span>
               </div>
@@ -1114,21 +1114,21 @@ async function renderPromotePage() {
             <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">2. Social Links <span style="font-size:11px;color:var(--text-faint);font-weight:normal;">(Optional — only provided links will display icons)</span></h3>
             <div class="form-grid">
               <div class="form-group">
-                <label for="pWeb">🌐 Official Website</label>
+                <label for="pWeb">Official Website</label>
                 <input type="text" id="pWeb" placeholder="https://yourproject.com">
               </div>
               <div class="form-group">
-                <label for="pX">𝕏 / Twitter Handle or URL</label>
+                <label for="pX">X (Twitter) URL</label>
                 <input type="text" id="pX" placeholder="https://x.com/yourproject">
               </div>
             </div>
             <div class="form-grid">
               <div class="form-group">
-                <label for="pTg">✈ Telegram Community</label>
+                <label for="pTg">Telegram Community</label>
                 <input type="text" id="pTg" placeholder="https://t.me/yourcommunity">
               </div>
               <div class="form-group">
-                <label for="pReddit">👾 Reddit Community</label>
+                <label for="pReddit">Reddit Community</label>
                 <input type="text" id="pReddit" placeholder="https://reddit.com/r/yourproject">
               </div>
             </div>
@@ -1162,7 +1162,7 @@ async function renderPromotePage() {
             <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">4. Payment & Activation</h3>
             <div style="background:rgba(0,136,204,0.08);border:1px solid rgba(0,136,204,0.25);border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
               <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:1.6rem;line-height:1;">✈</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#0088cc" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
                 <div>
                   <div style="color:var(--ink);font-size:13px;font-weight:700;">Official Telegram Ad Desk: <a href="https://t.me/bullclub_ads" target="_blank" style="color:#0088cc;text-decoration:underline;">@bullclub_ads</a></div>
                   <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
@@ -1173,7 +1173,7 @@ async function renderPromotePage() {
             </div>
 
             <button type="submit" id="btnCreateOrder" class="btn-solid" style="width:100%;padding:13px 12px;font-size:14px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;white-space:normal;text-align:center;box-sizing:border-box;">
-              <span style="white-space:normal;word-break:break-word;">✈ Book via Telegram @bullclub_ads ($149 USDT) →</span>
+              <span style="white-space:normal;word-break:break-word;">Book via Telegram @bullclub_ads ($149 USDT) →</span>
             </button>
           </form>
 
@@ -1199,17 +1199,17 @@ async function renderPromotePage() {
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
                   <a id="btnOpenTgChat" href="https://t.me/bullclub_ads" target="_blank" class="btn-solid" style="background:#0088cc;border-color:#0088cc;padding:10px 18px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
-                    <span>✈ Open Chat with @bullclub_ads</span>
+                    <span>Open Chat with @bullclub_ads →</span>
                   </a>
                   <button type="button" class="btn-subtle" onclick="copyOrderMessage()" style="padding:10px 14px;font-size:13px;cursor:pointer;">
-                    📋 Copy Order Message
+                    Copy Order Message
                   </button>
                 </div>
                 <label style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">Pre-formatted Message for Admin:</label>
                 <textarea id="tgMessageText" readonly style="width:100%;height:105px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:monospace;font-size:11px;color:var(--ink);resize:none;box-sizing:border-box;"></textarea>
 
                 <div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);">
-                  <span style="color:#0088cc;font-size:14px;">💬</span>
+                  <span style="color:#0088cc;font-weight:700;">Note:</span>
                   <span>Direct clearance with our admin desk: Send the message above to <b>@bullclub_ads</b> to complete manual payment and launch your campaign immediately.</span>
                 </div>
               </div>
@@ -1233,7 +1233,7 @@ async function renderPromotePage() {
                     </div>
                     <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
                       <span id="prevChain" style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">BSC</span>
-                      <a id="prevTradeBtn" href="#" target="_blank" class="btn-promoted-trade" title="Trade directly on DEX">🚀 Trade ↗</a>
+                      <a id="prevTradeBtn" href="#" target="_blank" class="btn-promoted-trade" title="Trade directly on DEX">Trade ↗</a>
                     </div>
                   </div>
                 </div>
@@ -1248,7 +1248,7 @@ async function renderPromotePage() {
             </div>
 
             <div style="margin-top:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;">
-              <h4 style="margin:0 0 .5rem;font-size:12px;color:var(--ink);">⚡ What You Get:</h4>
+              <h4 style="margin:0 0 .5rem;font-size:12px;color:var(--ink);text-transform:uppercase;letter-spacing:0.5px;">Package Inclusions:</h4>
               <ul style="margin:0;padding-left:1.2rem;font-size:12px;color:var(--text-muted);line-height:1.6;">
                 <li>Top Homepage Carousel Placement</li>
                 <li>Exclusive Promoted Spotlight Grid</li>
@@ -1302,7 +1302,7 @@ function initPromotePreviewHandlers() {
     }
     if (prevTradeBtn) {
       prevTradeBtn.href = tradeUrl;
-      prevTradeBtn.textContent = `🚀 ${dexLabel} ↗`;
+      prevTradeBtn.textContent = `${dexLabel} ↗`;
     }
 
     if (prevSocials) {
@@ -1357,7 +1357,7 @@ function initPromotePreviewHandlers() {
       promoteOrderState.price = Number(card.dataset.price);
       promoteOrderState.days = Number(card.dataset.days);
       if (btnCreateOrder) {
-        btnCreateOrder.innerHTML = `<span>✈ Book via Telegram @bullclub_ads ($${promoteOrderState.price} USDT) →</span>`;
+        btnCreateOrder.innerHTML = `<span>Book via Telegram @bullclub_ads ($${promoteOrderState.price} USDT) →</span>`;
       }
       const dispAmount = document.getElementById('dispAmount');
       if (dispAmount) dispAmount.textContent = `$${promoteOrderState.price} USDT`;
@@ -1510,7 +1510,7 @@ async function submitPromotionOrder() {
     alert('Error creating order: ' + err.message);
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = `<span>✈ Book via Telegram @bullclub_ads ($${promoteOrderState.price} USDT) →</span>`;
+      btn.innerHTML = `<span>Book via Telegram @bullclub_ads ($${promoteOrderState.price} USDT) →</span>`;
     }
   }
 }
@@ -1532,7 +1532,7 @@ function copyTreasuryAddress() {
     const btn = document.getElementById('btnCopyTreasury');
     if (btn) {
       btn.textContent = 'Copied! ✓';
-      setTimeout(() => { btn.textContent = 'Copy 📋'; }, 2000);
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     }
   }).catch(() => {
     prompt('Copy Treasury Address:', addr);
@@ -1580,7 +1580,7 @@ async function verifyAndActivateOrder() {
       if (statusMsg) {
         statusMsg.innerHTML = `
           <div style="background:rgba(127,184,120,0.15);color:var(--up);padding:10px 14px;border-radius:6px;border:1px solid rgba(127,184,120,0.3);margin-top:10px;">
-            <b>🎉 Payment Verified!</b> Your promotion is now <b>LIVE</b> on Bulls Traking.<br>
+            <b>Payment Verified!</b> Your promotion is now <b>LIVE</b> on Bulls Traking.<br>
             Redirecting to Promoted section in 2 seconds…
           </div>
         `;
@@ -1604,7 +1604,7 @@ async function verifyAndActivateOrder() {
     }
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '🚀 Verify & Activate Now';
+      btn.textContent = 'Verify & Activate Now';
     }
   }
 }
@@ -1631,7 +1631,7 @@ function renderAdminLogin(errorMsg = '') {
   app.innerHTML = `
     <div style="max-width:440px;margin:3.5rem auto;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;box-shadow:0 8px 32px rgba(0,0,0,0.35);">
       <div style="text-align:center;margin-bottom:1.5rem;">
-        <span style="font-size:2.6rem;">🛡️</span>
+        <span style="display:inline-block;margin-bottom:6px;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
         <h2 style="font-family:var(--display);margin:0.5rem 0 0.25rem;font-size:1.6rem;color:var(--ink);">Bulls Traking Admin</h2>
         <p style="font-size:13px;color:var(--text-muted);margin:0;">Promotion Clearance & Ad Activation Console</p>
       </div>
@@ -1692,13 +1692,13 @@ async function loadAdminDashboard() {
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
           <a href="https://t.me/bullclub_ads" target="_blank" class="btn-subtle" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:8px 14px;text-decoration:none;">
-            <span>✈ @bullclub_ads</span>
+            <span>@bullclub_ads</span>
           </a>
           <button type="button" class="btn-subtle" onclick="loadAdminDashboard()" style="padding:8px 14px;font-size:13px;cursor:pointer;">
-            🔄 Refresh
+            Refresh
           </button>
           <button type="button" class="btn-ghost" onclick="handleAdminLogout()" style="padding:8px 14px;font-size:13px;cursor:pointer;color:var(--down);">
-            🔒 Logout
+            Logout
           </button>
         </div>
       </div>
@@ -1785,11 +1785,11 @@ async function loadAdminDashboard() {
 
       let statusBadge = '';
       if (isLive) {
-        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(127,184,120,0.2);color:var(--up);border:1px solid rgba(127,184,120,0.4);">🟢 ACTIVE LIVE</span>`;
+        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(127,184,120,0.2);color:var(--up);border:1px solid rgba(127,184,120,0.4);">ACTIVE LIVE</span>`;
       } else if (order.payment_status === 'paid') {
-        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(0,136,204,0.2);color:#0088cc;border:1px solid rgba(0,136,204,0.4);">🔵 PAID</span>`;
+        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(0,136,204,0.2);color:#0088cc;border:1px solid rgba(0,136,204,0.4);">PAID</span>`;
       } else {
-        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(245,166,35,0.15);color:var(--gold);border:1px solid rgba(245,166,35,0.3);">⏳ PENDING</span>`;
+        statusBadge = `<span style="display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(245,166,35,0.15);color:var(--gold);border:1px solid rgba(245,166,35,0.3);">PENDING</span>`;
       }
 
       let actionBtn = '';
@@ -1799,8 +1799,8 @@ async function loadAdminDashboard() {
             <a href="/#/promoted" target="_blank" class="btn-ghost" style="padding:6px 10px;font-size:12px;text-decoration:none;">
               View Ad ↗
             </a>
-            <button type="button" class="btn-ghost" onclick="deleteOrderAdmin(${order.id})" title="Delete Order" style="padding:6px 8px;font-size:12px;color:var(--down);cursor:pointer;border-color:rgba(235,87,87,0.3);">
-              🗑️
+            <button type="button" class="btn-ghost" onclick="deleteOrderAdmin(${order.id})" title="Delete Order" style="padding:6px 10px;font-size:12px;color:var(--down);cursor:pointer;border-color:rgba(235,87,87,0.3);">
+              Delete
             </button>
           </div>
         `;
@@ -1808,10 +1808,10 @@ async function loadAdminDashboard() {
         actionBtn = `
           <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
             <button type="button" class="btn-solid" onclick="activateOrderAdmin(${order.id})" id="btnActOrder_${order.id}" style="padding:6px 12px;font-size:12px;background:var(--up);border-color:var(--up);color:#15130e;font-weight:700;cursor:pointer;">
-              ⚡ Approve & Run Ad
+              Approve & Run Ad
             </button>
-            <button type="button" class="btn-ghost" onclick="deleteOrderAdmin(${order.id})" title="Delete Order" style="padding:6px 8px;font-size:12px;color:var(--down);cursor:pointer;border-color:rgba(235,87,87,0.3);">
-              🗑️
+            <button type="button" class="btn-ghost" onclick="deleteOrderAdmin(${order.id})" title="Delete Order" style="padding:6px 10px;font-size:12px;color:var(--down);cursor:pointer;border-color:rgba(235,87,87,0.3);">
+              Delete
             </button>
           </div>
         `;
@@ -1874,7 +1874,7 @@ async function activateOrderAdmin(orderId) {
       if (noticeArea) {
         noticeArea.innerHTML = `
           <div style="background:rgba(127,184,120,0.15);color:var(--up);border:1px solid rgba(127,184,120,0.3);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
-            <span>🎉 <b>Order #BT-${orderId} Activated!</b> Token is now running live on homepage carousel, spotlight grid, and promoted section.</span>
+            <span><b>Order #BT-${orderId} Activated!</b> Token is now running live on homepage carousel, spotlight grid, and promoted section.</span>
             <a href="/#/promoted" target="_blank" style="color:var(--up);font-weight:700;margin-left:12px;">View Promoted Section →</a>
           </div>
         `;
@@ -1887,7 +1887,7 @@ async function activateOrderAdmin(orderId) {
     alert(`Failed to activate order: ${err.message}`);
     if (btn) {
       btn.disabled = false;
-      btn.textContent = '⚡ Approve & Run Ad';
+      btn.textContent = 'Approve & Run Ad';
     }
   }
 }
@@ -1900,7 +1900,7 @@ async function deleteOrderAdmin(orderId) {
   try {
     const res = await fetchApi(`/admin/orders/${orderId}`, {
       method: 'DELETE',
-      headers: {
+      headers: { 
         'Content-Type': 'application/json',
         'x-admin-key': adminPortalState.key
       }
@@ -1911,7 +1911,7 @@ async function deleteOrderAdmin(orderId) {
       if (noticeArea) {
         noticeArea.innerHTML = `
           <div style="background:rgba(235,87,87,0.12);color:var(--down);border:1px solid rgba(235,87,87,0.3);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:1.5rem;">
-            🗑️ <b>Order #BT-${orderId} deleted successfully.</b>
+            <b>Order #BT-${orderId} deleted successfully.</b>
           </div>
         `;
       }
@@ -2211,10 +2211,10 @@ function renderSubmit() {
 
       container.innerHTML = `
         <div class="success-screen-card" style="text-align:center;padding:2.5rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:580px;margin:2rem auto;">
-          <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+          <div style="margin-bottom:1.2rem;display:flex;justify-content:center;"><div style="width:54px;height:54px;border-radius:50%;background:rgba(61,220,151,0.12);border:2px solid var(--up);display:flex;align-items:center;justify-content:center;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--up)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div></div>
           <h2 style="font-family:var(--display);font-size:1.8rem;margin:0 0 0.5rem;color:var(--ink);">Token Listed Successfully!</h2>
           <div style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(61,220,151,0.15);color:var(--up);border:1px solid rgba(61,220,151,0.3);margin-bottom:1.2rem;">
-            🟢 LIVE ON BULLS TRAKING
+            LIVE ON BULLS TRAKING
           </div>
           <p style="color:var(--text-muted);font-size:14px;line-height:1.5;margin:0 auto 1.5rem;max-width:480px;">
             <b>${tokenDisplayName} ($${tokenDisplaySym})</b> has been verified and saved to the database. It is immediately discoverable in <b>New Coins</b> and accessible via search and direct URL.
@@ -2233,10 +2233,10 @@ function renderSubmit() {
 
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
             <a href="#/token/${targetId}" class="btn-solid" style="padding:0.75rem 1.8rem;font-size:14px;text-decoration:none;">
-              🚀 View Token Detail ↗
+              View Token Detail ↗
             </a>
             <a href="#/new-coins" class="btn-ghost" style="padding:0.75rem 1.6rem;font-size:14px;text-decoration:none;">
-              🔥 View in New Coins →
+              View in New Coins →
             </a>
           </div>
 
@@ -2533,9 +2533,9 @@ function renderSingleRadarRow(p, idx = 0, isNew = false) {
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
               <span class="token-sym">${escapeHtml(p.symbol)}</span>
-              ${p.twitter_url ? `<a href="${escapeHtml(p.twitter_url)}" target="_blank" rel="noopener" class="token-social-link" title="Twitter / X">𝕏</a>` : ''}
-              ${p.telegram_url ? `<a href="${escapeHtml(p.telegram_url)}" target="_blank" rel="noopener" class="token-social-link" title="Telegram">✈</a>` : ''}
-              ${p.website_url ? `<a href="${escapeHtml(p.website_url)}" target="_blank" rel="noopener" class="token-social-link" title="Website">🌐</a>` : ''}
+              ${p.twitter_url ? `<a href="${escapeHtml(p.twitter_url)}" target="_blank" rel="noopener" class="token-social-link" title="Twitter / X"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>` : ''}
+              ${p.telegram_url ? `<a href="${escapeHtml(p.telegram_url)}" target="_blank" rel="noopener" class="token-social-link" title="Telegram"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg></a>` : ''}
+              ${p.website_url ? `<a href="${escapeHtml(p.website_url)}" target="_blank" rel="noopener" class="token-social-link" title="Website"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>` : ''}
             </div>
           </div>
         </div>
@@ -2549,8 +2549,8 @@ function renderSingleRadarRow(p, idx = 0, isNew = false) {
       <td>
         <div style="display:flex;align-items:center;gap:6px;">
           <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost" style="padding:2px 8px;font-size:11px;">Scan</a>
-          <a href="${poolUrl}" target="_blank" rel="noopener" class="btn-ghost" style="padding:3px 8px;font-size:11px;text-decoration:none;">View Pool ↗</a>
-          <button class="btn-copy-address" data-address="${escapeHtml(p.token_address || p.pair_address)}" title="Copy Contract Address" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:2px 4px;">📋</button>
+          <a href="${poolUrl}" target="_blank" rel="noopener" class="btn-ghost" style="padding:3px 8px;font-size:11px;text-decoration:none;">View Pool</a>
+          <button class="btn-copy-address" data-address="${escapeHtml(p.token_address || p.pair_address)}" title="Copy Contract Address" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:2px 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
       </td>
     </tr>
@@ -2601,9 +2601,9 @@ async function loadRadarPairs(silent = false, isManual = false) {
 
         const feedbackEl = document.getElementById('radarLiveFeedback');
         if (feedbackEl) {
-          feedbackEl.innerHTML = `<span style="color:#00e699;font-weight:700;">⚡ Updated with newly discovered pairs!</span>`;
+          feedbackEl.innerHTML = `<span style="color:#00e699;font-weight:700;">Updated with newly discovered pairs!</span>`;
           setTimeout(() => {
-            if (feedbackEl) feedbackEl.textContent = '⚡ Streaming On-Chain Feeds • Auto-Syncing';
+            if (feedbackEl) feedbackEl.textContent = 'Streaming On-Chain Feeds • Auto-Syncing';
           }, 3000);
         }
       } else {
@@ -2694,9 +2694,9 @@ function handleLiveNewPair(p) {
   const feedbackEl = document.getElementById('radarLiveFeedback');
   if (feedbackEl) {
     const srcCfg = SOURCE_MAP[(p.source || '').toLowerCase()] || { name: p.source || 'On-Chain' };
-    feedbackEl.innerHTML = `<span style="color:#00e699;font-weight:700;">⚡ Live catch: ${escapeHtml(p.symbol || p.name)} on ${srcCfg.name}!</span>`;
+    feedbackEl.innerHTML = `<span style="color:#00e699;font-weight:700;">Live catch: ${escapeHtml(p.symbol || p.name)} on ${srcCfg.name}!</span>`;
     setTimeout(() => {
-      if (feedbackEl) feedbackEl.textContent = '⚡ Streaming On-Chain Feeds • Auto-Syncing';
+      if (feedbackEl) feedbackEl.textContent = 'Streaming On-Chain Feeds • Auto-Syncing';
     }, 3500);
   }
 }

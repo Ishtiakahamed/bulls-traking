@@ -84,7 +84,7 @@ router.get('/admin/orders/:id/quick-activate', (req, res) => {
       </head>
       <body style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0d1117;color:#c9d1d9;padding:2rem;text-align:center;">
         <div style="max-width:500px;margin:2rem auto;background:#161b22;padding:2.5rem;border-radius:12px;border:1px solid #30363d;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
-          <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+          <div style="display:flex;justify-content:center;margin-bottom:1rem;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
           <h1 style="color:#00e676;margin:0 0 10px;font-size:1.6rem;">Promotion Ad Activated!</h1>
           <p style="font-size:15px;color:#8b949e;line-height:1.6;">
             Promotion Order <b>#${req.params.id}</b> is now <b style="color:#00e676;">LIVE</b> on Bulls Traking homepage carousel, spotlight grid, and promoted feeds.
