@@ -23,6 +23,8 @@ function handleGetHomeData(req, res, next) {
     const excludeStablecoins = req.query.include_stables !== 'true';
     const cacheKey = `${chain}:${limit}:${page}:${excludeStablecoins}`;
 
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
+
     const cached = homeCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp < HOME_CACHE_TTL_MS)) {
       return res.json(cached.payload);
@@ -39,13 +41,9 @@ function handleGetHomeData(req, res, next) {
       SELECT 
         SUM(market_cap) as totalMarketCap,
         SUM(volume_24h) as total24hVolume,
-        COUNT(*) as totalActiveTokens
-      FROM (
-        SELECT market_cap, volume_24h, name
-        FROM tokens
-        WHERE is_active = 1
-        GROUP BY UPPER(TRIM(name))
-      )
+        COUNT(id) as totalActiveTokens
+      FROM tokens
+      WHERE is_active = 1
     `);
 
     const syncStatus = getSyncStatus();

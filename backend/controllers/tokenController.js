@@ -10,6 +10,7 @@ const {
 
 function handleGetTopCoins(req, res, next) {
   try {
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
     const { chain, limit, page, include_stables } = req.query;
     const excludeStablecoins = include_stables !== 'true';
     const result = getTopCoins({ chain, limit, page, excludeStablecoins });
@@ -21,6 +22,7 @@ function handleGetTopCoins(req, res, next) {
 
 function handleGetNewCoins(req, res, next) {
   try {
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
     const { chain, limit, page } = req.query;
     const result = getNewCoins({ chain, limit, page });
     res.json({ success: true, ...result });
@@ -31,6 +33,7 @@ function handleGetNewCoins(req, res, next) {
 
 function handleGetHotCoins(req, res, next) {
   try {
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
     const { chain, limit, page, include_stables } = req.query;
     const excludeStablecoins = include_stables !== 'true';
     const result = getHotCoins({ chain, limit, page, excludeStablecoins });
@@ -42,6 +45,7 @@ function handleGetHotCoins(req, res, next) {
 
 function handleGetTopGainers(req, res, next) {
   try {
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
     const { chain, limit, page, include_stables } = req.query;
     const excludeStablecoins = include_stables !== 'true';
     const result = getTopGainers({ chain, limit, page, excludeStablecoins });
@@ -53,6 +57,7 @@ function handleGetTopGainers(req, res, next) {
 
 function handleGetTrendingCoins(req, res, next) {
   try {
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
     const { chain, limit, page, include_stables } = req.query;
     const excludeStablecoins = include_stables !== 'true';
     const result = getTrendingCoins({ chain, limit, page, excludeStablecoins });

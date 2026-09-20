@@ -410,9 +410,13 @@ function runSeed(skipInit = false) {
             ?, CURRENT_TIMESTAMP
           )
         `;
+        const existingSet = new Set(
+          query('SELECT UPPER(TRIM(symbol)) as sym FROM tokens').map(r => r.sym)
+        );
         for (const dt of discovered) {
-          const exists = queryOne('SELECT id FROM tokens WHERE chain = ? AND (coingecko_id = ? OR UPPER(TRIM(symbol)) = UPPER(TRIM(?))) LIMIT 1', [dt.chain, dt.coingecko_id, dt.symbol]);
-          if (exists) continue;
+          const symKey = (dt.symbol || '').toUpperCase().trim();
+          if (symKey && existingSet.has(symKey)) continue;
+          if (symKey) existingSet.add(symKey);
           execute(insertDiscoveredStmt, [
             dt.chain, dt.contract_address, dt.coingecko_id, dt.provider_id, dt.name, dt.symbol, dt.logo_url,
             dt.price, dt.market_cap, dt.volume_24h, dt.change_1h, dt.change_24h, dt.change_7d,

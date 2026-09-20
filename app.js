@@ -191,6 +191,11 @@ async function loadTape() {
     populateTape(state.homeData.trending.slice(0, 12));
     return;
   }
+  const hash = location.hash || '#/';
+  if (hash === '#/' || hash === '#' || hash === '') {
+    // Will be populated by renderHome without redundant network request
+    return;
+  }
   try {
     const res = await fetchApi('/tokens/trending?limit=12');
     populateTape(res.tokens);
@@ -411,271 +416,352 @@ let homeState = {
   total: 0
 };
 
-async function renderHome() {
-  app.innerHTML = `<div class="state-msg">Loading Bulls Traking market data…</div>`;
-
-  try {
-    homeState.page = 1;
-    homeState.chain = state.chain || 'all';
-    // Fetch initial home aggregator with 20 items per tab and market stats
-    const res = await fetchApi(`/home?chain=${homeState.chain}&limit=20&page=1`);
-    const data = res.data;
-    state.homeData = data;
-
-    updateMarketStatus(data.marketStats);
-    if (data.trending && data.trending.length > 0) {
-      populateTape(data.trending.slice(0, 12));
-    }
-
-    const initialKey = homeState.tab === 'top' ? 'topCoins' : homeState.tab;
-    const initialTokens = initialKey === 'new' ? mergeLocalSubmissions(data[initialKey] || []) : (data[initialKey] || []);
-
-function renderPromotedCard(p) {
-  const chainName = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'BSC').toUpperCase();
-  const tradeUrl = p.auto_trading_url || (p.contract_address ? `https://dexscreener.com/search?q=${encodeURIComponent(p.contract_address)}` : null);
-
-  return `
-    <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
-      <div class="promoted-meta">
-        <img class="promoted-logo" src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
-        <div>
-          <div class="promoted-name">
-            ${escapeHtml(p.name)} <span class="badge-promoted">PROMOTED</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
-            <span style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(chainName)}</span>
-            ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">Trade ↗</a>` : ''}
+function renderHomeSkeleton() {
+  const rows = Array.from({ length: 12 }, (_, i) => `
+    <tr>
+      <td style="width:32px;"></td>
+      <td style="color:var(--text-faint);font-weight:600;">${i + 1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="skeleton-avatar"></div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div class="skeleton-line" style="width:65px;height:12px;"></div>
+            <div class="skeleton-line" style="width:35px;height:10px;"></div>
           </div>
         </div>
+      </td>
+      <td><div class="skeleton-line" style="width:70px;height:14px;"></div></td>
+      <td class="col-1h"><div class="skeleton-line" style="width:42px;height:12px;"></div></td>
+      <td><div class="skeleton-line" style="width:48px;height:12px;"></div></td>
+      <td class="col-7d"><div class="skeleton-line" style="width:42px;height:12px;"></div></td>
+      <td class="col-6h"><div class="skeleton-line" style="width:42px;height:12px;"></div></td>
+      <td class="col-txn"><div class="skeleton-line" style="width:38px;height:12px;"></div></td>
+      <td class="col-lp"><div class="skeleton-line" style="width:55px;height:12px;"></div></td>
+      <td class="col-vol"><div class="skeleton-line" style="width:68px;height:12px;"></div></td>
+      <td class="col-mcap"><div class="skeleton-line" style="width:80px;height:12px;"></div></td>
+      <td class="col-socials"><div class="skeleton-line" style="width:40px;height:12px;"></div></td>
+      <td class="col-spark"><div class="skeleton-line" style="width:90px;height:22px;"></div></td>
+    </tr>
+  `).join('');
+
+  app.innerHTML = `
+    <div class="controls-bar">
+      <div class="subtabs" id="homeTabs">
+        <span class="subtab is-active" data-tab="top">Top Coins</span>
+        <span class="subtab" data-tab="new">New Coins</span>
+        <span class="subtab" data-tab="hot">Hot Coins</span>
+        <span class="subtab" data-tab="gainers">Top Gainers</span>
       </div>
-      <div style="text-align:right;">
-        <div class="promoted-price">${fmtPrice(p.price)}</div>
-        <div>${fmtChg(p.change_24h)}</div>
-        <div style="margin-top:4px;">
-          ${renderSocialLinks(p)}
-        </div>
-      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32px;"></th>
+            <th>#</th>
+            <th>Token</th>
+            <th>Price</th>
+            <th class="col-1h">1h</th>
+            <th>24h</th>
+            <th class="col-7d">7d</th>
+            <th class="col-6h">6h</th>
+            <th class="col-txn">TXN</th>
+            <th class="col-lp">LP</th>
+            <th class="col-vol">24h Volume</th>
+            <th class="col-mcap">Market Cap</th>
+            <th class="col-socials">Socials</th>
+            <th class="col-spark">Last 7 Days</th>
+          </tr>
+        </thead>
+        <tbody id="homeTableBody">
+          ${rows}
+        </tbody>
+      </table>
     </div>
   `;
 }
 
-    const promotedCards = (data.promoted || []).map(renderPromotedCard).join('');
+function buildHomeUI(data) {
+  updateMarketStatus(data.marketStats);
+  if (data.trending && data.trending.length > 0) {
+    populateTape(data.trending.slice(0, 12));
+  }
 
-    app.innerHTML = `
-      <!-- PROMOTED TOKENS SECTION -->
-      ${data.promoted && data.promoted.length > 0 ? `
-        <section class="promoted-section">
-          <h3 class="section-headline">Promoted Tokens</h3>
-          <div class="promoted-grid">${promotedCards}</div>
-        </section>
-      ` : ''}
+  const initialKey = homeState.tab === 'top' ? 'topCoins' : homeState.tab;
+  const initialTokens = initialKey === 'new' ? mergeLocalSubmissions(data[initialKey] || []) : (data[initialKey] || []);
 
-      <!-- TABS & CHAIN CONTROLS -->
-      <div class="controls-bar">
-        <div class="subtabs" id="homeTabs">
-          <span class="subtab ${homeState.tab === 'top' ? 'is-active' : ''}" data-tab="top">Top Coins</span>
-          <span class="subtab ${homeState.tab === 'new' ? 'is-active' : ''}" data-tab="new">New Coins</span>
-          <span class="subtab ${homeState.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">Hot Coins</span>
-          <span class="subtab ${homeState.tab === 'gainers' ? 'is-active' : ''}" data-tab="gainers">Top Gainers</span>
+  function renderPromotedCard(p) {
+    const chainName = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'BSC').toUpperCase();
+    const tradeUrl = p.auto_trading_url || (p.contract_address ? `https://dexscreener.com/search?q=${encodeURIComponent(p.contract_address)}` : null);
+
+    return `
+      <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
+        <div class="promoted-meta">
+          <img class="promoted-logo" src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
+          <div>
+            <div class="promoted-name">
+              ${escapeHtml(p.name)} <span class="badge-promoted">PROMOTED</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+              <span style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(chainName)}</span>
+              ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">Trade ↗</a>` : ''}
+            </div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="promoted-price">${fmtPrice(p.price)}</div>
+          <div>${fmtChg(p.change_24h)}</div>
+          <div style="margin-top:4px;">
+            ${renderSocialLinks(p)}
+          </div>
         </div>
       </div>
-
-      <!-- TOKEN TABLE -->
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:32px;"></th>
-              <th>#</th>
-              <th>Token</th>
-              <th>Price</th>
-              <th class="col-1h">1h</th>
-              <th>24h</th>
-              <th class="col-7d">7d</th>
-              <th class="col-6h">6h</th>
-              <th class="col-txn">TXN</th>
-              <th class="col-lp">LP</th>
-              <th class="col-vol">24h Volume</th>
-              <th class="col-mcap">Market Cap</th>
-              <th class="col-socials">Socials</th>
-              <th class="col-spark">Last 7 Days</th>
-            </tr>
-          </thead>
-          <tbody id="homeTableBody">
-            ${initialTokens.length > 0 ? renderTokenRows(initialTokens, {
-              showAge: homeState.tab === 'new',
-              showHot: homeState.tab === 'hot'
-            }) : '<tr><td colspan="14" class="state-msg">Loading tokens…</td></tr>'}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- PAGINATION CONTROLS (20 TOKENS PER PAGE ACROSS 500+ POOL) -->
-      <div id="homePaginationWrap" class="home-pagination-wrap"></div>
     `;
+  }
 
-    // Function to load tab data with pagination
-    async function loadHomeTab(tabName, page = 1, append = false) {
-      homeState.tab = tabName;
-      homeState.page = page;
-      const tbody = document.getElementById('homeTableBody');
-      const pagWrap = document.getElementById('homePaginationWrap');
+  const promotedCards = (data.promoted || []).map(renderPromotedCard).join('');
 
-      // Fast-path: render page 1 instantly from pre-fetched home aggregator without duplicate network call
-      const tabKey = tabName === 'top' ? 'topCoins' : tabName;
-      if (page === 1 && !append && data && data[tabKey] && data[tabKey].length > 0) {
-        const tokens = tabName === 'new' ? mergeLocalSubmissions(data[tabKey]) : data[tabKey];
-        const total = data.pagination?.[`${tabName}Total`] || data.marketStats?.totalTokens || 1009;
-        homeState.total = total;
-        const totalPages = Math.max(1, Math.ceil(total / homeState.limit));
+  app.innerHTML = `
+    <!-- PROMOTED TOKENS SECTION -->
+    ${data.promoted && data.promoted.length > 0 ? `
+      <section class="promoted-section">
+        <h3 class="section-headline">Promoted Tokens</h3>
+        <div class="promoted-grid">${promotedCards}</div>
+      </section>
+    ` : ''}
 
+    <!-- TABS & CHAIN CONTROLS -->
+    <div class="controls-bar">
+      <div class="subtabs" id="homeTabs">
+        <span class="subtab ${homeState.tab === 'top' ? 'is-active' : ''}" data-tab="top">Top Coins</span>
+        <span class="subtab ${homeState.tab === 'new' ? 'is-active' : ''}" data-tab="new">New Coins</span>
+        <span class="subtab ${homeState.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">Hot Coins</span>
+        <span class="subtab ${homeState.tab === 'gainers' ? 'is-active' : ''}" data-tab="gainers">Top Gainers</span>
+      </div>
+    </div>
+
+    <!-- TOKEN TABLE -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:32px;"></th>
+            <th>#</th>
+            <th>Token</th>
+            <th>Price</th>
+            <th class="col-1h">1h</th>
+            <th>24h</th>
+            <th class="col-7d">7d</th>
+            <th class="col-6h">6h</th>
+            <th class="col-txn">TXN</th>
+            <th class="col-lp">LP</th>
+            <th class="col-vol">24h Volume</th>
+            <th class="col-mcap">Market Cap</th>
+            <th class="col-socials">Socials</th>
+            <th class="col-spark">Last 7 Days</th>
+          </tr>
+        </thead>
+        <tbody id="homeTableBody">
+          ${initialTokens.length > 0 ? renderTokenRows(initialTokens, {
+            showAge: homeState.tab === 'new',
+            showHot: homeState.tab === 'hot'
+          }) : '<tr><td colspan="14" class="state-msg">Loading tokens…</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION CONTROLS (20 TOKENS PER PAGE ACROSS 500+ POOL) -->
+    <div id="homePaginationWrap" class="home-pagination-wrap"></div>
+  `;
+
+  // Function to load tab data with pagination
+  async function loadHomeTab(tabName, page = 1, append = false) {
+    homeState.tab = tabName;
+    homeState.page = page;
+    const tbody = document.getElementById('homeTableBody');
+    const pagWrap = document.getElementById('homePaginationWrap');
+
+    // Fast-path: render page 1 instantly from pre-fetched home aggregator without duplicate network call
+    const tabKey = tabName === 'top' ? 'topCoins' : tabName;
+    if (page === 1 && !append && data && data[tabKey] && data[tabKey].length > 0) {
+      const tokens = tabName === 'new' ? mergeLocalSubmissions(data[tabKey]) : data[tabKey];
+      const total = data.pagination?.[`${tabName}Total`] || data.marketStats?.totalTokens || 1009;
+      homeState.total = total;
+      const totalPages = Math.max(1, Math.ceil(total / homeState.limit));
+
+      tbody.innerHTML = renderTokenRows(tokens, {
+        showAge: tabName === 'new',
+        showHot: tabName === 'hot'
+      });
+
+      renderHomePagination(pagWrap, {
+        tabName,
+        page: 1,
+        limit: homeState.limit,
+        total,
+        totalPages,
+        loadedCount: tokens.length
+      });
+      return;
+    }
+
+    if (!append) {
+      tbody.innerHTML = `<tr><td colspan="14" class="state-msg">Loading ${tabName} tokens (Page ${page})…</td></tr>`;
+    }
+
+    try {
+      let endpoint = `/tokens/${tabName}?chain=${homeState.chain}&page=${page}&limit=${homeState.limit}`;
+      if (tabName === 'top') endpoint = `/tokens/top?chain=${homeState.chain}&page=${page}&limit=${homeState.limit}`;
+
+      const res = await fetchApi(endpoint);
+      const tokens = tabName === 'new' ? mergeLocalSubmissions(res.tokens || []) : (res.tokens || []);
+      const total = res.pagination?.total || data.marketStats?.totalTokens || 1009;
+      homeState.total = total;
+      const totalPages = Math.max(1, Math.ceil(total / homeState.limit));
+
+      if (append) {
+        tbody.insertAdjacentHTML('beforeend', renderTokenRows(tokens, {
+          showAge: tabName === 'new',
+          showHot: tabName === 'hot'
+        }));
+      } else {
         tbody.innerHTML = renderTokenRows(tokens, {
           showAge: tabName === 'new',
           showHot: tabName === 'hot'
         });
-
-        renderHomePagination(pagWrap, {
-          tabName,
-          page: 1,
-          limit: homeState.limit,
-          total,
-          totalPages,
-          loadedCount: tokens.length
-        });
-        return;
       }
 
+      renderHomePagination(pagWrap, {
+        tabName,
+        page,
+        limit: homeState.limit,
+        total,
+        totalPages,
+        loadedCount: (page - 1) * homeState.limit + tokens.length
+      });
+    } catch (err) {
       if (!append) {
-        tbody.innerHTML = `<tr><td colspan="14" class="state-msg">Loading ${tabName} tokens (Page ${page})…</td></tr>`;
-      }
-
-      try {
-        let endpoint = `/tokens/${tabName}?chain=${homeState.chain}&page=${page}&limit=${homeState.limit}`;
-        if (tabName === 'top') endpoint = `/tokens/top?chain=${homeState.chain}&page=${page}&limit=${homeState.limit}`;
-
-        const res = await fetchApi(endpoint);
-        const tokens = tabName === 'new' ? mergeLocalSubmissions(res.tokens || []) : (res.tokens || []);
-        const total = res.pagination?.total || data.marketStats?.totalTokens || 1009;
-        homeState.total = total;
-        const totalPages = Math.max(1, Math.ceil(total / homeState.limit));
-
-        if (append) {
-          tbody.insertAdjacentHTML('beforeend', renderTokenRows(tokens, {
-            showAge: tabName === 'new',
-            showHot: tabName === 'hot'
-          }));
-        } else {
-          tbody.innerHTML = renderTokenRows(tokens, {
-            showAge: tabName === 'new',
-            showHot: tabName === 'hot'
-          });
-        }
-
-        renderHomePagination(pagWrap, {
-          tabName,
-          page,
-          limit: homeState.limit,
-          total,
-          totalPages,
-          loadedCount: append ? (tbody.querySelectorAll('tr[data-token-id]').length) : tokens.length
-        });
-      } catch (e) {
-        if (!append) {
-          tbody.innerHTML = `<tr><td colspan="14" class="state-msg">Unable to load tokens: ${escapeHtml(e.message)}</td></tr>`;
-        }
+        tbody.innerHTML = `<tr><td colspan="14" class="state-msg">Error loading ${tabName} tokens: ${escapeHtml(err.message)}</td></tr>`;
       }
     }
+  }
 
-    function renderHomePagination(container, meta) {
-      if (!container) return;
-      const { tabName, page, limit, total, totalPages, loadedCount } = meta;
-      const start = ((page - 1) * limit) + 1;
-      const end = Math.min(total, start + loadedCount - 1);
+  // Pagination bar builder
+  function renderHomePagination(container, { tabName, page, limit, total, totalPages, loadedCount }) {
+    if (!container) return;
+    const start = (page - 1) * limit + 1;
+    const end = Math.min(total, page * limit);
 
-      // Compute page numbers to display
-      const pagesToShow = [];
-      pagesToShow.push(1);
-      for (let p = Math.max(2, page - 2); p <= Math.min(totalPages - 1, page + 2); p++) {
-        if (!pagesToShow.includes(p)) pagesToShow.push(p);
-      }
-      if (totalPages > 1 && !pagesToShow.includes(totalPages)) {
-        pagesToShow.push(totalPages);
-      }
-
-      let pageBtnsHtml = '';
-      pagesToShow.forEach((p, idx, arr) => {
-        if (idx > 0 && p - arr[idx - 1] > 1) {
-          pageBtnsHtml += `<span class="page-ellipsis">…</span>`;
-        }
-        pageBtnsHtml += `<button class="page-btn ${p === page ? 'is-active' : ''}" data-page="${p}">${p}</button>`;
-      });
-
-      container.innerHTML = `
-        <div class="pagination-bar">
-          <div class="pagination-info">
-            Showing <b>${start.toLocaleString()}–${end.toLocaleString()}</b> of <b>${total.toLocaleString()}</b> tokens
-            <span class="source-verified-note">
-              • Verified live data via 
-              <img src="assets/coinmarketcap.png" class="source-logo-inline" alt="CoinMarketCap"> CoinMarketCap Pro,
-              <img src="assets/coingecko.png" class="source-logo-inline" alt="CoinGecko"> CoinGecko 
-              &amp; <img src="assets/dexscreener.png" class="source-logo-inline" alt="DexScreener"> DexScreener
-            </span>
-          </div>
-          <div class="pagination-actions">
-            <button class="btn-ghost btn-prev" ${page <= 1 ? 'disabled' : ''}>‹ Previous</button>
-            <div class="page-numbers">${pageBtnsHtml}</div>
-            <button class="btn-ghost btn-next" ${page >= totalPages ? 'disabled' : ''}>Next ›</button>
-            <button class="btn-ghost btn-load-more" ${page >= totalPages ? 'style="display:none;"' : ''}>Load More (+20)</button>
-          </div>
-        </div>
-      `;
-
-      container.querySelector('.btn-prev')?.addEventListener('click', () => {
-        if (page > 1) {
-          loadHomeTab(homeState.tab, page - 1, false);
-          document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
-      container.querySelector('.btn-next')?.addEventListener('click', () => {
-        if (page < totalPages) {
-          loadHomeTab(homeState.tab, page + 1, false);
-          document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
-      container.querySelectorAll('.page-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const targetPage = parseInt(btn.dataset.page, 10);
-          if (targetPage !== page) {
-            loadHomeTab(homeState.tab, targetPage, false);
-            document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        });
-      });
-      container.querySelector('.btn-load-more')?.addEventListener('click', (e) => {
-        const btn = e.currentTarget;
-        btn.disabled = true;
-        btn.textContent = 'Loading…';
-        loadHomeTab(homeState.tab, page + 1, true);
-      });
+    const pagesToShow = [];
+    pagesToShow.push(1);
+    for (let p = Math.max(2, page - 2); p <= Math.min(totalPages - 1, page + 2); p++) {
+      if (!pagesToShow.includes(p)) pagesToShow.push(p);
+    }
+    if (totalPages > 1 && !pagesToShow.includes(totalPages)) {
+      pagesToShow.push(totalPages);
     }
 
-    // Bind Home tabs
-    document.getElementById('homeTabs').addEventListener('click', (e) => {
-      const tab = e.target.closest('.subtab');
-      if (!tab) return;
-      const targetTab = tab.dataset.tab;
-      document.querySelectorAll('#homeTabs .subtab').forEach(el => el.classList.remove('is-active'));
-      tab.classList.add('is-active');
-      loadHomeTab(targetTab, 1, false);
+    let pageBtnsHtml = '';
+    pagesToShow.forEach((p, idx, arr) => {
+      if (idx > 0 && p - arr[idx - 1] > 1) {
+        pageBtnsHtml += `<span class="page-ellipsis">…</span>`;
+      }
+      pageBtnsHtml += `<button class="page-btn ${p === page ? 'is-active' : ''}" data-page="${p}">${p}</button>`;
     });
 
+    container.innerHTML = `
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          Showing <b>${start.toLocaleString()}–${end.toLocaleString()}</b> of <b>${total.toLocaleString()}</b> tokens
+          <span class="source-verified-note">
+            • Verified live data via 
+            <img src="assets/coinmarketcap.png" class="source-logo-inline" alt="CoinMarketCap"> CoinMarketCap Pro,
+            <img src="assets/coingecko.png" class="source-logo-inline" alt="CoinGecko"> CoinGecko 
+            &amp; <img src="assets/dexscreener.png" class="source-logo-inline" alt="DexScreener"> DexScreener
+          </span>
+        </div>
+        <div class="pagination-actions">
+          <button class="btn btn-secondary btn-pagination-nav btn-prev" ${page <= 1 ? 'disabled' : ''}>← Previous</button>
+          <div class="pagination-pages">${pageBtnsHtml}</div>
+          <button class="btn btn-secondary btn-pagination-nav btn-next" ${page >= totalPages ? 'disabled' : ''}>Next →</button>
+          ${loadedCount < total ? `<button class="btn btn-secondary btn-load-more" style="margin-left:8px;">Load More (+${Math.min(limit, total - loadedCount)})</button>` : ''}
+        </div>
+      </div>
+    `;
 
+    container.querySelector('.btn-prev')?.addEventListener('click', () => {
+      if (page > 1) {
+        loadHomeTab(homeState.tab, page - 1, false);
+        document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+    container.querySelector('.btn-next')?.addEventListener('click', () => {
+      if (page < totalPages) {
+        loadHomeTab(homeState.tab, page + 1, false);
+        document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+    container.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetPage = parseInt(btn.dataset.page, 10);
+        if (targetPage !== page) {
+          loadHomeTab(homeState.tab, targetPage, false);
+          document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+    container.querySelector('.btn-load-more')?.addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Loading…';
+      loadHomeTab(homeState.tab, page + 1, true);
+    });
+  }
 
-    // Initial load of first 20 tokens
-    loadHomeTab(homeState.tab, 1, false);
+  // Bind Home tabs
+  document.getElementById('homeTabs')?.addEventListener('click', (e) => {
+    const tab = e.target.closest('.subtab');
+    if (!tab) return;
+    const targetTab = tab.dataset.tab;
+    document.querySelectorAll('#homeTabs .subtab').forEach(el => el.classList.remove('is-active'));
+    tab.classList.add('is-active');
+    loadHomeTab(targetTab, 1, false);
+  });
 
+  // Initial load of active tab
+  loadHomeTab(homeState.tab, 1, false);
+}
+
+async function renderHome() {
+  homeState.page = 1;
+  homeState.chain = state.chain || 'all';
+
+  let cached = state.homeData;
+  if (!cached) {
+    try {
+      const raw = sessionStorage.getItem('bulls_home_cache');
+      if (raw) cached = JSON.parse(raw);
+    } catch (_) {}
+  }
+
+  if (cached && cached.topCoins && cached.topCoins.length > 0) {
+    buildHomeUI(cached);
+  } else {
+    renderHomeSkeleton();
+  }
+
+  try {
+    const res = await fetchApi(`/home?chain=${homeState.chain}&limit=20&page=1`);
+    const data = res.data;
+    state.homeData = data;
+    try {
+      sessionStorage.setItem('bulls_home_cache', JSON.stringify(data));
+    } catch (_) {}
+    buildHomeUI(data);
   } catch (err) {
-    app.innerHTML = `<div class="state-msg">Unable to load market data: ${escapeHtml(err.message)}</div>`;
+    if (!cached) {
+      app.innerHTML = `<div class="state-msg">Unable to load market data: ${escapeHtml(err.message)}</div>`;
+    }
   }
 }
 
