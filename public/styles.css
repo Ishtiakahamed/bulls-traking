@@ -476,6 +476,43 @@ td:nth-child(4), td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child
   cursor: not-allowed;
 }
 
+/* Modern Web3 Promote Pill Button */
+.btn-promote-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(242, 169, 59, 0.12);
+  border: 1px solid rgba(242, 169, 59, 0.55);
+  color: var(--gold);
+  border-radius: 9999px;
+  padding: 5px 14px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  box-shadow: 0 0 10px rgba(242, 169, 59, 0.12);
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.btn-promote-pill svg {
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.btn-promote-pill:hover,
+.btn-promote-pill:active {
+  background: rgba(242, 169, 59, 0.22);
+  border-color: var(--gold);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(242, 169, 59, 0.35);
+  transform: translateY(-1px);
+}
+
 /* ==========================================================================
    MAIN LAYOUT & HERO METRICS
    ========================================================================== */
@@ -586,14 +623,18 @@ td:nth-child(4), td:nth-child(5), td:nth-child(6), td:nth-child(7), td:nth-child
 .badge-promoted {
   font-family: var(--font-mono);
   font-size: 9px;
-  background: rgba(242, 169, 59, 0.12);
+  background: rgba(242, 169, 59, 0.14);
   color: var(--gold);
-  padding: 1px 5px;
-  border-radius: 2px;
-  font-weight: 600;
-  margin-left: 5px;
-  border: 1px solid rgba(242, 169, 59, 0.35);
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-weight: 700;
+  margin-left: 6px;
+  border: 1px solid rgba(242, 169, 59, 0.5);
   text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 0 8px rgba(242, 169, 59, 0.12);
 }
 
 .promoted-price {
@@ -2341,14 +2382,34 @@ tbody tr:hover {
   .market-status-indicator {
     display: none !important; /* Hide verbose telemetry text on phone */
   }
+  .util-nav .btn-promote-pill,
   .util-nav .btn-ghost {
-    padding: 5px 9px !important;
-    font-size: 11px !important;
+    padding: 0 12px !important;
+    font-size: 11.5px !important;
     font-weight: 700 !important;
-    border-radius: 4px !important;
-    line-height: 1.2 !important;
-    border-color: var(--gold) !important;
+    border-radius: 9999px !important; /* Perfect sleek pill capsule, no harsh square box */
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    line-height: 28px !important;
+    border: 1px solid rgba(242, 169, 59, 0.6) !important;
+    background: rgba(242, 169, 59, 0.12) !important;
     color: var(--gold) !important;
+    box-shadow: 0 0 10px rgba(242, 169, 59, 0.15) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    text-decoration: none !important;
+    box-sizing: border-box !important;
+    letter-spacing: 0.02em !important;
+  }
+  .util-nav .btn-promote-pill svg,
+  .util-nav .btn-ghost svg {
+    width: 11px !important;
+    height: 11px !important;
+    fill: currentColor !important;
+    flex-shrink: 0 !important;
   }
   .util-nav .btn-solid {
     display: none !important; /* Promoted in mobile drawer for clean header */
@@ -2360,14 +2421,15 @@ tbody tr:hover {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 34px !important;
-    height: 34px !important;
-    padding: 6px !important;
+    width: 32px !important;
+    height: 30px !important;
+    padding: 5px !important;
     background: var(--bg-panel-raised) !important;
     border: 1px solid var(--line) !important;
-    border-radius: 4px !important;
+    border-radius: 8px !important;
     cursor: pointer !important;
     margin-left: 2px !important;
+    box-sizing: border-box !important;
   }
 
   /* Row 2: Full-Width Search Bar */
@@ -2435,6 +2497,7 @@ tbody tr:hover {
   }
 
   /* Promoted Spotlight Swipeable Carousel */
+  .promoted-grid,
   .promoted-carousel {
     display: flex !important;
     overflow-x: auto !important;
@@ -2444,10 +2507,12 @@ tbody tr:hover {
     padding: 4px 2px 10px !important;
     scrollbar-width: none !important;
   }
+  .promoted-grid::-webkit-scrollbar,
   .promoted-carousel::-webkit-scrollbar {
     display: none !important;
   }
-  .promoted-card {
+  .promoted-grid .promoted-card,
+  .promoted-carousel .promoted-card {
     flex: 0 0 85% !important;
     min-width: 250px !important;
     max-width: 320px !important;
@@ -2864,7 +2929,7 @@ tbody tr:hover {
     grid-template-columns: 1fr !important;
     gap: 1.25rem !important;
   }
-  .btn-solid, .btn-ghost {
+  .btn-solid:not(.util-nav *), .btn-ghost:not(.util-nav *) {
     min-height: 42px !important;
   }
   .source-tag {
@@ -2891,6 +2956,182 @@ tbody tr:hover {
   }
   .package-card > div:nth-child(2) {
     font-size: 1.1rem !important;
+  }
+}
+
+/* =========================================================================
+   SMARTPHONE LANDSCAPE ORIENTATION OPTIMIZATION (HEIGHT <= 520px)
+   Keeps topbar in a single compact row & maximizes crypto table view
+   ========================================================================= */
+@media (orientation: landscape) and (max-height: 520px) {
+  /* Ticker Tape Slim */
+  .tape {
+    height: 20px !important;
+  }
+  .tape-item {
+    font-size: 9px !important;
+  }
+
+  /* Single-Row Compact Topbar (44px) */
+  .topbar {
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+  }
+  .topbar-inner {
+    flex-wrap: nowrap !important;
+    height: 44px !important;
+    padding: 0 10px !important;
+    gap: 8px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  .brand {
+    order: 1 !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+  }
+  .wordmark {
+    font-size: 0.92rem !important;
+    gap: 5px !important;
+  }
+  .brand-logo {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* Hide verbose horizontal desktop nav links on landscape phone */
+  .topbar .nav-links {
+    display: none !important;
+  }
+
+  /* Search Bar stays inline in center */
+  .search-wrap {
+    order: 2 !important;
+    flex: 1 1 auto !important;
+    max-width: 260px !important;
+    width: auto !important;
+    margin: 0 0 0 10px !important;
+    position: relative !important;
+  }
+  .search-input {
+    height: 28px !important;
+    padding: 0.3rem 0.65rem !important;
+    font-size: 11.5px !important;
+  }
+
+  /* Action Buttons & Hamburger on right */
+  .util-nav {
+    order: 3 !important;
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    width: auto !important;
+  }
+  .market-status-indicator {
+    display: none !important;
+  }
+  .util-nav .btn-promote-pill,
+  .util-nav .btn-ghost {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    line-height: 26px !important;
+    font-size: 10.5px !important;
+    padding: 0 9px !important;
+    border-radius: 9999px !important;
+  }
+  .util-nav .btn-solid {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    order: 4 !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 4px !important;
+    border-radius: 6px !important;
+    display: flex !important;
+  }
+
+  /* Main Container Compact Spacing */
+  .app {
+    padding: 0.4rem 0.6rem 1.5rem !important;
+  }
+
+  /* Hero Overview in Landscape: 4 stats in a single sleek row */
+  .hero-overview {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .hero-stat-card {
+    padding: 0.4rem 0.5rem !important;
+  }
+  .hero-stat-card .label {
+    font-size: 9px !important;
+  }
+  .hero-stat-card .val {
+    font-size: 0.95rem !important;
+  }
+
+  /* Promoted Grid in Landscape */
+  .promoted-grid,
+  .promoted-carousel {
+    padding: 2px 2px 6px !important;
+    gap: 6px !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .promoted-grid .promoted-card,
+  .promoted-carousel .promoted-card {
+    flex: 0 0 45% !important;
+    min-width: 220px !important;
+    max-width: 280px !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  /* Subtabs & Controls in Landscape */
+  .controls-bar, .subtabs, .filter-bar {
+    gap: 4px !important;
+    padding-bottom: 2px !important;
+    margin-bottom: 0.4rem !important;
+  }
+  .subtab, .filter-pill {
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    min-height: 26px !important;
+  }
+
+  /* Data Table in Landscape: Unhide 1h change for extra utility */
+  .col-1h,
+  table thead th:nth-child(5),
+  table tbody td:nth-child(5) {
+    display: table-cell !important;
+    padding: 4px 6px !important;
+    font-size: 10.5px !important;
+    text-align: right !important;
+  }
+
+  /* Modals in Landscape */
+  .modal-dialog, .token-modal-content {
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+    margin: 6px auto !important;
+    padding: 0.85rem !important;
+  }
+
+  /* Mobile Drawer in Landscape */
+  .mobile-drawer {
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+  .mobile-drawer-body {
+    max-height: calc(100vh - 48px) !important;
+    overflow-y: auto !important;
+    padding-bottom: 2rem !important;
   }
 }
 
