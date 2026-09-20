@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 140" width="420" height="140">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181308"/>
+      <stop offset="50%" stop-color="#2a1f0a"/>
+      <stop offset="100%" stop-color="#0e0c05"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFE259"/>
+      <stop offset="100%" stop-color="#FFA751"/>
+    </linearGradient>
+    <linearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F2A93B"/>
+      <stop offset="100%" stop-color="#E08816"/>
+    </linearGradient>
+    <linearGradient id="greenGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00FFA3"/>
+      <stop offset="100%" stop-color="#00B875"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="420" height="140" fill="url(#bg1)"/>
+  
+  <!-- Subtle Grid Pattern & Crypto Glow -->
+  <circle cx="50" cy="70" r="80" fill="#F2A93B" opacity="0.12" filter="url(#glow)"/>
+  <circle cx="380" cy="110" r="70" fill="#00FFA3" opacity="0.08" filter="url(#glow)"/>
+
+  <!-- Gold Border Frame -->
+  <rect x="1" y="1" width="418" height="138" rx="8" fill="none" stroke="#52401C" stroke-width="1.5"/>
+
+  <!-- Left Icon / Mascot Badge -->
+  <g transform="translate(18, 22)">
+    <!-- Mascot Base Circle with Gold Glow -->
+    <circle cx="48" cy="48" r="44" fill="#221A0A" stroke="url(#goldGrad)" stroke-width="2"/>
+    <!-- Cute Bull / Frog Mascot Illustration -->
+    <circle cx="48" cy="48" r="36" fill="#1C381E"/>
+    <!-- Head -->
+    <ellipse cx="48" cy="50" rx="26" ry="22" fill="#2EAA43"/>
+    <!-- Big Anime Eyes -->
+    <circle cx="39" cy="44" r="9" fill="#FFF"/>
+    <circle cx="57" cy="44" r="9" fill="#FFF"/>
+    <circle cx="41" cy="44" r="4.5" fill="#000"/>
+    <circle cx="59" cy="44" r="4.5" fill="#000"/>
+    <circle cx="42.5" cy="42" r="1.8" fill="#FFF"/>
+    <circle cx="60.5" cy="42" r="1.8" fill="#FFF"/>
+    <!-- Cute Cheeks -->
+    <circle cx="33" cy="54" r="4" fill="#FF5E7E" opacity="0.7"/>
+    <circle cx="63" cy="54" r="4" fill="#FF5E7E" opacity="0.7"/>
+    <!-- Smile -->
+    <path d="M 43 55 Q 48 61 53 55" stroke="#000" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <!-- Bull Horns -->
+    <path d="M 28 36 Q 22 20 34 26" stroke="#FFA751" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <path d="M 68 36 Q 74 20 62 26" stroke="#FFA751" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <!-- Gold Coin Sparkle -->
+    <circle cx="16" cy="14" r="11" fill="url(#goldGrad)"/>
+    <text x="16" y="18" font-family="'Inter', sans-serif" font-size="11" font-weight="900" fill="#000" text-anchor="middle">⚡</text>
+  </g>
+
+  <!-- Content Section -->
+  <g transform="translate(125, 20)">
+    <!-- Top Pill Badges -->
+    <rect x="0" y="0" width="112" height="18" rx="9" fill="#2D210B" stroke="#755216" stroke-width="1"/>
+    <text x="56" y="13" font-family="'IBM Plex Mono', monospace" font-size="9" font-weight="700" fill="#FFA751" text-anchor="middle">🔥 MEME LAUNCHPAD</text>
+
+    <rect x="118" y="0" width="76" height="18" rx="9" fill="#0E2B1A" stroke="#1D6B3C" stroke-width="1"/>
+    <text x="156" y="13" font-family="'IBM Plex Mono', monospace" font-size="9" font-weight="700" fill="#00FFA3" text-anchor="middle">0% CREATION</text>
+
+    <!-- Headline -->
+    <text x="0" y="44" font-family="'Space Grotesk', system-ui, sans-serif" font-size="20" font-weight="900" fill="url(#goldGrad)" letter-spacing="0.2">FREE TOKEN CREATION</text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="66" font-family="'Inter', system-ui, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">&amp; 1-CLICK INSTANT DEX LISTING</text>
+
+    <!-- Bottom CTA Button & Features -->
+    <g transform="translate(0, 78)">
+      <rect x="0" y="0" width="128" height="28" rx="5" fill="url(#btnGrad)"/>
+      <text x="64" y="18" font-family="'Space Grotesk', system-ui, sans-serif" font-size="12" font-weight="800" fill="#000000" text-anchor="middle">CREATE NOW ➔</text>
+
+      <text x="138" y="18" font-family="'IBM Plex Mono', monospace" font-size="10.5" font-weight="600" fill="#A89E88">⚡ Fast • Fair • Audited</text>
+    </g>
+  </g>
+</svg>

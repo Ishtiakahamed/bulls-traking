@@ -554,6 +554,53 @@ function renderBannerAd(banner, slotPlacement = 'top_banner') {
   `;
 }
 
+function renderBannerTrioGrid(topBanners) {
+  const defaultList = [
+    { slot: 1, placement: 'top_banner_1', title: 'Bulls Meme Launchpad', banner_image: 'assets/banners/banner_meme_launch.svg', target_url: '#/submit', price: 149, is_placeholder: false },
+    { slot: 2, placement: 'top_banner_2', title: 'Minotaur Bull Presale', banner_image: 'assets/banners/banner_minotaur_presale.svg', target_url: '#/presales', price: 199, is_placeholder: false },
+    { slot: 3, placement: 'top_banner_3', title: 'Solana Alpha Calls', banner_image: 'assets/banners/banner_solana_calls.svg', target_url: '#/top-coins', price: 149, is_placeholder: false }
+  ];
+
+  const slots = Array.isArray(topBanners) && topBanners.length >= 3
+    ? topBanners.slice(0, 3)
+    : defaultList;
+
+  const renderedCards = slots.map((banner, idx) => {
+    const slotNum = idx + 1;
+    const isPlaceholder = !banner || banner.is_placeholder || !banner.banner_image;
+    const targetUrl = banner?.target_url || `#/promote?type=banner&slot=${slotNum}`;
+    const clickHandler = banner?.id ? `onclick="trackBannerClick(${banner.id})"` : '';
+    const isExternal = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
+    const targetAttr = isExternal ? 'target="_blank" rel="noopener sponsored"' : '';
+
+    if (isPlaceholder) {
+      const defaultPrice = slotNum === 2 ? '$199/7D' : '$149/7D';
+      const slotLabel = slotNum === 2 ? 'CENTER PRIME' : `SLOT #${slotNum}`;
+      return `
+        <a href="${escapeHtml(targetUrl)}" class="banner-trio-item" title="Book this advertising slot">
+          <div class="banner-trio-placeholder">
+            <span class="banner-trio-ph-badge">${slotLabel} AVAILABLE</span>
+            <div class="banner-trio-ph-title">${escapeHtml(banner?.title || 'Your Banner Here')}</div>
+            <div class="banner-trio-ph-cta">Advertise Here (${defaultPrice}) ➔</div>
+          </div>
+        </a>
+      `;
+    }
+
+    return `
+      <a href="${escapeHtml(targetUrl)}" ${targetAttr} class="banner-trio-item" ${clickHandler} title="${escapeHtml(banner.title || 'Sponsored Banner')}">
+        <img src="${escapeHtml(banner.banner_image)}" alt="${escapeHtml(banner.title || 'Banner ad')}" class="banner-trio-img" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'banner-trio-placeholder\\'><span class=\\'banner-trio-ph-badge\\'>SLOT #${slotNum}</span><div class=\\'banner-trio-ph-title\\'>${escapeHtml(banner.title || 'Sponsored')}</div><div class=\\'banner-trio-ph-cta\\'>Visit Site ➔</div></div>';" />
+      </a>
+    `;
+  }).join('');
+
+  return `
+    <div class="banner-trio-grid" id="bannerTrioGrid" aria-label="Sponsored Banners (Trio Leaderboard)">
+      ${renderedCards}
+    </div>
+  `;
+}
+
 function buildHomeUI(data) {
   updateMarketStatus(data.marketStats);
   if (data.trending && data.trending.length > 0) {
@@ -593,12 +640,12 @@ function buildHomeUI(data) {
   }
 
   const promotedCards = (data.promoted || []).map(renderPromotedCard).join('');
-  const topBannerHtml = renderBannerAd(data.banners?.top_banner, 'top_banner');
+  const trioGridHtml = renderBannerTrioGrid(data.banners?.top_banners);
   const homeBannerHtml = renderBannerAd(data.banners?.homepage_banner, 'homepage_banner');
 
   app.innerHTML = `
-    <!-- TOP HEADER LEADERBOARD BANNER -->
-    ${topBannerHtml}
+    <!-- 3-SLOT TOP BANNER GRID (TOP100TOKEN STYLE) -->
+    ${trioGridHtml}
 
     <!-- PROMOTED TOKENS SECTION -->
     ${data.promoted && data.promoted.length > 0 ? `
@@ -1231,17 +1278,30 @@ function switchPromoteMode(mode) {
 }
 window.switchPromoteMode = switchPromoteMode;
 
-async function renderPromotePage(initialType = 'token') {
+async function renderPromotePage(initialType = 'token', initialSlot = null) {
   document.title = 'Promote & Advertise | Bulls Traking';
   promoteOrderState.selectedPkg = '7D';
   promoteOrderState.price = 149;
   promoteOrderState.days = 7;
   promoteOrderState.activeOrder = null;
 
-  bannerOrderState.selectedPkg = 'banner_top_7d';
-  bannerOrderState.price = 199;
-  bannerOrderState.days = 7;
-  bannerOrderState.placement = 'top_banner';
+  // Initialize selected banner slot
+  if (initialSlot === '1') {
+    bannerOrderState.selectedPkg = 'banner_slot_1';
+    bannerOrderState.price = 149;
+    bannerOrderState.days = 7;
+    bannerOrderState.placement = 'top_banner_1';
+  } else if (initialSlot === '3') {
+    bannerOrderState.selectedPkg = 'banner_slot_3';
+    bannerOrderState.price = 149;
+    bannerOrderState.days = 7;
+    bannerOrderState.placement = 'top_banner_3';
+  } else {
+    bannerOrderState.selectedPkg = 'banner_slot_2';
+    bannerOrderState.price = 199;
+    bannerOrderState.days = 7;
+    bannerOrderState.placement = 'top_banner_2';
+  }
   bannerOrderState.activeOrder = null;
 
   const isBannerMode = initialType === 'banner';
@@ -1262,7 +1322,7 @@ async function renderPromotePage(initialType = 'token') {
           🪙 Token Spotlight ($39 - $399)
         </button>
         <button type="button" id="tabBannerBtn" class="btn-solid" onclick="switchPromoteMode('banner')" style="${isBannerMode ? 'background:var(--gold);color:#000;border-color:var(--gold);' : 'background:var(--bg-panel);border:1px solid var(--line);color:var(--ink-dim);'}padding:10px 22px;font-size:14px;font-weight:700;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;">
-          📢 Banner Ads Placement ($199 - $599)
+          📢 Banner Ads Placement ($149 - $499)
         </button>
       </div>
 
@@ -1555,22 +1615,27 @@ async function renderPromotePage(initialType = 'token') {
 
               <h3 style="margin:1.75rem 0 0.5rem;font-size:1.1rem;color:var(--ink);">3. Select Banner Placement & Duration</h3>
               <div class="package-selector" id="bPkgSelector">
-                <div class="package-card is-selected" data-key="banner_top_7d" data-placement="top_banner" data-price="199" data-days="7">
-                  <div style="font-weight:700;font-size:13px;color:var(--ink);">Top Header</div>
+                <div class="package-card ${bannerOrderState.selectedPkg === 'banner_slot_1' ? 'is-selected' : ''}" data-key="banner_slot_1" data-placement="top_banner_1" data-price="149" data-days="7">
+                  <div style="font-weight:700;font-size:13px;color:var(--ink);">Slot 1 (Left)</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$149</div>
+                  <div style="font-size:11px;color:var(--ink-dim);">7 Days • 3:1 Banner</div>
+                </div>
+                <div class="package-card ${bannerOrderState.selectedPkg === 'banner_slot_2' ? 'is-selected' : ''}" data-key="banner_slot_2" data-placement="top_banner_2" data-price="199" data-days="7">
+                  <span class="pkg-badge">CENTER PRIME</span>
+                  <div style="font-weight:700;font-size:13px;color:var(--ink);">Slot 2 (Center)</div>
                   <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$199</div>
-                  <div style="font-size:11px;color:var(--ink-dim);">7 Days Leaderboard</div>
+                  <div style="font-size:11px;color:var(--ink-dim);">7 Days • Prime Eye-Level</div>
                 </div>
-                <div class="package-card" data-key="banner_home_7d" data-placement="homepage_banner" data-price="299" data-days="7">
-                  <span class="pkg-badge">POPULAR</span>
-                  <div style="font-weight:700;font-size:13px;color:var(--ink);">In-Feed Spotlight</div>
-                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$299</div>
-                  <div style="font-size:11px;color:var(--ink-dim);">7 Days High-Converting</div>
+                <div class="package-card ${bannerOrderState.selectedPkg === 'banner_slot_3' ? 'is-selected' : ''}" data-key="banner_slot_3" data-placement="top_banner_3" data-price="149" data-days="7">
+                  <div style="font-weight:700;font-size:13px;color:var(--ink);">Slot 3 (Right)</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$149</div>
+                  <div style="font-size:11px;color:var(--ink-dim);">7 Days • 3:1 Banner</div>
                 </div>
-                <div class="package-card" data-key="banner_bundle_30d" data-placement="top_banner" data-price="599" data-days="30">
+                <div class="package-card ${bannerOrderState.selectedPkg === 'banner_bundle_30d' ? 'is-selected' : ''}" data-key="banner_bundle_30d" data-placement="top_banner_2" data-price="499" data-days="30">
                   <span class="pkg-badge" style="background:#00E5FF;">VIP</span>
-                  <div style="font-weight:700;font-size:13px;color:var(--ink);">VIP Domination</div>
-                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$599</div>
-                  <div style="font-size:11px;color:var(--ink-dim);">30 Days Full Domination</div>
+                  <div style="font-weight:700;font-size:13px;color:var(--ink);">30-Day VIP</div>
+                  <div style="font-size:1.25rem;font-weight:800;color:var(--gold);margin:4px 0;">$499</div>
+                  <div style="font-size:11px;color:var(--ink-dim);">30 Days Center Domination</div>
                 </div>
               </div>
 
@@ -1588,7 +1653,7 @@ async function renderPromotePage(initialType = 'token') {
               </div>
 
               <button type="submit" id="btnCreateBannerOrder" class="btn-solid" style="width:100%;padding:13px 12px;font-size:14px;cursor:pointer;background:#0088cc;border-color:#0088cc;display:flex;align-items:center;justify-content:center;gap:8px;white-space:normal;text-align:center;box-sizing:border-box;">
-                <span style="white-space:normal;word-break:break-word;">Book via Telegram @bullclub_ads ($199 USDT) →</span>
+                <span style="white-space:normal;word-break:break-word;">Book via Telegram @bullclub_ads ($${bannerOrderState.price} USDT) →</span>
               </button>
             </form>
 
@@ -1600,7 +1665,7 @@ async function renderPromotePage(initialType = 'token') {
                   <span style="background:rgba(242,169,59,0.15);color:var(--gold);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;">Awaiting Payment Clearance</span>
                 </div>
                 <div style="font-size:1.5rem;font-weight:800;color:var(--ink);margin-bottom:6px;">
-                  Amount: <span style="color:var(--up);" id="dispBannerAmount">$199 USDT</span>
+                  Amount: <span style="color:var(--up);" id="dispBannerAmount">$${bannerOrderState.price} USDT</span>
                 </div>
                 <p style="font-size:13px;color:var(--ink-dim);margin:0 0 14px;line-height:1.5;">
                   Your banner slot is reserved in our ad engine! Contact our official Telegram desk <b>@bullclub_ads</b> with your order details for instant clearance and live activation.
@@ -1629,35 +1694,31 @@ async function renderPromotePage(initialType = 'token') {
           <!-- BANNER PREVIEW COLUMN -->
           <div class="promote-col-preview">
             <div style="position:sticky;top:20px;">
-              <h3 style="margin:0 0 .75rem;font-size:1.05rem;color:var(--ink);">Live Banner Ad Preview</h3>
-              <p style="font-size:12px;color:var(--ink-dim);margin:0 0 1rem;">This is how your banner ad appears live across Bulls Traking.</p>
+              <h3 style="margin:0 0 .75rem;font-size:1.05rem;color:var(--ink);">Live 3-Slot Trio Grid Preview</h3>
+              <p style="font-size:12px;color:var(--ink-dim);margin:0 0 1rem;">This is how your banner appears in the top 3-column leaderboard above Promoted Tokens.</p>
 
               <div id="prevBannerWrap" style="margin-bottom:1.5rem;">
-                <!-- Live Banner Rendered Here -->
-                <div class="banner-ad-wrapper top_banner">
-                  <div class="banner-ad-card" style="border:1px solid var(--gold);box-shadow:0 0 16px rgba(242,169,59,0.18);">
-                    <div class="banner-ad-badge">SPONSORED</div>
-                    <div class="banner-ad-left">
-                      <div class="banner-ad-icon" id="prevBannerIcon">⚡</div>
-                      <img id="prevBannerImg" src="" alt="Banner logo" class="banner-ad-icon-img" style="display:none;" />
-                      <div class="banner-ad-info">
-                        <div class="banner-ad-title" id="prevBannerTitle">DexSwap — Zero Slippage Meme Trading</div>
-                        <div class="banner-ad-desc" id="prevBannerDesc">Instant multi-chain swaps, deep liquidity & verified contracts.</div>
-                      </div>
-                    </div>
-                    <a id="prevBannerCta" href="#" target="_blank" class="banner-ad-cta">Trade Now →</a>
+                <div class="banner-trio-grid" style="grid-template-columns: 1fr; gap: 10px;">
+                  <div id="prevBannerSlotCard" class="banner-trio-item" style="display:block;border-color:var(--gold);box-shadow:0 0 16px rgba(242,169,59,0.25);">
+                    <img id="prevBannerImg" src="assets/banners/banner_minotaur_presale.svg" alt="Banner preview" class="banner-trio-img" style="display:block;" />
+                  </div>
+                  <div class="banner-trio-placeholder" style="padding:10px 12px;min-height:50px;">
+                    <span class="banner-trio-ph-badge" id="prevSlotIndicatorBadge">SLOT 2 (CENTER PRIME) SELECTED</span>
+                    <div class="banner-trio-ph-title" id="prevBannerTitle" style="font-size:12px;margin:2px 0;">Minotaur Bull Presale</div>
+                    <div class="banner-trio-ph-cta" id="prevBannerCta" style="font-size:11px;">Target: https://yourdomain.com</div>
                   </div>
                 </div>
               </div>
 
               <div style="background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:1rem;">
-                <h4 style="margin:0 0 .5rem;font-size:12px;color:var(--ink);text-transform:uppercase;letter-spacing:0.5px;">Banner Inclusions:</h4>
+                <h4 style="margin:0 0 .5rem;font-size:12px;color:var(--ink);text-transform:uppercase;letter-spacing:0.5px;">Trio Banner Inclusions:</h4>
                 <ul style="margin:0;padding-left:1.2rem;font-size:12px;color:var(--ink-dim);line-height:1.6;">
-                  <li>High-conversion prime placement (Header or In-Feed)</li>
-                  <li>Multi-device responsive (Desktop, Tablet, Mobile)</li>
+                  <li>High-conversion prime placement above Promoted Tokens</li>
+                  <li>Side-by-side 3-column layout matching Top100Token reference</li>
+                  <li>Fully responsive (3 cols desktop, 2 cols tablet, 1 col mobile)</li>
                   <li>Live click attribution & impression metrics</li>
-                  <li>Direct link to your Web3 app, token, or DEX pair</li>
-                  <li>Priority Telegram desk verification & fast launch</li>
+                  <li>Direct link to your Web3 project, presale, DEX, or community</li>
+                  <li>Priority Telegram desk verification & fast live activation</li>
                 </ul>
               </div>
             </div>
@@ -1944,30 +2005,40 @@ function initBannerHandlers() {
   const prevBannerCta = document.getElementById('prevBannerCta');
   const prevBannerImg = document.getElementById('prevBannerImg');
   const prevBannerIcon = document.getElementById('prevBannerIcon');
-  const btnCreateBannerOrder = document.getElementById('btnCreateBannerOrder');
+  const slotGraphicDefaults = {
+    'top_banner_1': 'assets/banners/banner_meme_launch.svg',
+    'top_banner_2': 'assets/banners/banner_minotaur_presale.svg',
+    'top_banner_3': 'assets/banners/banner_solana_calls.svg'
+  };
+
+  const slotBadgeLabels = {
+    'banner_slot_1': 'SLOT 1 (LEFT) SELECTED',
+    'banner_slot_2': 'SLOT 2 (CENTER PRIME) SELECTED',
+    'banner_slot_3': 'SLOT 3 (RIGHT) SELECTED',
+    'banner_bundle_30d': '30-DAY VIP LEADERBOARD SELECTED'
+  };
 
   function updateBannerPreview() {
-    if (prevBannerTitle) {
-      prevBannerTitle.textContent = bTitle ? (bTitle.value.trim() || 'DexSwap — Zero Slippage Meme Trading') : 'Campaign Title';
+    if (prevSlotIndicatorBadge) {
+      prevSlotIndicatorBadge.textContent = slotBadgeLabels[bannerOrderState.selectedPkg] || 'SPONSORED BANNER';
     }
-    if (prevBannerDesc) {
-      const descVal = bDesc ? bDesc.value.trim() : '';
-      prevBannerDesc.textContent = descVal || 'Instant multi-chain swaps, deep liquidity & verified contracts.';
-      prevBannerDesc.style.display = 'block';
+    if (prevBannerTitle) {
+      prevBannerTitle.textContent = bTitle && bTitle.value.trim() ? bTitle.value.trim() : (bannerOrderState.selectedPkg === 'banner_slot_1' ? 'Bulls Meme Launchpad' : (bannerOrderState.selectedPkg === 'banner_slot_3' ? 'Solana Alpha Calls' : 'Minotaur Bull Presale'));
     }
     if (prevBannerCta) {
-      prevBannerCta.textContent = bCtaText ? (bCtaText.value.trim() || 'Trade Now →') : 'Trade Now →';
-      prevBannerCta.href = bTargetUrl ? (bTargetUrl.value.trim() || '#') : '#';
+      prevBannerCta.textContent = `Target: ${bTargetUrl && bTargetUrl.value.trim() ? bTargetUrl.value.trim() : 'https://yourdomain.com'}`;
     }
     if (bImageUrl && bImageUrl.value.trim()) {
       if (prevBannerImg) {
         prevBannerImg.src = bImageUrl.value.trim();
         prevBannerImg.style.display = 'block';
       }
-      if (prevBannerIcon) prevBannerIcon.style.display = 'none';
     } else {
-      if (prevBannerImg) prevBannerImg.style.display = 'none';
-      if (prevBannerIcon) prevBannerIcon.style.display = 'flex';
+      if (prevBannerImg) {
+        const defaultImg = slotGraphicDefaults[bannerOrderState.placement] || 'assets/banners/banner_minotaur_presale.svg';
+        prevBannerImg.src = defaultImg;
+        prevBannerImg.style.display = 'block';
+      }
     }
   }
 
@@ -1982,7 +2053,7 @@ function initBannerHandlers() {
       bCards.forEach(c => c.classList.remove('is-selected'));
       card.classList.add('is-selected');
       bannerOrderState.selectedPkg = card.dataset.key;
-      bannerOrderState.placement = card.dataset.placement || 'top_banner';
+      bannerOrderState.placement = card.dataset.placement || 'top_banner_2';
       bannerOrderState.price = Number(card.dataset.price);
       bannerOrderState.days = Number(card.dataset.days);
       if (btnCreateBannerOrder) {
@@ -1990,6 +2061,7 @@ function initBannerHandlers() {
       }
       const dispBannerAmount = document.getElementById('dispBannerAmount');
       if (dispBannerAmount) dispBannerAmount.textContent = `$${bannerOrderState.price} USDT`;
+      updateBannerPreview();
     });
   });
 
@@ -2124,7 +2196,13 @@ async function submitBannerOrder() {
     const dispAmount = document.getElementById('dispBannerAmount');
     if (dispAmount) dispAmount.textContent = `$${res.data.price} USDT`;
 
-    const slotName = bannerOrderState.placement === 'top_banner' ? (bannerOrderState.days === 30 ? 'Monthly VIP Leaderboard' : 'Top Header Leaderboard') : 'Homepage In-Feed Spotlight';
+    const slotLabels = {
+      'top_banner_1': 'Top Leaderboard Slot 1 (Left - $149/7D)',
+      'top_banner_2': bannerOrderState.days === 30 ? 'Top Leaderboard Slot 2 (Center VIP - $499/30D)' : 'Top Leaderboard Slot 2 (Center Prime - $199/7D)',
+      'top_banner_3': 'Top Leaderboard Slot 3 (Right - $149/7D)',
+      'homepage_banner': 'Homepage In-Feed Spotlight ($299/7D)'
+    };
+    const slotName = slotLabels[bannerOrderState.placement] || bannerOrderState.placement;
 
     const tgMessage = `Hello Admin (@bullclub_ads)! I want to book a Banner Advertisement on Bulls Traking:\n\n• Order ID: ${orderNum}\n• Campaign: ${payload.title}\n• Slot Placement: ${slotName}\n• Duration: ${payload.durationDays} Days ($${payload.price} USDT)\n• Target URL: ${payload.targetUrl}\n• CTA Text: ${ctaText}\n\nPlease provide your payment address to verify and activate this banner placement.`;
 
@@ -3607,7 +3685,7 @@ function route() {
   } else if (path === '/promoted') {
     renderPromotedPage();
   } else if (path === '/promote') {
-    renderPromotePage(params.get('type'));
+    renderPromotePage(params.get('type'), params.get('slot'));
   } else if (path === '/admin') {
     renderAdminPage();
   } else if (path === '/presales') {

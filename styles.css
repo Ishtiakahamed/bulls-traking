@@ -3359,6 +3359,109 @@ tbody tr:hover {
 }
 
 /* =========================================================================
+   3-SLOT VISUAL BANNER GRID (TOP100TOKEN REFERENCE LAYOUT)
+   ========================================================================= */
+
+.banner-trio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  width: 100%;
+  margin: 1rem 0 1.5rem;
+  box-sizing: border-box;
+}
+
+.banner-trio-item {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 420 / 140;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  box-sizing: border-box;
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.banner-trio-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.banner-trio-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.banner-trio-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 1rem;
+  text-align: center;
+  border: 1px dashed rgba(242, 169, 59, 0.4);
+  background: radial-gradient(circle at center, rgba(242, 169, 59, 0.06) 0%, rgba(28, 25, 18, 0.95) 100%);
+  box-sizing: border-box;
+}
+
+.banner-trio-placeholder:hover {
+  border-color: var(--gold);
+  background: radial-gradient(circle at center, rgba(242, 169, 59, 0.12) 0%, rgba(28, 25, 18, 0.95) 100%);
+}
+
+.banner-trio-ph-badge {
+  display: inline-block;
+  background: var(--bg-panel-raised);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.banner-trio-ph-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.banner-trio-ph-cta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+@media (max-width: 992px) {
+  .banner-trio-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .banner-trio-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin: 0.75rem 0 1.25rem;
+  }
+}
+
+/* =========================================================================
    BANNER ADVERTISING ENGINE (LEDGER THEMED)
    ========================================================================= */
 

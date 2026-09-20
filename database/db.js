@@ -250,28 +250,39 @@ function initDatabase() {
     }
 
     // Ensure default banner slots exist
-    const slotCount = db.prepare('SELECT COUNT(*) as count FROM banner_slots').get();
-    if (!slotCount || slotCount.count === 0) {
-      db.exec(`
-        INSERT OR IGNORE INTO banner_slots (id, slot_name, position, dimensions, price_per_week, is_active) VALUES
-        (1, 'Top Header Leaderboard', 'top_banner', '728x90', 199.00, 1),
-        (2, 'Homepage In-Feed Spotlight', 'homepage_banner', '970x90', 299.00, 1),
-        (3, 'New Pairs Radar Banner', 'radar_banner', '728x90', 149.00, 1);
-      `);
-    }
+    db.exec(`
+      INSERT OR IGNORE INTO banner_slots (id, slot_name, position, dimensions, price_per_week, is_active) VALUES
+      (1, 'Top Leaderboard Slot 1 (Left)', 'top_banner_1', '420x140 / 3:1', 149.00, 1),
+      (2, 'Top Leaderboard Slot 2 (Center Prime)', 'top_banner_2', '420x140 / 3:1', 199.00, 1),
+      (3, 'Top Leaderboard Slot 3 (Right)', 'top_banner_3', '420x140 / 3:1', 149.00, 1),
+      (4, 'Homepage In-Feed Spotlight', 'homepage_banner', '970x90', 299.00, 1);
+    `);
 
-    // Ensure sample active banner orders exist for demonstration & tests
-    const bannerCount = db.prepare('SELECT COUNT(*) as count FROM banner_orders').get();
-    if (!bannerCount || bannerCount.count === 0) {
+    // Ensure active sample banner orders exist for the 3 visual slots
+    const slotCount = db.prepare("SELECT COUNT(*) as count FROM banner_orders WHERE placement IN ('top_banner_1', 'top_banner_2', 'top_banner_3') AND approval_status = 'approved' AND datetime(end_at) >= datetime('now')").get();
+    if (!slotCount || slotCount.count < 3) {
       db.exec(`
+        DELETE FROM banner_orders WHERE placement IN ('top_banner_1', 'top_banner_2', 'top_banner_3', 'top_banner');
         INSERT INTO banner_orders (
           title, banner_image, target_url, placement, duration, start_at, end_at, price, payment_status, approval_status
         ) VALUES
         (
-          'Bulls Traking Official Telegram Desk',
-          'assets/logo-transparent.png',
-          'https://t.me/bullclub_ads',
-          'top_banner',
+          'Bulls Meme Exchange — Free Token Creation & Instant Listing',
+          'assets/banners/banner_meme_launch.svg',
+          '#/submit',
+          'top_banner_1',
+          30,
+          datetime('now', '-1 day'),
+          datetime('now', '+29 days'),
+          149.00,
+          'completed',
+          'approved'
+        ),
+        (
+          'Minotaur Bull Presale — $1 Today, $100 Tomorrow — Wake Up Rich',
+          'assets/banners/banner_minotaur_presale.svg',
+          '#/presales',
+          'top_banner_2',
           30,
           datetime('now', '-1 day'),
           datetime('now', '+29 days'),
@@ -280,14 +291,14 @@ function initDatabase() {
           'approved'
         ),
         (
-          'Promote Your Token — Reach 100K+ Crypto Traders',
-          'assets/logo-transparent.png',
-          '#/promote',
-          'homepage_banner',
+          'Solana Alpha Calls & Real-Time Win Rate Tracking',
+          'assets/banners/banner_solana_calls.svg',
+          '#/top-coins',
+          'top_banner_3',
           30,
           datetime('now', '-1 day'),
           datetime('now', '+29 days'),
-          299.00,
+          149.00,
           'completed',
           'approved'
         );

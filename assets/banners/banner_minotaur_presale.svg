@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 140" width="420" height="140">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A0D08"/>
+      <stop offset="50%" stop-color="#281206"/>
+      <stop offset="100%" stop-color="#0F0603"/>
+    </linearGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF5A36"/>
+      <stop offset="50%" stop-color="#FF9E2C"/>
+      <stop offset="100%" stop-color="#FFD23F"/>
+    </linearGradient>
+    <linearGradient id="limeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4EFA8B"/>
+      <stop offset="100%" stop-color="#2BD96B"/>
+    </linearGradient>
+    <linearGradient id="btnPresale" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2BD96B"/>
+      <stop offset="100%" stop-color="#1EA850"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="420" height="140" fill="url(#bg2)"/>
+  
+  <!-- Fire Glow Backdrops -->
+  <circle cx="65" cy="70" r="75" fill="#FF5A36" opacity="0.14"/>
+  <circle cx="370" cy="40" r="60" fill="#FFD23F" opacity="0.08"/>
+
+  <!-- Border Frame -->
+  <rect x="1" y="1" width="418" height="138" rx="8" fill="none" stroke="#5E2813" stroke-width="1.5"/>
+
+  <!-- Left Minotaur Bull Fighter Mascot -->
+  <g transform="translate(18, 14)">
+    <circle cx="44" cy="56" r="44" fill="#2E1308" stroke="url(#fireGrad)" stroke-width="2"/>
+    <!-- Minotaur Mask / Strong Bull Body -->
+    <path d="M 28 85 L 34 50 L 44 42 L 54 50 L 60 85 Z" fill="#A84E22"/>
+    <ellipse cx="44" cy="50" rx="20" ry="18" fill="#BD5C2A"/>
+    <!-- Horns -->
+    <path d="M 28 44 Q 14 26 24 16 Q 30 26 34 38" fill="#FFD23F" stroke="#8C4100" stroke-width="1"/>
+    <path d="M 60 44 Q 74 26 64 16 Q 58 26 54 38" fill="#FFD23F" stroke="#8C4100" stroke-width="1"/>
+    <!-- Eyes (Fiery Glow) -->
+    <ellipse cx="37" cy="48" rx="4" ry="2.5" fill="#FFF"/>
+    <ellipse cx="51" cy="48" rx="4" ry="2.5" fill="#FFF"/>
+    <circle cx="37" cy="48" r="2" fill="#FF2200"/>
+    <circle cx="51" cy="48" r="2" fill="#FF2200"/>
+    <!-- Snout & Ring -->
+    <ellipse cx="44" cy="58" rx="10" ry="7" fill="#8C3A16"/>
+    <circle cx="41" cy="57" r="1.5" fill="#1A0A04"/>
+    <circle cx="47" cy="57" r="1.5" fill="#1A0A04"/>
+    <circle cx="44" cy="65" r="4.5" fill="none" stroke="#FFD23F" stroke-width="2"/>
+    <!-- Muscle arms -->
+    <ellipse cx="20" cy="66" rx="9" ry="12" fill="#9C451D"/>
+    <ellipse cx="68" cy="66" rx="9" ry="12" fill="#9C451D"/>
+  </g>
+
+  <!-- Content Section -->
+  <g transform="translate(118, 18)">
+    <!-- Brand / Symbol Header -->
+    <g style="display:flex;">
+      <text x="0" y="16" font-family="'Space Grotesk', system-ui, sans-serif" font-size="15" font-weight="900" fill="#FF9E2C" letter-spacing="1">MINOTAURUS</text>
+      <rect x="116" y="4" width="76" height="16" rx="8" fill="#3D1808" stroke="#7A3212" stroke-width="1"/>
+      <text x="154" y="15.5" font-family="'IBM Plex Mono', monospace" font-size="8.5" font-weight="700" fill="#FFD23F" text-anchor="middle">⚡ 100X STAGE</text>
+    </g>
+
+    <!-- Main Value Proposition (Matching $1 TODAY -> $100 TOMORROW) -->
+    <g transform="translate(0, 42)">
+      <rect x="0" y="-14" width="86" height="23" rx="4" fill="#241103" stroke="#FF9E2C" stroke-width="1.2"/>
+      <text x="43" y="2" font-family="'Space Grotesk', system-ui, sans-serif" font-size="13" font-weight="900" fill="#FFD23F" text-anchor="middle">$1 TODAY</text>
+
+      <text x="96" y="2" font-family="'Space Grotesk', system-ui, sans-serif" font-size="14" font-weight="900" fill="#FFFFFF">➔</text>
+
+      <rect x="118" y="-14" width="138" height="23" rx="4" fill="#0C2612" stroke="#2BD96B" stroke-width="1.4"/>
+      <text x="187" y="2" font-family="'Space Grotesk', system-ui, sans-serif" font-size="13" font-weight="900" fill="#2BD96B" text-anchor="middle">$100 TOMORROW</text>
+    </g>
+
+    <!-- Catchy Slogan & Call to Action -->
+    <g transform="translate(0, 78)">
+      <text x="0" y="20" font-family="'Space Grotesk', system-ui, sans-serif" font-size="14" font-weight="900" fill="#FFFFFF" letter-spacing="0.5">WAKE UP RICH</text>
+
+      <rect x="126" y="2" width="130" height="28" rx="5" fill="url(#btnPresale)"/>
+      <text x="191" y="20" font-family="'Space Grotesk', system-ui, sans-serif" font-size="12" font-weight="900" fill="#031A0B" text-anchor="middle">JOIN PRESALE ➔</text>
+    </g>
+  </g>
+</svg>

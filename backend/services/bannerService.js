@@ -47,10 +47,19 @@ function getActiveBanners() {
     };
   };
 
+  const slot1 = findSlot('top_banner_1', '🚀 Meme Launchpad / DEX Spot', 'Book Slot 1 ($149/7D) →', 149);
+  const slot2 = findSlot('top_banner_2', '🔥 Center Prime Presale Spotlight', 'Book Slot 2 ($199/7D) →', 199);
+  const slot3 = findSlot('top_banner_3', '⚡ Alpha Calls & Live Signals', 'Book Slot 3 ($149/7D) →', 149);
+  const homeBanner = findSlot('homepage_banner', '⚡ Verified Token Promotion — 1-Click DEX Volume', 'Book In-Feed Banner ($299/7D) →', 299);
+
   return {
-    top_banner: findSlot('top_banner', '🚀 Spotlight Your Token — Reach 100K+ Active Multi-Chain Traders', 'Book Header Banner ($199/7D) →', 199),
-    homepage_banner: findSlot('homepage_banner', '⚡ Verified Token Promotion — 1-Click DEX Volume & Direct Exposure', 'Book In-Feed Banner ($299/7D) →', 299),
-    radar_banner: findSlot('radar_banner', '📡 New Pairs Radar Sponsorship — High Intent Fair Launch Traffic', 'Book Radar Banner ($149/7D) →', 149)
+    top_banners: [slot1, slot2, slot3],
+    top_banner_1: slot1,
+    top_banner_2: slot2,
+    top_banner_3: slot3,
+    top_banner: slot2, // backward compatibility
+    homepage_banner: homeBanner,
+    radar_banner: findSlot('radar_banner', '📡 New Pairs Radar Sponsorship', 'Book Radar Banner ($149/7D) →', 149)
   };
 }
 
@@ -77,7 +86,7 @@ function createBannerOrder(data) {
     title = 'Banner Advertisement',
     bannerImage,
     targetUrl,
-    placement = 'top_banner',
+    placement = 'top_banner_2',
     durationDays = 7,
     price = 199.00
   } = data || {};
@@ -86,8 +95,8 @@ function createBannerOrder(data) {
     throw new Error('Both bannerImage and targetUrl are required');
   }
 
-  const validPlacements = ['top_banner', 'homepage_banner', 'radar_banner'];
-  const safePlacement = validPlacements.includes(placement) ? placement : 'top_banner';
+  const validPlacements = ['top_banner_1', 'top_banner_2', 'top_banner_3', 'top_banner', 'homepage_banner', 'radar_banner'];
+  const safePlacement = validPlacements.includes(placement) ? placement : 'top_banner_2';
 
   const insertSql = `
     INSERT INTO banner_orders (
@@ -128,31 +137,40 @@ function createBannerOrder(data) {
 function getBannerPackages() {
   return [
     {
-      id: 'banner_top_7d',
-      name: 'Top Header Leaderboard (7 Days)',
-      placement: 'top_banner',
-      dimensions: '728x90 / Mobile Responsive',
-      price: 199,
+      id: 'banner_slot_1',
+      name: 'Top Leaderboard Slot 1 (Left)',
+      placement: 'top_banner_1',
+      dimensions: '420x140 (3:1 Aspect) / Mobile Fluid',
+      price: 149,
       durationDays: 7,
-      description: 'Maximum prominence directly under the top ticker tape across every page.'
+      description: 'Prime left-wing banner in the high-visibility top 3-slot grid.'
     },
     {
-      id: 'banner_home_7d',
-      name: 'Homepage In-Feed Spotlight (7 Days)',
-      placement: 'homepage_banner',
-      dimensions: '970x90 / Mobile Responsive',
-      price: 299,
+      id: 'banner_slot_2',
+      name: 'Top Leaderboard Slot 2 (Center Prime)',
+      placement: 'top_banner_2',
+      dimensions: '420x140 (3:1 Aspect) / Mobile Fluid',
+      price: 199,
       durationDays: 7,
-      description: 'High-converting eye-level banner placed right above Top Coins leaderboard.'
+      description: 'Absolute center eye-level dominance in the top 3-slot grid.'
+    },
+    {
+      id: 'banner_slot_3',
+      name: 'Top Leaderboard Slot 3 (Right)',
+      placement: 'top_banner_3',
+      dimensions: '420x140 (3:1 Aspect) / Mobile Fluid',
+      price: 149,
+      durationDays: 7,
+      description: 'Right-wing banner directly above Promoted Tokens table.'
     },
     {
       id: 'banner_bundle_30d',
       name: 'Monthly Leaderboard VIP (30 Days)',
-      placement: 'top_banner',
-      dimensions: '728x90 Multi-Device',
-      price: 599,
+      placement: 'top_banner_2',
+      dimensions: '420x140 / 3:1 Aspect',
+      price: 499,
       durationDays: 30,
-      description: 'Full month prime header domination with unlimited clicks and priority rendering.'
+      description: 'Full month center prime banner domination with unlimited clicks.'
     }
   ];
 }

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 140" width="420" height="140">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#08101E"/>
+      <stop offset="50%" stop-color="#0E1729"/>
+      <stop offset="100%" stop-color="#050B14"/>
+    </linearGradient>
+    <linearGradient id="solGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00FFA3"/>
+      <stop offset="50%" stop-color="#03E1FF"/>
+      <stop offset="100%" stop-color="#DC1FFF"/>
+    </linearGradient>
+    <linearGradient id="purpleBtn" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9945FF"/>
+      <stop offset="100%" stop-color="#14F195"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="420" height="140" fill="url(#bg3)"/>
+  
+  <!-- Cyber Glows -->
+  <circle cx="50" cy="70" r="70" fill="#9945FF" opacity="0.12"/>
+  <circle cx="380" cy="80" r="80" fill="#14F195" opacity="0.10"/>
+
+  <!-- Border Frame -->
+  <rect x="1" y="1" width="418" height="138" rx="8" fill="none" stroke="#1E3250" stroke-width="1.5"/>
+
+  <!-- Left Solana Holographic Logo Symbol -->
+  <g transform="translate(16, 26)">
+    <circle cx="44" cy="44" r="44" fill="#0D1A30" stroke="url(#solGrad)" stroke-width="2"/>
+    <!-- Solana 3 Slanted Bars -->
+    <path d="M 24 30 L 60 30 L 64 36 L 28 36 Z" fill="url(#solGrad)"/>
+    <path d="M 28 42 L 64 42 L 60 48 L 24 48 Z" fill="url(#solGrad)"/>
+    <path d="M 24 54 L 60 54 L 64 60 L 28 60 Z" fill="url(#solGrad)"/>
+    <!-- Live Ping Badge -->
+    <circle cx="68" cy="20" r="5" fill="#14F195"/>
+    <circle cx="68" cy="20" r="8" fill="none" stroke="#14F195" stroke-width="1" opacity="0.6"/>
+  </g>
+
+  <!-- Content Section -->
+  <g transform="translate(118, 18)">
+    <!-- Top Tags -->
+    <g>
+      <text x="0" y="16" font-family="'Space Grotesk', system-ui, sans-serif" font-size="14" font-weight="900" fill="#03E1FF" letter-spacing="1">SOL SIFT &amp; RADAR</text>
+      <rect x="140" y="4" width="88" height="16" rx="8" fill="#15243B" stroke="#00FFA3" stroke-width="0.8"/>
+      <text x="184" y="15.5" font-family="'IBM Plex Mono', monospace" font-size="8.5" font-weight="700" fill="#00FFA3" text-anchor="middle">LIVE SIGNALS</text>
+    </g>
+
+    <!-- Headline -->
+    <text x="0" y="45" font-family="'Space Grotesk', system-ui, sans-serif" font-size="20" font-weight="900" fill="#FFFFFF" letter-spacing="0.4">SOLANA ALPHA CALLS</text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="65" font-family="'Inter', system-ui, sans-serif" font-size="11.5" font-weight="600" fill="#8EA7CC">REAL-TIME WIN RATE &amp; DEX TRACKING</text>
+
+    <!-- Bottom CTA Button & Features -->
+    <g transform="translate(0, 78)">
+      <rect x="0" y="0" width="138" height="28" rx="5" fill="url(#purpleBtn)"/>
+      <text x="69" y="18" font-family="'Space Grotesk', system-ui, sans-serif" font-size="12" font-weight="900" fill="#000000" text-anchor="middle">VIEW LIVE CALLS ➔</text>
+
+      <text x="150" y="18" font-family="'IBM Plex Mono', monospace" font-size="10" font-weight="600" fill="#14F195">● 84% Win Rate</text>
+    </g>
+  </g>
+</svg>
