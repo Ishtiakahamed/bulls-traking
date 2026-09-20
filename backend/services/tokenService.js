@@ -2,10 +2,54 @@ const { query, queryOne } = require('../../database/db');
 const { calculateTokenAge, getChainAliases } = require('../utils/helpers');
 const config = require('../../config/default');
 
+const CANONICAL_NAMES = {
+  'BTC': 'Bitcoin',
+  'ETH': 'Ethereum',
+  'BNB': 'BNB',
+  'SOL': 'Solana',
+  'XRP': 'XRP',
+  'ADA': 'Cardano',
+  'DOGE': 'Dogecoin',
+  'TRX': 'TRON',
+  'DOT': 'Polkadot',
+  'AVAX': 'Avalanche',
+  'LINK': 'Chainlink',
+  'SUI': 'Sui',
+  'NEAR': 'NEAR Protocol',
+  'APT': 'Aptos',
+  'TON': 'Toncoin',
+  'LTC': 'Litecoin',
+  'SHIB': 'Shiba Inu',
+  'UNI': 'Uniswap',
+  'ATOM': 'Cosmos',
+  'XLM': 'Stellar',
+  'OKB': 'OKB',
+  'CRO': 'Cronos',
+  'BGB': 'Bitget Token',
+  'GT': 'GateToken',
+  'KCS': 'KuCoin Token',
+  'MX': 'MX Token',
+  'LEO': 'LEO Token',
+  'ZEC': 'Zcash',
+  'HYPE': 'Hyperliquid'
+};
+
+function cleanTokenDisplayName(tok) {
+  if (!tok) return tok;
+  const sym = (tok.symbol || '').toUpperCase().trim();
+  let name = tok.name;
+  if (CANONICAL_NAMES[sym] && (/peg|bridged|wormhole/i.test(tok.name) || tok.name.toLowerCase() === sym.toLowerCase())) {
+    name = CANONICAL_NAMES[sym];
+  } else if (/^(binance-peg|solana bridged|wormhole bridged|l2 standard bridged)\s+/i.test(name)) {
+    name = name.replace(/^(binance-peg|solana bridged|wormhole bridged|l2 standard bridged)\s+/i, '').replace(/\s*\([^)]*\)$/, '');
+  }
+  return { ...tok, name };
+}
+
 function attachSparklines(tokens) {
   if (!tokens || tokens.length === 0) return [];
   const tokenIds = tokens.map(t => t.id).filter(Boolean);
-  if (tokenIds.length === 0) return tokens;
+  if (tokenIds.length === 0) return tokens.map(cleanTokenDisplayName);
 
   const placeholders = tokenIds.map(() => '?').join(',');
   const allHistory = query(`
@@ -24,11 +68,11 @@ function attachSparklines(tokens) {
   return tokens.map(tok => {
     const arr = historyMap.get(tok.id);
     const prices = (arr && arr.length > 1) ? arr : [tok.price * 0.95, tok.price];
-    return {
+    return cleanTokenDisplayName({
       ...tok,
       age: calculateTokenAge(tok.first_seen_at),
       sparkline: prices
-    };
+    });
   });
 }
 

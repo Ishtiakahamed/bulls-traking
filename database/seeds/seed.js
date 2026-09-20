@@ -1,6 +1,7 @@
-const { initDatabase, execute, queryOne, query, transaction } = require('../db');
+module.exports = { runSeed };
 
 function runSeed(skipInit = false) {
+  const { initDatabase, execute, queryOne, query, transaction, db } = require('../db');
   if (!skipInit) {
     console.log('[Seed] Initializing Phase 1 database schema...');
     initDatabase();
@@ -27,6 +28,7 @@ function runSeed(skipInit = false) {
         description: 'The first and largest decentralized digital cryptocurrency, created by Satoshi Nakamoto.',
         website_url: 'https://bitcoin.org',
         x_url: 'https://x.com/bitcoin',
+        telegram_url: null,
         price: 80450.00,
         market_cap: 1613000000000,
         volume_24h: 24500000000,
@@ -392,7 +394,7 @@ function runSeed(skipInit = false) {
       try {
         const discovered = JSON.parse(fs.readFileSync(discoveredPath, 'utf-8'));
         const insertDiscoveredStmt = `
-          INSERT INTO tokens (
+          INSERT OR IGNORE INTO tokens (
             chain, contract_address, coingecko_id, provider_id, name, symbol, logo_url,
             price, market_cap, volume_24h, change_1h, change_24h, change_7d,
             circulating_supply, total_supply, ath, ath_date, atl, atl_date,
@@ -407,12 +409,6 @@ function runSeed(skipInit = false) {
             0, 0, 1, 'LIVE', 'verified',
             ?, CURRENT_TIMESTAMP
           )
-          ON CONFLICT(chain, contract_address) DO UPDATE SET
-            coingecko_id = COALESCE(excluded.coingecko_id, tokens.coingecko_id),
-            price = excluded.price,
-            market_cap = excluded.market_cap,
-            volume_24h = excluded.volume_24h,
-            last_data_sync = CURRENT_TIMESTAMP
         `;
         for (const dt of discovered) {
           const exists = queryOne('SELECT id FROM tokens WHERE chain = ? AND (coingecko_id = ? OR UPPER(TRIM(symbol)) = UPPER(TRIM(?))) LIMIT 1', [dt.chain, dt.coingecko_id, dt.symbol]);

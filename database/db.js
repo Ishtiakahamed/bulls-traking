@@ -301,8 +301,9 @@ function initDatabase() {
 
 function query(sql, params = []) {
   try {
+    const safeParams = params.map(p => p === undefined ? null : p);
     const stmt = db.prepare(sql);
-    return stmt.all(...params);
+    return stmt.all(...safeParams);
   } catch (err) {
     console.error('[DB Query Error]', sql, params, err);
     throw err;
@@ -311,8 +312,9 @@ function query(sql, params = []) {
 
 function queryOne(sql, params = []) {
   try {
+    const safeParams = params.map(p => p === undefined ? null : p);
     const stmt = db.prepare(sql);
-    return stmt.get(...params) || null;
+    return stmt.get(...safeParams) || null;
   } catch (err) {
     console.error('[DB QueryOne Error]', sql, params, err);
     throw err;
@@ -321,8 +323,9 @@ function queryOne(sql, params = []) {
 
 function execute(sql, params = []) {
   try {
+    const safeParams = params.map(p => p === undefined ? null : p);
     const stmt = db.prepare(sql);
-    return stmt.run(...params);
+    return stmt.run(...safeParams);
   } catch (err) {
     console.error('[DB Execute Error]', sql, params, err);
     throw err;
