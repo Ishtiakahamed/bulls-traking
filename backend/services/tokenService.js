@@ -42,24 +42,45 @@ function buildChainFilter(chain, params) {
   return '';
 }
 
+const STABLECOIN_FILTER_SQL = `
+  NOT (
+    UPPER(TRIM(symbol)) IN (
+      'USDT', 'USDC', 'DAI', 'USDE', 'FDUSD', 'BUSD', 'TUSD', 'PYUSD', 
+      'USDD', 'EURC', 'EURT', 'USDS', 'FRAX', 'GUSD', 'LUSD', 'CRVUSD', 
+      'SUSD', 'USDBC', 'BSC-USD', 'CUSD', 'OUSD', 'USD+', 'USDL', 'USDY', 'AUSD'
+    )
+    OR LOWER(name) LIKE '%tether%'
+    OR LOWER(name) LIKE '%usd coin%'
+    OR LOWER(name) LIKE '%bridged usdt%'
+    OR LOWER(name) LIKE '%bridged usdc%'
+    OR LOWER(name) LIKE '%stablecoin%'
+    OR LOWER(name) LIKE '%ethena usde%'
+    OR LOWER(name) LIKE '%first digital usd%'
+    OR LOWER(name) LIKE '%paypal usd%'
+    OR (price >= 0.85 AND price <= 1.15 AND (UPPER(symbol) LIKE '%USD%' OR LOWER(name) LIKE '%dollar%'))
+  )
+`;
+
 /**
- * Top Coins (Section 9): Sorted by Market Cap DESC, deduplicated by name
+ * Top Coins (Section 9): Sorted by Market Cap DESC, deduplicated by symbol/name, optional stablecoin exclusion
  */
-function getTopCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
+function getTopCoins({ chain = 'all', limit = 50, page = 1, excludeStablecoins = false } = {}) {
   const p = Math.max(1, parseInt(page, 10));
   const lim = parseInt(limit, 10);
   const offset = (p - 1) * lim;
   const params = [];
   const chainFilter = buildChainFilter(chain, params);
+  const stableFilter = excludeStablecoins ? ` AND ${STABLECOIN_FILTER_SQL}` : '';
+  const partitionKey = excludeStablecoins ? 'UPPER(TRIM(symbol))' : 'UPPER(TRIM(name))';
 
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(name)) 
+        PARTITION BY ${partitionKey} 
         ORDER BY market_cap DESC, volume_24h DESC
       ) as rn
       FROM tokens
-      WHERE is_active = 1 ${chainFilter}
+      WHERE is_active = 1 ${chainFilter} ${stableFilter}
     )
     WHERE rn = 1
     ORDER BY market_cap DESC
@@ -70,7 +91,7 @@ function getTopCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const tokens = query(sql, params);
   const countParams = [];
   const countChainFilter = buildChainFilter(chain, countParams);
-  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count FROM tokens WHERE is_active = 1 ${countChainFilter}`;
+  const countSql = `SELECT COUNT(DISTINCT ${partitionKey}) as count FROM tokens WHERE is_active = 1 ${countChainFilter} ${stableFilter}`;
   const total = queryOne(countSql, countParams)?.count || 0;
 
   return {
@@ -118,23 +139,25 @@ function getNewCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
 }
 
 /**
- * Hot Coins (Section 13): Algorithmic Hot Score DESC, deduplicated by name
+ * Hot Coins (Section 13): Algorithmic Hot Score DESC, deduplicated by symbol/name, optional stablecoin exclusion
  */
-function getHotCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
+function getHotCoins({ chain = 'all', limit = 50, page = 1, excludeStablecoins = false } = {}) {
   const p = Math.max(1, parseInt(page, 10));
   const lim = parseInt(limit, 10);
   const offset = (p - 1) * lim;
   const params = [];
   const chainFilter = buildChainFilter(chain, params);
+  const stableFilter = excludeStablecoins ? ` AND ${STABLECOIN_FILTER_SQL}` : '';
+  const partitionKey = excludeStablecoins ? 'UPPER(TRIM(symbol))' : 'UPPER(TRIM(name))';
 
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(name)) 
+        PARTITION BY ${partitionKey} 
         ORDER BY hot_score DESC, volume_24h DESC
       ) as rn
       FROM tokens
-      WHERE is_active = 1 ${chainFilter}
+      WHERE is_active = 1 ${chainFilter} ${stableFilter}
     )
     WHERE rn = 1
     ORDER BY hot_score DESC, volume_24h DESC
@@ -145,7 +168,7 @@ function getHotCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const tokens = query(sql, params);
   const countParams = [];
   const countChainFilter = buildChainFilter(chain, countParams);
-  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count FROM tokens WHERE is_active = 1 ${countChainFilter}`;
+  const countSql = `SELECT COUNT(DISTINCT ${partitionKey}) as count FROM tokens WHERE is_active = 1 ${countChainFilter} ${stableFilter}`;
   const total = queryOne(countSql, countParams)?.count || 0;
 
   return {
@@ -155,24 +178,26 @@ function getHotCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
 }
 
 /**
- * Top Gainers (Section 14): 24h percentage gain DESC with minimum quality filter, deduplicated by name
+ * Top Gainers (Section 14): 24h percentage gain DESC with minimum quality filter, deduplicated by symbol/name
  */
-function getTopGainers({ chain = 'all', limit = 50, page = 1 } = {}) {
+function getTopGainers({ chain = 'all', limit = 50, page = 1, excludeStablecoins = false } = {}) {
   const p = Math.max(1, parseInt(page, 10));
   const lim = parseInt(limit, 10);
   const offset = (p - 1) * lim;
   const minVol = config.gainersFilter.minVolume24hUsd;
   const params = [minVol];
   const chainFilter = buildChainFilter(chain, params);
+  const stableFilter = excludeStablecoins ? ` AND ${STABLECOIN_FILTER_SQL}` : '';
+  const partitionKey = excludeStablecoins ? 'UPPER(TRIM(symbol))' : 'UPPER(TRIM(name))';
 
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(name)) 
+        PARTITION BY ${partitionKey} 
         ORDER BY change_24h DESC, volume_24h DESC
       ) as rn
       FROM tokens
-      WHERE is_active = 1 AND volume_24h >= ? AND change_24h > 0 ${chainFilter}
+      WHERE is_active = 1 AND volume_24h >= ? AND change_24h > 0 ${chainFilter} ${stableFilter}
     )
     WHERE rn = 1
     ORDER BY change_24h DESC
@@ -184,9 +209,9 @@ function getTopGainers({ chain = 'all', limit = 50, page = 1 } = {}) {
   const countParams = [minVol];
   const countChainFilter = buildChainFilter(chain, countParams);
   const countSql = `
-    SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count 
+    SELECT COUNT(DISTINCT ${partitionKey}) as count 
     FROM tokens 
-    WHERE is_active = 1 AND volume_24h >= ? AND change_24h > 0 ${countChainFilter}
+    WHERE is_active = 1 AND volume_24h >= ? AND change_24h > 0 ${countChainFilter} ${stableFilter}
   `;
   const total = queryOne(countSql, countParams)?.count || 0;
 
@@ -197,23 +222,25 @@ function getTopGainers({ chain = 'all', limit = 50, page = 1 } = {}) {
 }
 
 /**
- * Trending Coins (Section 39): Internal ranking, deduplicated by name
+ * Trending Coins (Section 39): Internal ranking, deduplicated by symbol/name, optional stablecoin exclusion
  */
-function getTrendingCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
+function getTrendingCoins({ chain = 'all', limit = 50, page = 1, excludeStablecoins = false } = {}) {
   const p = Math.max(1, parseInt(page, 10));
   const lim = parseInt(limit, 10);
   const offset = (p - 1) * lim;
   const params = [];
   const chainFilter = buildChainFilter(chain, params);
+  const stableFilter = excludeStablecoins ? ` AND ${STABLECOIN_FILTER_SQL}` : '';
+  const partitionKey = excludeStablecoins ? 'UPPER(TRIM(symbol))' : 'UPPER(TRIM(name))';
 
   const sql = `
     SELECT * FROM (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY UPPER(TRIM(name)) 
+        PARTITION BY ${partitionKey} 
         ORDER BY (volume_24h * 0.4 + market_cap * 0.3 + ABS(change_24h) * 100000) DESC
       ) as rn
       FROM tokens
-      WHERE is_active = 1 ${chainFilter}
+      WHERE is_active = 1 ${chainFilter} ${stableFilter}
     )
     WHERE rn = 1
     ORDER BY (volume_24h * 0.4 + market_cap * 0.3 + ABS(change_24h) * 100000) DESC
@@ -224,7 +251,7 @@ function getTrendingCoins({ chain = 'all', limit = 50, page = 1 } = {}) {
   const tokens = query(sql, params);
   const countParams = [];
   const countChainFilter = buildChainFilter(chain, countParams);
-  const countSql = `SELECT COUNT(DISTINCT UPPER(TRIM(name))) as count FROM tokens WHERE is_active = 1 ${countChainFilter}`;
+  const countSql = `SELECT COUNT(DISTINCT ${partitionKey}) as count FROM tokens WHERE is_active = 1 ${countChainFilter} ${stableFilter}`;
   const total = queryOne(countSql, countParams)?.count || 0;
 
   return {

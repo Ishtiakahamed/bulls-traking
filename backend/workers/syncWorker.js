@@ -33,6 +33,38 @@ async function syncMarketData() {
       }
     }
 
+    // Ensure top tier global cryptocurrencies (like BTC) are tracked in tokens table
+    for (const item of marketList) {
+      const sym = (item.symbol || '').toUpperCase().trim();
+      if (!sym) continue;
+      const alreadyTracked = queryOne("SELECT id FROM tokens WHERE UPPER(symbol) = ? AND (contract_address IS NULL OR contract_address = '') LIMIT 1", [sym]);
+      if (!alreadyTracked && item.marketCap > 500000000) {
+        try {
+          execute(`
+            INSERT INTO tokens (
+              chain, contract_address, provider_id, name, symbol, logo_url,
+              price, market_cap, volume_24h, change_1h, change_24h, change_7d,
+              market_cap_rank, is_active, listing_status, first_seen_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'LIVE', CURRENT_TIMESTAMP)
+          `, [
+            sym === 'BTC' ? 'bitcoin' : (sym === 'SOL' ? 'solana' : (sym === 'BNB' ? 'binance-smart-chain' : 'ethereum')),
+            null,
+            item.providerId,
+            item.name,
+            sym,
+            item.logo,
+            item.price || 0,
+            item.marketCap || 0,
+            item.volume24h || 0,
+            item.change1h || 0,
+            item.change24h || 0,
+            item.change7d || 0,
+            item.marketCapRank || 999
+          ]);
+        } catch (_) {}
+      }
+    }
+
     const currentTokens = query(`SELECT * FROM tokens WHERE is_active = 1`);
     const nowSec = Math.floor(Date.now() / 1000);
 

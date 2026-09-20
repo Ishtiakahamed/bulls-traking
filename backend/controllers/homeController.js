@@ -20,18 +20,19 @@ function handleGetHomeData(req, res, next) {
     const chain = req.query.chain || 'all';
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const cacheKey = `${chain}:${limit}:${page}`;
+    const excludeStablecoins = req.query.include_stables !== 'true';
+    const cacheKey = `${chain}:${limit}:${page}:${excludeStablecoins}`;
 
     const cached = homeCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp < HOME_CACHE_TTL_MS)) {
       return res.json(cached.payload);
     }
 
-    const trendingRes = getTrendingCoins({ chain, limit, page });
+    const trendingRes = getTrendingCoins({ chain, limit, page, excludeStablecoins });
     const newCoinsRes = getNewCoins({ chain, limit, page });
-    const hotRes = getHotCoins({ chain, limit, page });
-    const gainersRes = getTopGainers({ chain, limit, page });
-    const topCoinsRes = getTopCoins({ chain, limit, page });
+    const hotRes = getHotCoins({ chain, limit, page, excludeStablecoins });
+    const gainersRes = getTopGainers({ chain, limit, page, excludeStablecoins });
+    const topCoinsRes = getTopCoins({ chain, limit, page, excludeStablecoins });
     const promoted = getActivePromotions().slice(0, 6);
 
     const stats = queryOne(`

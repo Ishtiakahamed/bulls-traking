@@ -10,8 +10,9 @@ const {
 
 function handleGetTopCoins(req, res, next) {
   try {
-    const { chain, limit, page } = req.query;
-    const result = getTopCoins({ chain, limit, page });
+    const { chain, limit, page, include_stables } = req.query;
+    const excludeStablecoins = include_stables !== 'true';
+    const result = getTopCoins({ chain, limit, page, excludeStablecoins });
     res.json({ success: true, ...result });
   } catch (err) {
     next(err);
@@ -30,8 +31,9 @@ function handleGetNewCoins(req, res, next) {
 
 function handleGetHotCoins(req, res, next) {
   try {
-    const { chain, limit, page } = req.query;
-    const result = getHotCoins({ chain, limit, page });
+    const { chain, limit, page, include_stables } = req.query;
+    const excludeStablecoins = include_stables !== 'true';
+    const result = getHotCoins({ chain, limit, page, excludeStablecoins });
     res.json({ success: true, ...result });
   } catch (err) {
     next(err);
@@ -40,8 +42,9 @@ function handleGetHotCoins(req, res, next) {
 
 function handleGetTopGainers(req, res, next) {
   try {
-    const { chain, limit, page } = req.query;
-    const result = getTopGainers({ chain, limit, page });
+    const { chain, limit, page, include_stables } = req.query;
+    const excludeStablecoins = include_stables !== 'true';
+    const result = getTopGainers({ chain, limit, page, excludeStablecoins });
     res.json({ success: true, ...result });
   } catch (err) {
     next(err);
@@ -50,8 +53,9 @@ function handleGetTopGainers(req, res, next) {
 
 function handleGetTrendingCoins(req, res, next) {
   try {
-    const { chain, limit, page } = req.query;
-    const result = getTrendingCoins({ chain, limit, page });
+    const { chain, limit, page, include_stables } = req.query;
+    const excludeStablecoins = include_stables !== 'true';
+    const result = getTrendingCoins({ chain, limit, page, excludeStablecoins });
     res.json({ success: true, ...result });
   } catch (err) {
     next(err);
