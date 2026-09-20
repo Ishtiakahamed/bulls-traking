@@ -1694,9 +1694,9 @@ tbody tr:hover {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(0, 229, 255, 0.12);
-  color: #00E5FF;
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  background: rgba(242, 169, 59, 0.12);
+  color: var(--gold);
+  border: 1px solid rgba(242, 169, 59, 0.3);
   border-radius: 4px;
   padding: 2px 7px;
   font-size: 10px;
@@ -1705,9 +1705,9 @@ tbody tr:hover {
   transition: all 0.2s ease;
 }
 .btn-promoted-trade:hover {
-  background: #00E5FF;
-  color: #0d1117;
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+  background: var(--gold);
+  color: var(--bg-page);
+  box-shadow: 0 0 10px rgba(242, 169, 59, 0.5);
 }
 
 /* Promote Coin Page Styles */
@@ -2022,11 +2022,11 @@ tbody tr:hover {
 /* Live Radar Real-Time Glow & Pulse */
 @keyframes newPairGlow {
   0% {
-    background-color: rgba(0, 230, 153, 0.35);
-    box-shadow: inset 0 0 16px rgba(0, 230, 153, 0.45);
+    background-color: rgba(127, 184, 120, 0.35);
+    box-shadow: inset 0 0 16px rgba(127, 184, 120, 0.45);
   }
   50% {
-    background-color: rgba(0, 230, 153, 0.18);
+    background-color: rgba(127, 184, 120, 0.18);
   }
   100% {
     background-color: transparent;
@@ -2042,9 +2042,9 @@ tbody tr:hover {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(0, 230, 153, 0.12);
-  color: #00e699;
-  border: 1px solid rgba(0, 230, 153, 0.32);
+  background: rgba(127, 184, 120, 0.12);
+  color: var(--up);
+  border: 1px solid rgba(127, 184, 120, 0.32);
   border-radius: 20px;
   padding: 4px 12px;
   font-size: 11px;
@@ -2056,21 +2056,21 @@ tbody tr:hover {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #00e699;
-  box-shadow: 0 0 10px #00e699;
+  background: var(--up);
+  box-shadow: 0 0 10px var(--up);
   animation: radarDotPulse 1.5s infinite;
 }
 
 @keyframes radarDotPulse {
-  0% { transform: scale(0.85); opacity: 0.7; box-shadow: 0 0 4px #00e699; }
-  50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px #00e699; }
-  100% { transform: scale(0.85); opacity: 0.7; box-shadow: 0 0 4px #00e699; }
+  0% { transform: scale(0.85); opacity: 0.7; box-shadow: 0 0 4px var(--up); }
+  50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px var(--up); }
+  100% { transform: scale(0.85); opacity: 0.7; box-shadow: 0 0 4px var(--up); }
 }
 
 .badge-fresh-new {
   display: inline-block;
-  background: #00e699;
-  color: #0c1017;
+  background: var(--up);
+  color: var(--bg-page);
   font-size: 9px;
   font-weight: 800;
   padding: 1px 5px;
@@ -2094,7 +2094,7 @@ tbody tr:hover {
   font-size: 12px;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: var(--card-bg, #111622);
+  background: var(--bg-panel-raised);
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -2108,8 +2108,8 @@ tbody tr:hover {
 
 .filter-pill.is-active {
   background: var(--card-bg-hover, rgba(255, 255, 255, 0.08));
-  color: #00e699;
-  border-color: #00e699;
+  color: var(--up);
+  border-color: var(--up);
   font-weight: 600;
 }
 
