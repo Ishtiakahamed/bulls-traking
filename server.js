@@ -4,6 +4,14 @@ try {
   // .env file loaded if present
 }
 
+process.on('uncaughtException', (err) => {
+  console.warn('[Server] Uncaught exception:', err?.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.warn('[Server] Unhandled rejection:', reason?.message || reason);
+});
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -36,8 +44,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(express.static(path.join(__dirname)));
 
-// Upload endpoint for token logos
-app.post(['/api/upload-logo', '/upload-logo'], (req, res) => {
+// Upload endpoint for token logos and banner images
+app.post(['/api/upload-logo', '/upload-logo', '/api/upload-banner', '/upload-banner', '/api/upload'], (req, res) => {
   try {
     const { imageBase64, filename } = req.body || {};
     if (!imageBase64) {
@@ -54,7 +62,9 @@ app.post(['/api/upload-logo', '/upload-logo'], (req, res) => {
       const extMatch = imageBase64.match(/^data:image\/([a-zA-Z0-9+]+);base64,/);
       const ext = extMatch ? extMatch[1].replace('+xml', 'svg') : 'png';
       const safeExt = ext === 'jpeg' ? 'jpg' : ext;
-      const cleanName = `logo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+      const isBanner = req.path.includes('banner') || (filename && filename.toLowerCase().includes('banner'));
+      const prefix = isBanner ? 'banner' : 'logo';
+      const cleanName = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
       const filePath = path.join(uploadsDir, cleanName);
 
       const base64Data = imageBase64.replace(/^data:image\/[a-zA-Z0-9+]+;base64,/, '');
@@ -68,7 +78,7 @@ app.post(['/api/upload-logo', '/upload-logo'], (req, res) => {
     res.json({
       success: true,
       url: publicUrl || imageBase64,
-      message: 'Logo uploaded successfully'
+      message: 'Image uploaded successfully'
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

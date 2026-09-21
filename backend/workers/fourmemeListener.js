@@ -278,7 +278,11 @@ async function connectFourmemeWs() {
   console.log('[FourMemeListener] Connecting to BSC RPC WebSocket...');
 
   try {
-    wsProvider = new ethers.WebSocketProvider(BSC_WS_RPC);
+    wsProvider = new ethers.WebSocketProvider(BSC_WS_RPC, 56);
+
+    wsProvider.on('error', (err) => {
+      console.warn('[FourMemeListener] Provider error:', err.message || 'unknown');
+    });
 
     const filter = {
       address: FOURMEME_CONTRACT,
@@ -286,22 +290,27 @@ async function connectFourmemeWs() {
     };
 
     wsProvider.on(filter, async (log) => {
-      await processTokenCreateLog(log);
+      try {
+        await processTokenCreateLog(log);
+      } catch (logErr) {
+        console.warn('[FourMemeListener] Error processing log:', logErr.message);
+      }
     });
 
     console.log('[FourMemeListener] Subscribed to TokenCreate events on 0x5c952063c7fc8610ffdb798152d69f0b9550762b');
     currentBackoffMs = 2000;
 
     // Listen for provider drops
-    wsProvider.websocket.onclose = () => {
-      console.warn(`[FourMemeListener] WS dropped. Reconnecting in ${currentBackoffMs / 1000}s...`);
-      scheduleWsReconnect();
-    };
+    if (wsProvider.websocket) {
+      wsProvider.websocket.onclose = () => {
+        console.warn(`[FourMemeListener] WS dropped. Reconnecting in ${currentBackoffMs / 1000}s...`);
+        scheduleWsReconnect();
+      };
 
-    wsProvider.websocket.onerror = (e) => {
-      console.warn('[FourMemeListener] WS provider error:', e.message || 'unknown');
-    };
-
+      wsProvider.websocket.onerror = (e) => {
+        console.warn('[FourMemeListener] WS provider error:', e?.message || 'unknown');
+      };
+    }
   } catch (err) {
     console.warn('[FourMemeListener] WS connection failed:', err.message);
     scheduleWsReconnect();

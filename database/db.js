@@ -249,6 +249,15 @@ function initDatabase() {
       db.exec(bannerSql);
     }
 
+    // Migration 007: ensure click_count and impression_count columns exist
+    const bannerOrderCols = db.prepare('PRAGMA table_info(banner_orders)').all().map(c => c.name);
+    if (!bannerOrderCols.includes('click_count')) {
+      db.exec('ALTER TABLE banner_orders ADD COLUMN click_count INTEGER DEFAULT 0;');
+    }
+    if (!bannerOrderCols.includes('impression_count')) {
+      db.exec('ALTER TABLE banner_orders ADD COLUMN impression_count INTEGER DEFAULT 0;');
+    }
+
     // Ensure default banner slots exist
     db.exec(`
       INSERT OR IGNORE INTO banner_slots (id, slot_name, position, dimensions, price_per_week, is_active) VALUES

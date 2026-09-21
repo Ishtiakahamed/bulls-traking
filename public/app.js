@@ -78,6 +78,27 @@ const fmtAge = (d) => {
   return `${months}mo ago`;
 };
 
+const formatChainLabel = (chain) => {
+  if (!chain) return '';
+  const c = String(chain).toLowerCase().trim();
+  if (c === 'binance-smart-chain' || c === 'bsc') return 'BSC';
+  if (c === 'ethereum' || c === 'ethereum-ecosystem' || c === 'eth') return 'ETH';
+  if (c === 'solana' || c === 'solana-ecosystem' || c === 'sol') return 'SOL';
+  if (c === 'base' || c === 'base-ecosystem') return 'BASE';
+  if (c === 'bitcoin' || c === 'btc') return 'BTC';
+  if (c === 'ripple' || c === 'xrp') return 'XRP';
+  if (c === 'cardano' || c === 'ada') return 'ADA';
+  if (c === 'dogecoin' || c === 'doge') return 'DOGE';
+  if (c === 'avalanche' || c === 'avax') return 'AVAX';
+  if (c === 'polkadot' || c === 'dot') return 'DOT';
+  if (c === 'polygon' || c === 'polygon-ecosystem' || c === 'matic') return 'POL';
+  if (c === 'sui') return 'SUI';
+  if (c === 'near') return 'NEAR';
+  if (c === 'tron' || c === 'trx') return 'TRX';
+  if (c === 'litecoin' || c === 'ltc') return 'LTC';
+  return c.replace('-ecosystem', '').toUpperCase();
+};
+
 const getTokenFallbackAvatar = (symbol = '', name = '') => {
   const cleanSym = String(symbol || name || '?').slice(0, 4).toUpperCase().replace(/[^A-Z0-9]/g, '');
   let hash = 0;
@@ -347,7 +368,7 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
                 ${showHot ? `<span class="badge-hot">${t.hot_score}</span>` : ''}
               </div>
               <div class="token-chain-row">
-                <span class="chain-tag">${escapeHtml(t.chain ? t.chain.replace('-ecosystem', '') : '')}</span>
+                <span class="chain-tag">${escapeHtml(formatChainLabel(t.chain))}</span>
               </div>
             </div>
           </div>
@@ -445,6 +466,13 @@ function renderHomeSkeleton() {
   `).join('');
 
   app.innerHTML = `
+    <!-- HOMEPAGE BANNER STRIP SKELETON (TOP100TOKEN STYLE) -->
+    <div class="banner-strip" id="homeBannerStrip" aria-label="Sponsored Banners">
+      <a href="#/promote" class="banner-strip-item banner-strip-placeholder"><div class="banner-placeholder-text"><span class="banner-placeholder-title">Advertise in this spot</span><span class="banner-placeholder-sub">Book Slot #1 &bull; $149/7D &rarr;</span></div></a>
+      <a href="#/promote" class="banner-strip-item banner-strip-placeholder"><div class="banner-placeholder-text"><span class="banner-placeholder-title">Advertise in this spot</span><span class="banner-placeholder-sub">Book Slot #2 &bull; $199/7D &rarr;</span></div></a>
+      <a href="#/promote" class="banner-strip-item banner-strip-placeholder"><div class="banner-placeholder-text"><span class="banner-placeholder-title">Advertise in this spot</span><span class="banner-placeholder-sub">Book Slot #3 &bull; $149/7D &rarr;</span></div></a>
+    </div>
+
     <div class="controls-bar">
       <div class="subtabs" id="homeTabs">
         <span class="subtab is-active" data-tab="top">Top Coins</span>
@@ -483,10 +511,75 @@ function renderHomeSkeleton() {
 
 /* ---------------- Banner Ads helpers ---------------- */
 
-function trackBannerClick(bannerId) {
+function handleBannerClick(event, bannerId) {
   if (!bannerId) return;
-  fetchApi('/banners/click/' + bannerId, { method: 'POST' }).catch(() => {});
+  fetchApi('/promotion/banners/' + bannerId + '/click', { method: 'POST' }).catch(() => {
+    fetchApi('/banners/click/' + bannerId, { method: 'POST' }).catch(() => {});
+  });
 }
+window.handleBannerClick = handleBannerClick;
+
+function trackBannerClick(bannerId) {
+  handleBannerClick(null, bannerId);
+}
+
+function getBannerSlotHtml(banner, slotNum) {
+  const bannerImg = banner?.banner_url || banner?.banner_image;
+  const hasBanner = banner && bannerImg && !banner.is_placeholder;
+  const defaultPrice = slotNum === 2 ? '$199/7D' : '$149/7D';
+
+  if (hasBanner) {
+    const targetUrl = banner.target_url || '#/promote';
+    const title = banner.title || 'Sponsored Partner';
+    const clickAttr = banner.id ? `onclick="handleBannerClick(event, ${banner.id})"` : '';
+    return `
+      <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener sponsored" class="banner-strip-item banner-strip-link" data-banner-id="${banner.id || ''}" ${clickAttr} title="${escapeHtml(title)}">
+        <img src="${escapeHtml(bannerImg)}" alt="${escapeHtml(title)}" class="banner-strip-img" onerror="this.onerror=null; this.parentElement.className='banner-strip-item banner-strip-placeholder'; this.parentElement.removeAttribute('target'); this.parentElement.href='#/promote?type=banner&slot=${slotNum}'; this.parentElement.innerHTML='<div class=\\'banner-placeholder-text\\'><span class=\\'banner-placeholder-title\\'>Advertise in this spot</span><span class=\\'banner-placeholder-sub\\'>Book Slot #${slotNum} &bull; ${defaultPrice} &rarr;</span></div>';" />
+      </a>
+    `;
+  }
+
+  return `
+    <a href="#/promote?type=banner&slot=${slotNum}" class="banner-strip-item banner-strip-placeholder" title="Advertise in this spot">
+      <div class="banner-placeholder-text">
+        <span class="banner-placeholder-title">Advertise in this spot</span>
+        <span class="banner-placeholder-sub">Book Slot #${slotNum} &bull; ${defaultPrice} &rarr;</span>
+      </div>
+    </a>
+  `;
+}
+
+async function renderBannerStrip() {
+  const container = document.getElementById('homeBannerStrip');
+  try {
+    const res = await fetchApi('/promotion/banners/active');
+    const activeData = res?.data || res || {};
+    const slots = [
+      { slotNum: 1, banner: activeData.top_banner },
+      { slotNum: 2, banner: activeData.homepage_banner },
+      { slotNum: 3, banner: activeData.presale_banner }
+    ];
+
+    // Fire impression tracking call for active banners (fire-and-forget)
+    slots.forEach(({ banner }) => {
+      if (banner?.id && !banner.is_placeholder) {
+        fetchApi('/promotion/banners/' + banner.id + '/impression', { method: 'POST' }).catch(() => {
+          fetchApi('/banners/impression/' + banner.id, { method: 'POST' }).catch(() => {});
+        });
+      }
+    });
+
+    if (container) {
+      container.innerHTML = slots.map(({ slotNum, banner }) => getBannerSlotHtml(banner, slotNum)).join('');
+    }
+  } catch (err) {
+    console.warn('[BannerStrip] Failed to load active banners:', err);
+    if (container && !container.children.length) {
+      container.innerHTML = [1, 2, 3].map(slotNum => getBannerSlotHtml(null, slotNum)).join('');
+    }
+  }
+}
+window.renderBannerStrip = renderBannerStrip;
 
 function renderBannerAd(banner, slotPlacement = 'top_banner') {
   if (!banner) {
@@ -555,48 +648,13 @@ function renderBannerAd(banner, slotPlacement = 'top_banner') {
 }
 
 function renderBannerTrioGrid(topBanners) {
-  const defaultList = [
-    { slot: 1, placement: 'top_banner_1', title: 'Bulls Meme Launchpad', banner_image: 'assets/banners/banner_meme_launch.svg', target_url: '#/submit', price: 149, is_placeholder: false },
-    { slot: 2, placement: 'top_banner_2', title: 'Minotaur Bull Presale', banner_image: 'assets/banners/banner_minotaur_presale.svg', target_url: '#/presales', price: 199, is_placeholder: false },
-    { slot: 3, placement: 'top_banner_3', title: 'Solana Alpha Calls', banner_image: 'assets/banners/banner_solana_calls.svg', target_url: '#/top-coins', price: 149, is_placeholder: false }
-  ];
-
   const slots = Array.isArray(topBanners) && topBanners.length >= 3
     ? topBanners.slice(0, 3)
-    : defaultList;
-
-  const renderedCards = slots.map((banner, idx) => {
-    const slotNum = idx + 1;
-    const isPlaceholder = !banner || banner.is_placeholder || !banner.banner_image;
-    const targetUrl = banner?.target_url || `#/promote?type=banner&slot=${slotNum}`;
-    const clickHandler = banner?.id ? `onclick="trackBannerClick(${banner.id})"` : '';
-    const isExternal = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
-    const targetAttr = isExternal ? 'target="_blank" rel="noopener sponsored"' : '';
-
-    if (isPlaceholder) {
-      const defaultPrice = slotNum === 2 ? '$199/7D' : '$149/7D';
-      const slotLabel = slotNum === 2 ? 'CENTER PRIME' : `SLOT #${slotNum}`;
-      return `
-        <a href="${escapeHtml(targetUrl)}" class="banner-trio-item" title="Book this advertising slot">
-          <div class="banner-trio-placeholder">
-            <span class="banner-trio-ph-badge">${slotLabel} AVAILABLE</span>
-            <div class="banner-trio-ph-title">${escapeHtml(banner?.title || 'Your Banner Here')}</div>
-            <div class="banner-trio-ph-cta">Advertise Here (${defaultPrice}) ➔</div>
-          </div>
-        </a>
-      `;
-    }
-
-    return `
-      <a href="${escapeHtml(targetUrl)}" ${targetAttr} class="banner-trio-item" ${clickHandler} title="${escapeHtml(banner.title || 'Sponsored Banner')}">
-        <img src="${escapeHtml(banner.banner_image)}" alt="${escapeHtml(banner.title || 'Banner ad')}" class="banner-trio-img" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'banner-trio-placeholder\\'><span class=\\'banner-trio-ph-badge\\'>SLOT #${slotNum}</span><div class=\\'banner-trio-ph-title\\'>${escapeHtml(banner.title || 'Sponsored')}</div><div class=\\'banner-trio-ph-cta\\'>Visit Site ➔</div></div>';" />
-      </a>
-    `;
-  }).join('');
+    : [null, null, null];
 
   return `
-    <div class="banner-trio-grid" id="bannerTrioGrid" aria-label="Sponsored Banners (Trio Leaderboard)">
-      ${renderedCards}
+    <div class="banner-strip banner-trio-grid" id="bannerTrioGrid" aria-label="Sponsored Banners (Trio Leaderboard)">
+      ${slots.map((b, idx) => getBannerSlotHtml(b, idx + 1)).join('')}
     </div>
   `;
 }
@@ -611,7 +669,7 @@ function buildHomeUI(data) {
   const initialTokens = initialKey === 'new' ? mergeLocalSubmissions(data[initialKey] || []) : (data[initialKey] || []);
 
   function renderPromotedCard(p) {
-    const chainName = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'BSC').toUpperCase();
+    const chainName = formatChainLabel(p.chain);
     const tradeUrl = p.auto_trading_url || (p.contract_address ? `https://dexscreener.com/search?q=${encodeURIComponent(p.contract_address)}` : null);
 
     return `
@@ -640,11 +698,23 @@ function buildHomeUI(data) {
   }
 
   const promotedCards = (data.promoted || []).map(renderPromotedCard).join('');
-  const trioGridHtml = renderBannerTrioGrid(data.banners?.top_banners);
   const homeBannerHtml = renderBannerAd(data.banners?.homepage_banner, 'homepage_banner');
 
+  const initialBanners = data.banners || {};
+  const initialSlots = [
+    getBannerSlotHtml(initialBanners.top_banner || (initialBanners.top_banners && initialBanners.top_banners[0]), 1),
+    getBannerSlotHtml(initialBanners.homepage_banner || (initialBanners.top_banners && initialBanners.top_banners[1]), 2),
+    getBannerSlotHtml(initialBanners.presale_banner || (initialBanners.top_banners && initialBanners.top_banners[2]), 3)
+  ].join('');
+
+  const trioGridHtml = `
+    <!-- 3-SLOT TOP BANNER STRIP (TOP100TOKEN STYLE) -->
+    <div class="banner-strip" id="homeBannerStrip" aria-label="Sponsored Banners">
+      ${initialSlots}
+    </div>
+  `;
+
   app.innerHTML = `
-    <!-- 3-SLOT TOP BANNER GRID (TOP100TOKEN STYLE) -->
     ${trioGridHtml}
 
     <!-- PROMOTED TOKENS SECTION -->
@@ -777,25 +847,8 @@ function buildHomeUI(data) {
   // Pagination bar builder
   function renderHomePagination(container, { tabName, page, limit, total, totalPages, loadedCount }) {
     if (!container) return;
-    const start = (page - 1) * limit + 1;
-    const end = Math.min(total, page * limit);
-
-    const pagesToShow = [];
-    pagesToShow.push(1);
-    for (let p = Math.max(2, page - 2); p <= Math.min(totalPages - 1, page + 2); p++) {
-      if (!pagesToShow.includes(p)) pagesToShow.push(p);
-    }
-    if (totalPages > 1 && !pagesToShow.includes(totalPages)) {
-      pagesToShow.push(totalPages);
-    }
-
-    let pageBtnsHtml = '';
-    pagesToShow.forEach((p, idx, arr) => {
-      if (idx > 0 && p - arr[idx - 1] > 1) {
-        pageBtnsHtml += `<span class="page-ellipsis">…</span>`;
-      }
-      pageBtnsHtml += `<button class="page-btn ${p === page ? 'is-active' : ''}" data-page="${p}">${p}</button>`;
-    });
+    const start = 1;
+    const end = Math.min(total, loadedCount || (page * limit));
 
     container.innerHTML = `
       <div class="pagination-bar">
@@ -809,35 +862,11 @@ function buildHomeUI(data) {
           </span>
         </div>
         <div class="pagination-actions">
-          <button class="btn btn-secondary btn-pagination-nav btn-prev" ${page <= 1 ? 'disabled' : ''}>← Previous</button>
-          <div class="pagination-pages">${pageBtnsHtml}</div>
-          <button class="btn btn-secondary btn-pagination-nav btn-next" ${page >= totalPages ? 'disabled' : ''}>Next →</button>
-          ${loadedCount < total ? `<button class="btn btn-secondary btn-load-more" style="margin-left:8px;">Load More (+${Math.min(limit, total - loadedCount)})</button>` : ''}
+          ${loadedCount < total ? `<button class="btn btn-secondary btn-load-more">Load More (+${Math.min(limit, total - loadedCount)})</button>` : ''}
         </div>
       </div>
     `;
 
-    container.querySelector('.btn-prev')?.addEventListener('click', () => {
-      if (page > 1) {
-        loadHomeTab(homeState.tab, page - 1, false);
-        document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-    container.querySelector('.btn-next')?.addEventListener('click', () => {
-      if (page < totalPages) {
-        loadHomeTab(homeState.tab, page + 1, false);
-        document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-    container.querySelectorAll('.page-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetPage = parseInt(btn.dataset.page, 10);
-        if (targetPage !== page) {
-          loadHomeTab(homeState.tab, targetPage, false);
-          document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
-    });
     container.querySelector('.btn-load-more')?.addEventListener('click', (e) => {
       const btn = e.currentTarget;
       btn.disabled = true;
@@ -855,6 +884,9 @@ function buildHomeUI(data) {
     tab.classList.add('is-active');
     loadHomeTab(targetTab, 1, false);
   });
+
+  // Load live banner strip & record impressions
+  renderBannerStrip();
 
   // Initial load of active tab
   loadHomeTab(homeState.tab, 1, false);
@@ -1252,26 +1284,30 @@ function switchPromoteMode(mode) {
     if (tokenSec) tokenSec.style.display = 'none';
     if (bannerSec) bannerSec.style.display = 'block';
     if (tabSpot) {
+      tabSpot.classList.remove('is-active');
       tabSpot.style.background = 'var(--bg-panel)';
-      tabSpot.style.color = 'var(--ink-dim)';
+      tabSpot.style.color = 'var(--ink)';
       tabSpot.style.borderColor = 'var(--line)';
     }
     if (tabBan) {
+      tabBan.classList.add('is-active');
       tabBan.style.background = 'var(--gold)';
-      tabBan.style.color = '#000';
+      tabBan.style.color = '#15130E';
       tabBan.style.borderColor = 'var(--gold)';
     }
   } else {
     if (tokenSec) tokenSec.style.display = 'block';
     if (bannerSec) bannerSec.style.display = 'none';
     if (tabSpot) {
+      tabSpot.classList.add('is-active');
       tabSpot.style.background = 'var(--gold)';
-      tabSpot.style.color = '#000';
+      tabSpot.style.color = '#15130E';
       tabSpot.style.borderColor = 'var(--gold)';
     }
     if (tabBan) {
+      tabBan.classList.remove('is-active');
       tabBan.style.background = 'var(--bg-panel)';
-      tabBan.style.color = 'var(--ink-dim)';
+      tabBan.style.color = 'var(--ink)';
       tabBan.style.borderColor = 'var(--line)';
     }
   }
@@ -1317,11 +1353,11 @@ async function renderPromotePage(initialType = 'token', initialSlot = null) {
       </div>
 
       <!-- TYPE SWITCHER TABS -->
-      <div class="promote-type-tabs" style="display:flex;justify-content:center;gap:12px;margin-bottom:2rem;flex-wrap:wrap;">
-        <button type="button" id="tabSpotlightBtn" class="btn-solid" onclick="switchPromoteMode('token')" style="${!isBannerMode ? 'background:var(--gold);color:#000;border-color:var(--gold);' : 'background:var(--bg-panel);border:1px solid var(--line);color:var(--ink-dim);'}padding:10px 22px;font-size:14px;font-weight:700;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;">
+      <div class="promote-type-tabs">
+        <button type="button" id="tabSpotlightBtn" class="promote-type-btn ${!isBannerMode ? 'is-active' : ''}" onclick="switchPromoteMode('token')" style="${!isBannerMode ? 'background:var(--gold);color:#15130E;border-color:var(--gold);' : 'background:var(--bg-panel);border:1px solid var(--line);color:var(--ink);'}">
           🪙 Token Spotlight ($39 - $399)
         </button>
-        <button type="button" id="tabBannerBtn" class="btn-solid" onclick="switchPromoteMode('banner')" style="${isBannerMode ? 'background:var(--gold);color:#000;border-color:var(--gold);' : 'background:var(--bg-panel);border:1px solid var(--line);color:var(--ink-dim);'}padding:10px 22px;font-size:14px;font-weight:700;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s;">
+        <button type="button" id="tabBannerBtn" class="promote-type-btn ${isBannerMode ? 'is-active' : ''}" onclick="switchPromoteMode('banner')" style="${isBannerMode ? 'background:var(--gold);color:#15130E;border-color:var(--gold);' : 'background:var(--bg-panel);border:1px solid var(--line);color:var(--ink);'}">
           📢 Banner Ads Placement ($149 - $499)
         </button>
       </div>
@@ -2105,7 +2141,7 @@ function processBannerFile(file) {
     return;
   }
   if (file.size > 5 * 1024 * 1024) {
-    alert('Image size exceeds 5MB limit.');
+    alert('Image size exceeds 5MB limit. Please choose a smaller image.');
     return;
   }
 
@@ -2113,7 +2149,7 @@ function processBannerFile(file) {
   const statusEl = document.getElementById('bannerUploadStatus');
   if (statusEl) statusEl.textContent = 'Processing image…';
 
-  reader.onload = function(evt) {
+  reader.onload = async function(evt) {
     const dataUrl = evt.target.result;
     const thumb = document.getElementById('bannerUploadThumb');
     const placeholder = document.getElementById('bannerUploadPlaceholder');
@@ -2133,7 +2169,27 @@ function processBannerFile(file) {
       prevBannerImg.style.display = 'block';
     }
     if (prevBannerIcon) prevBannerIcon.style.display = 'none';
-    if (statusEl) statusEl.innerHTML = '<span style="color:var(--up);">✓ Ready</span>';
+
+    if (statusEl) statusEl.textContent = 'Uploading to server…';
+
+    try {
+      const res = await fetchApi('/upload-banner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: dataUrl,
+          filename: file.name
+        })
+      });
+
+      if (res.success && res.url) {
+        if (bImageUrl) bImageUrl.value = res.url;
+        if (statusEl) statusEl.innerHTML = '<span style="color:var(--up);">✓ Uploaded</span>';
+      }
+    } catch (err) {
+      console.warn('[Banner Upload Notice] Stored as data URL:', err.message);
+      if (statusEl) statusEl.innerHTML = '<span style="color:var(--up);">✓ Ready</span>';
+    }
   };
 
   reader.readAsDataURL(file);
@@ -2172,6 +2228,7 @@ async function submitBannerOrder() {
       title,
       targetUrl,
       bannerImage: imageUrl,
+      banner_url: imageUrl,
       placement: bannerOrderState.placement,
       durationDays: bannerOrderState.days,
       price: bannerOrderState.price
@@ -2919,7 +2976,7 @@ function renderSubmit() {
       container.style.display = 'block';
       const tokenDisplayName = escapeHtml(res.name || data.projectName);
       const tokenDisplaySym = escapeHtml(res.symbol || data.projectName.slice(0, 5).toUpperCase());
-      const tokenDisplayChain = escapeHtml((res.chain || data.chain).replace('-ecosystem', '').toUpperCase());
+      const tokenDisplayChain = escapeHtml(formatChainLabel(res.chain || data.chain));
       const tokenDisplayCA = escapeHtml(res.contractAddress || data.contractAddress);
       const targetId = res.tokenId || encodeURIComponent(res.contractAddress || data.contractAddress);
 
@@ -3014,7 +3071,7 @@ async function renderTokenDetail(idOrAddress) {
           <div style="font-size:12px;color:var(--text-faint);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span>Contract: <code style="color:var(--cyan);">${escapeHtml(t.contract_address)}</code></span>
             <button onclick="navigator.clipboard.writeText('${escapeHtml(t.contract_address)}'); alert('Contract address copied!');" style="background:transparent;border:1px solid var(--line-light);color:var(--text-muted);font-size:11px;padding:2px 6px;border-radius:3px;">Copy</button>
-            <span style="text-transform:uppercase;">(${escapeHtml(t.chain.replace('-ecosystem',''))})</span>
+            <span>(${escapeHtml(formatChainLabel(t.chain))})</span>
           </div>
         </div>
       </div>
@@ -3218,7 +3275,7 @@ const SOURCE_MAP = {
 };
 
 function renderSingleRadarRow(p, idx = 0, isNew = false) {
-  const chainLabel = (p.chain || '').replace('-ecosystem', '').replace('binance-smart-chain', 'BSC').toUpperCase();
+  const chainLabel = formatChainLabel(p.chain);
   const age = fmtAge(p.pair_created_at);
   const txns = p.txn_count_24h != null && p.txn_count_24h > 0 ? Number(p.txn_count_24h).toLocaleString() : '—';
   
@@ -3497,6 +3554,97 @@ async function renderWatchlistPage() {
   }
 }
 
+/* ---------------- 9b. TELEGRAM & ALPHA SIGNALS VIEW (/signals) ---------------- */
+
+let signalsState = {
+  direction: 'all',
+  page: 1,
+  limit: 20
+};
+
+async function renderSignalsPage() {
+  document.title = 'Telegram & Market Alpha Signals | Bulls Traking';
+  app.innerHTML = `
+    <div class="page-head">
+      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Telegram & Market Alpha Signals</h1>
+      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Curated on-chain trade setups, breakout telemetry, and risk warnings aggregated from verified Telegram alpha channels.</p>
+    </div>
+
+    <!-- DIRECTION FILTER TABS -->
+    <div class="controls-bar">
+      <div class="subtabs" id="signalsTabs">
+        <span class="subtab ${signalsState.direction === 'all' ? 'is-active' : ''}" data-dir="all">All Signals</span>
+        <span class="subtab ${signalsState.direction === 'buy' ? 'is-active' : ''}" data-dir="buy">Buy / Long</span>
+        <span class="subtab ${signalsState.direction === 'sell' ? 'is-active' : ''}" data-dir="sell">Sell / Take Profit</span>
+        <span class="subtab ${signalsState.direction === 'watch' ? 'is-active' : ''}" data-dir="watch">Watchlist / Alert</span>
+      </div>
+    </div>
+
+    <div id="signalsList"><div class="state-msg">Loading alpha signals…</div></div>
+  `;
+
+  document.getElementById('signalsTabs')?.addEventListener('click', (e) => {
+    const tab = e.target.closest('.subtab');
+    if (!tab) return;
+    signalsState.direction = tab.dataset.dir;
+    signalsState.page = 1;
+    renderSignalsPage();
+  });
+
+  loadSignals();
+}
+
+async function loadSignals() {
+  const container = document.getElementById('signalsList');
+  if (!container) return;
+  try {
+    const queryDir = signalsState.direction === 'all' ? '' : `&direction=${signalsState.direction}`;
+    const res = await fetchApi(`/signals?page=${signalsState.page}&limit=${signalsState.limit}${queryDir}`);
+    const signals = res.signals || [];
+
+    if (signals.length === 0) {
+      container.innerHTML = `<div class="state-msg">No active signals found in this category.</div>`;
+      return;
+    }
+
+    const cards = signals.map(s => {
+      const dirCls = s.direction === 'buy' ? 'buy' : s.direction === 'sell' ? 'sell' : 'watch';
+      const dirIcon = s.direction === 'buy' ? '▲ BUY' : s.direction === 'sell' ? '▼ SELL' : '● WATCH';
+      const timeAgo = fmtAge(s.posted_at);
+
+      let tokenPill = '';
+      if (s.token_symbol) {
+        tokenPill = `
+          <div class="signal-token-pill" onclick="location.hash='#/token/${s.token_id}'">
+            <img src="${escapeHtml(s.token_logo_url || 'assets/logo-transparent.png')}" alt="${escapeHtml(s.token_symbol)}" onerror="this.src='assets/logo-transparent.png';">
+            <span>$${escapeHtml(s.token_symbol)} (${fmtPrice(s.token_price)})</span>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="signal-card">
+          <div>
+            <div class="signal-header">
+              <span class="signal-badge ${dirCls}">${dirIcon}</span>
+              <span class="signal-source-badge">${escapeHtml((s.source || 'telegram').replace(/_/g, ' ').toUpperCase())}</span>
+            </div>
+            <h3 class="signal-title">${escapeHtml(s.title)}</h3>
+            <div class="signal-body">${escapeHtml(s.message)}</div>
+          </div>
+          <div class="signal-footer">
+            <div>${tokenPill || '<span style="color:var(--text-faint);">Market-wide Setup</span>'}</div>
+            <span>${timeAgo}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = `<div class="signals-grid">${cards}</div>`;
+  } catch (err) {
+    container.innerHTML = `<div class="state-msg">Failed to load signals: ${escapeHtml(err.message)}</div>`;
+  }
+}
 
 /* ---------------- 10. LEGAL & INFO PAGES (Phase 3 Task 4) ---------------- */
 
@@ -3632,10 +3780,16 @@ function parseHash() {
 }
 
 function updateNavHighlight(route) {
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('is-active'));
+  document.querySelectorAll('.nav-item, .nav-dropdown-link, .mobile-nav-link').forEach(el => el.classList.remove('is-active'));
   const clean = (route === '/' || route === '') ? 'home' : route.replace('/', '');
-  const el = document.querySelector(`[data-route="${clean}"]`);
-  if (el) el.classList.add('is-active');
+  const elements = document.querySelectorAll(`[data-route="${clean}"]`);
+  elements.forEach(el => {
+    el.classList.add('is-active');
+    const dropdown = el.closest('.nav-dropdown');
+    if (dropdown) {
+      dropdown.querySelector('.nav-dropdown-trigger')?.classList.add('is-active');
+    }
+  });
 }
 
 function toggleMobileMenu(forceState) {
@@ -3680,6 +3834,8 @@ function route() {
     renderGainers();
   } else if (path === '/watchlist') {
     renderWatchlistPage();
+  } else if (path === '/signals') {
+    renderSignalsPage();
   } else if (path === '/scan') {
     renderScanner();
   } else if (path === '/promoted') {

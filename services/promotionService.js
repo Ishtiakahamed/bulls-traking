@@ -94,11 +94,71 @@ function getActiveBanners() {
   `;
   const banners = query(sql);
 
-  return {
-    top_banner: banners.filter(b => b.placement === 'top_banner')[0] || null,
-    homepage_banner: banners.filter(b => b.placement === 'homepage_banner')[0] || null,
-    presale_banner: banners.filter(b => b.placement === 'presale_banner')[0] || null
+  const formatBanner = (b) => {
+    if (!b) return null;
+    const img = b.banner_image || b.banner_url || null;
+    return {
+      id: b.id,
+      token_id: b.token_id,
+      title: b.title,
+      banner_url: img,
+      banner_image: img,
+      target_url: b.target_url,
+      placement: b.placement,
+      duration: b.duration,
+      start_at: b.start_at,
+      end_at: b.end_at,
+      price: b.price,
+      click_count: b.click_count || 0,
+      impression_count: b.impression_count || 0,
+      token_name: b.token_name || null,
+      token_symbol: b.token_symbol || null
+    };
   };
+
+  const top1 = banners.find(b => b.placement === 'top_banner_1' || b.placement === 'top_banner') || null;
+  const top2 = banners.find(b => b.placement === 'top_banner_2' || b.placement === 'homepage_banner') || null;
+  const top3 = banners.find(b => b.placement === 'top_banner_3' || b.placement === 'presale_banner') || null;
+
+  return {
+    top_banner: formatBanner(top1),
+    homepage_banner: formatBanner(top2),
+    presale_banner: formatBanner(top3)
+  };
+}
+
+/**
+ * Record a click on a banner ad
+ */
+function recordBannerClick(id) {
+  const numId = parseInt(id, 10);
+  if (isNaN(numId) || numId <= 0) return false;
+  try {
+    const banner = queryOne('SELECT id FROM banner_orders WHERE id = ?', [numId]);
+    if (!banner) return false;
+    execute('UPDATE banner_orders SET click_count = COALESCE(click_count, 0) + 1 WHERE id = ?', [numId]);
+    return true;
+  } catch (err) {
+    console.warn('[PromotionService] Click tracking notice:', err.message);
+    return false;
+  }
+}
+
+/**
+ * Record an impression on a banner ad
+ */
+function recordBannerImpression(id) {
+  const numId = parseInt(id, 10);
+  if (isNaN(numId) || numId <= 0) return false;
+  try {
+    const banner = queryOne('SELECT id FROM banner_orders WHERE id = ?', [numId]);
+    if (!banner) return false;
+    execute('UPDATE banner_orders SET impression_count = COALESCE(impression_count, 0) + 1 WHERE id = ?', [numId]);
+    return true;
+  } catch (err) {
+    console.warn('[PromotionService] Impression tracking notice:', err.message);
+    return false;
+  }
 }
 
 /**
@@ -157,5 +217,7 @@ module.exports = {
   getActivePromotedTokens,
   getCurrentAdBoard,
   getActiveBanners,
-  createPromotionOrder
+  createPromotionOrder,
+  recordBannerClick,
+  recordBannerImpression
 };

@@ -4,7 +4,9 @@ const {
   getActivePromotedTokens, 
   getCurrentAdBoard, 
   getActiveBanners, 
-  createPromotionOrder 
+  createPromotionOrder,
+  recordBannerClick,
+  recordBannerImpression
 } = require('../services/promotionService');
 
 router.get('/promotions/active', (req, res) => {
@@ -29,6 +31,26 @@ router.get('/banners/active', (req, res) => {
   try {
     const banners = getActiveBanners();
     res.json({ success: true, data: banners });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Click tracking endpoint (both :id/click and click/:id patterns)
+router.post(['/banners/:id/click', '/banners/click/:id'], (req, res) => {
+  try {
+    const recorded = recordBannerClick(req.params.id);
+    res.json({ success: true, recorded });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Impression tracking endpoint
+router.post(['/banners/:id/impression', '/banners/impression/:id'], (req, res) => {
+  try {
+    const recorded = recordBannerImpression(req.params.id);
+    res.json({ success: true, recorded });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

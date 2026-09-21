@@ -144,7 +144,7 @@ async function runPhase3Tests() {
   await test('9. Frontend index.html contains New Pairs and Legal nav', () => {
     const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
     assert.ok(html.includes('href="#/new-pairs"'), 'Missing new-pairs nav link');
-    assert.ok(!html.includes('href="#/signals"'), 'Signals nav link should be removed');
+    assert.ok(html.includes('href="#/signals"'), 'Missing signals nav link');
     assert.ok(html.includes('href="#/about"'), 'Missing about footer link');
     assert.ok(html.includes('href="#/terms-of-service"'), 'Missing terms footer link');
     assert.ok(html.includes('href="#/privacy-policy"'), 'Missing privacy footer link');
@@ -153,11 +153,11 @@ async function runPhase3Tests() {
   });
 
   // 10. Frontend Asset Integrity: app.js views and routes
-  await test('10. app.js contains renderNewPairs, renderWatchlistPage, and legal views (Signals removed)', () => {
+  await test('10. app.js contains renderNewPairs, renderWatchlistPage, renderSignalsPage, and legal views', () => {
     const js = fs.readFileSync(path.join(__dirname, 'app.js'), 'utf-8');
     assert.ok(js.includes('renderNewPairs'), 'Missing renderNewPairs');
     assert.ok(js.includes('renderWatchlistPage'), 'Missing renderWatchlistPage');
-    assert.ok(!js.includes('renderSignalsPage'), 'renderSignalsPage should be removed');
+    assert.ok(js.includes('renderSignalsPage'), 'Missing renderSignalsPage');
     assert.ok(js.includes('renderAbout'), 'Missing renderAbout');
     assert.ok(js.includes('renderTerms'), 'Missing renderTerms');
     assert.ok(js.includes('renderPrivacy'), 'Missing renderPrivacy');

@@ -33,6 +33,34 @@ async function syncMarketData() {
       }
     }
 
+function getNativeChainForSymbol(sym) {
+  const upper = (sym || '').toUpperCase().trim();
+  switch (upper) {
+    case 'BTC': return 'bitcoin';
+    case 'ETH': return 'ethereum-ecosystem';
+    case 'SOL': return 'solana-ecosystem';
+    case 'BNB': return 'binance-smart-chain';
+    case 'XRP': return 'ripple';
+    case 'ADA': return 'cardano';
+    case 'DOGE': return 'dogecoin';
+    case 'AVAX': return 'avalanche';
+    case 'TRX': return 'tron';
+    case 'DOT': return 'polkadot';
+    case 'NEAR': return 'near';
+    case 'SUI': return 'sui';
+    case 'APT': return 'aptos';
+    case 'LTC': return 'litecoin';
+    case 'BCH': return 'bitcoin-cash';
+    case 'LINK':
+    case 'UNI':
+    case 'SHIB':
+    case 'PEPE':
+      return 'ethereum-ecosystem';
+    default:
+      return 'ethereum-ecosystem';
+  }
+}
+
     // Ensure top tier global cryptocurrencies (like BTC) are tracked in tokens table
     for (const item of marketList) {
       const sym = (item.symbol || '').toUpperCase().trim();
@@ -47,7 +75,7 @@ async function syncMarketData() {
               market_cap_rank, is_active, listing_status, first_seen_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'LIVE', CURRENT_TIMESTAMP)
           `, [
-            sym === 'BTC' ? 'bitcoin' : (sym === 'SOL' ? 'solana' : (sym === 'BNB' ? 'binance-smart-chain' : 'ethereum')),
+            getNativeChainForSymbol(sym),
             null,
             item.providerId,
             item.name,

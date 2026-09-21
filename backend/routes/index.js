@@ -48,11 +48,15 @@ router.get('/health', (req, res) => {
 // Single Home Data Aggregator (Section 42)
 router.get('/home', handleGetHomeData);
 
+const legacyPromotionRoutes = require('../../routes/promotionRoutes');
+
 // Sub-routes
 router.use('/', tokenRoutes);
 router.use('/', submissionRoutes);
 router.use('/', promotionRoutes);
 router.use('/', bannerRoutes);
+router.use('/promotion', legacyPromotionRoutes);
+router.use('/promotions', legacyPromotionRoutes);
 router.use('/', securityRoutes);
 router.use('/', newPairsRoutes);
 router.use('/', signalsRoutes);

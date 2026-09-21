@@ -27,10 +27,13 @@ function getActiveBanners() {
     if (found) {
       // Async increment impression counter
       try {
-        execute('UPDATE banner_orders SET impression_count = impression_count + 1 WHERE id = ?', [found.id]);
+        execute('UPDATE banner_orders SET impression_count = COALESCE(impression_count, 0) + 1 WHERE id = ?', [found.id]);
       } catch (_) {}
+      const img = found.banner_image || found.banner_url || null;
       return {
         ...found,
+        banner_url: img,
+        banner_image: img,
         is_placeholder: false
       };
     }
@@ -38,6 +41,7 @@ function getActiveBanners() {
     return {
       id: null,
       title: defaultTitle,
+      banner_url: null,
       banner_image: null,
       target_url: '#/promote',
       placement,
@@ -57,8 +61,10 @@ function getActiveBanners() {
     top_banner_1: slot1,
     top_banner_2: slot2,
     top_banner_3: slot3,
-    top_banner: slot2, // backward compatibility
-    homepage_banner: homeBanner,
+    top_banner: slot1,
+    homepage_banner: slot2,
+    presale_banner: slot3,
+    in_feed_banner: homeBanner,
     radar_banner: findSlot('radar_banner', '📡 New Pairs Radar Sponsorship', 'Book Radar Banner ($149/7D) →', 149)
   };
 }
@@ -67,12 +73,32 @@ function getActiveBanners() {
  * Record a click on a banner ad
  */
 function recordBannerClick(id) {
-  if (!id) return false;
+  const numId = parseInt(id, 10);
+  if (isNaN(numId) || numId <= 0) return false;
   try {
-    execute('UPDATE banner_orders SET click_count = click_count + 1 WHERE id = ?', [id]);
+    const banner = queryOne('SELECT id FROM banner_orders WHERE id = ?', [numId]);
+    if (!banner) return false;
+    execute('UPDATE banner_orders SET click_count = COALESCE(click_count, 0) + 1 WHERE id = ?', [numId]);
     return true;
   } catch (err) {
     console.warn('[BannerService] Click tracking error:', err.message);
+    return false;
+  }
+}
+
+/**
+ * Record an impression on a banner ad
+ */
+function recordBannerImpression(id) {
+  const numId = parseInt(id, 10);
+  if (isNaN(numId) || numId <= 0) return false;
+  try {
+    const banner = queryOne('SELECT id FROM banner_orders WHERE id = ?', [numId]);
+    if (!banner) return false;
+    execute('UPDATE banner_orders SET impression_count = COALESCE(impression_count, 0) + 1 WHERE id = ?', [numId]);
+    return true;
+  } catch (err) {
+    console.warn('[BannerService] Impression tracking error:', err.message);
     return false;
   }
 }
@@ -85,17 +111,26 @@ function createBannerOrder(data) {
     tokenId = null,
     title = 'Banner Advertisement',
     bannerImage,
+    banner_image,
+    bannerUrl,
+    banner_url,
     targetUrl,
+    target_url,
     placement = 'top_banner_2',
-    durationDays = 7,
+    durationDays,
+    duration,
     price = 199.00
   } = data || {};
 
-  if (!bannerImage || !targetUrl) {
+  const finalBannerImage = bannerImage || banner_image || bannerUrl || banner_url;
+  const finalTargetUrl = targetUrl || target_url;
+  const finalDuration = durationDays || duration || 7;
+
+  if (!finalBannerImage || !finalTargetUrl) {
     throw new Error('Both bannerImage and targetUrl are required');
   }
 
-  const validPlacements = ['top_banner_1', 'top_banner_2', 'top_banner_3', 'top_banner', 'homepage_banner', 'radar_banner'];
+  const validPlacements = ['top_banner_1', 'top_banner_2', 'top_banner_3', 'top_banner', 'homepage_banner', 'presale_banner', 'radar_banner'];
   const safePlacement = validPlacements.includes(placement) ? placement : 'top_banner_2';
 
   const insertSql = `
@@ -113,11 +148,11 @@ function createBannerOrder(data) {
   const result = execute(insertSql, [
     tokenId || null,
     title,
-    bannerImage,
-    targetUrl,
+    finalBannerImage,
+    finalTargetUrl,
     safePlacement,
-    durationDays,
-    durationDays,
+    finalDuration,
+    finalDuration,
     price
   ]);
 
@@ -202,6 +237,7 @@ function updateBannerApproval(id, approvalStatus) {
 module.exports = {
   getActiveBanners,
   recordBannerClick,
+  recordBannerImpression,
   createBannerOrder,
   getBannerPackages,
   getAllBannersAdmin,

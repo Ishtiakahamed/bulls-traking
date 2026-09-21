@@ -3,14 +3,15 @@ const router = express.Router();
 const {
   getActiveBanners,
   recordBannerClick,
+  recordBannerImpression,
   createBannerOrder,
   getBannerPackages,
   getAllBannersAdmin,
   updateBannerApproval
 } = require('../services/bannerService');
 
-// Public: Get currently active banner slots
-router.get('/banners/active', (req, res) => {
+// Public: Get currently active banner slots (supports both /banners/active and /promotion/banners/active)
+router.get(['/banners/active', '/promotion/banners/active'], (req, res) => {
   try {
     const banners = getActiveBanners();
     res.json({ success: true, data: banners });
@@ -20,7 +21,7 @@ router.get('/banners/active', (req, res) => {
 });
 
 // Public: Get banner ad packages & pricing
-router.get('/banners/packages', (req, res) => {
+router.get(['/banners/packages', '/promotion/banners/packages'], (req, res) => {
   try {
     const packages = getBannerPackages();
     res.json({ success: true, data: packages });
@@ -29,8 +30,8 @@ router.get('/banners/packages', (req, res) => {
   }
 });
 
-// Public: Track banner ad click
-router.post('/banners/click/:id', (req, res) => {
+// Public: Track banner ad click (supports both :id/click and click/:id)
+router.post(['/banners/click/:id', '/banners/:id/click', '/promotion/banners/click/:id', '/promotion/banners/:id/click'], (req, res) => {
   try {
     const recorded = recordBannerClick(req.params.id);
     res.json({ success: true, recorded });
@@ -39,8 +40,18 @@ router.post('/banners/click/:id', (req, res) => {
   }
 });
 
+// Public: Track banner ad impression
+router.post(['/banners/impression/:id', '/banners/:id/impression', '/promotion/banners/impression/:id', '/promotion/banners/:id/impression'], (req, res) => {
+  try {
+    const recorded = recordBannerImpression(req.params.id);
+    res.json({ success: true, recorded });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Public: Create banner advertisement order
-router.post('/banners/order', (req, res) => {
+router.post(['/banners/order', '/promotion/banners/order'], (req, res) => {
   try {
     const result = createBannerOrder(req.body);
     res.status(201).json({ success: true, data: result });

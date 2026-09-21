@@ -74,6 +74,14 @@ async function discoverTokens() {
           for (const coin of coins) {
             if (!coin.id || !coin.name || !coin.symbol) continue;
 
+            // Filter out synthetic peg tokens from other L1 networks (e.g. binance-peg-xrp, binance-peg-cardano)
+            if (chain === 'binance-smart-chain') {
+              const isPeg = coin.id.startsWith('binance-peg-') || coin.name.toLowerCase().startsWith('binance-peg ');
+              if (isPeg) continue;
+              // Skip Uniswap under BSC as it is natively an Ethereum token
+              if (coin.id === 'uniswap' || (coin.symbol || '').toUpperCase() === 'UNI') continue;
+            }
+
             const existing = queryOne(
               'SELECT id, first_seen_at, contract_address FROM tokens WHERE chain = ? AND coingecko_id = ? LIMIT 1',
               [chain, coin.id]

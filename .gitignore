@@ -34,3 +34,6 @@ Thumbs.db
 # Uploads
 public/uploads/*
 !public/uploads/.gitkeep
+
+# Scratch files
+scratch/
