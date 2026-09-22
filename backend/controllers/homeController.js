@@ -6,7 +6,7 @@ const {
   getTrendingCoins
 } = require('../services/tokenService');
 const { getActivePromotions } = require('../services/promotionService');
-const { getActiveBanners } = require('../services/bannerService');
+const { getActiveBanners, getActiveSpotlight } = require('../services/bannerService');
 const { getSyncStatus } = require('../workers/syncWorker');
 const { queryOne } = require('../../database/db');
 
@@ -26,8 +26,9 @@ function handleGetHomeData(req, res, next) {
 
     res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
 
+    const bypassCache = req.query.nocache === 'true' || req.headers['cache-control'] === 'no-cache';
     const cached = homeCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < HOME_CACHE_TTL_MS)) {
+    if (!bypassCache && cached && (Date.now() - cached.timestamp < HOME_CACHE_TTL_MS)) {
       return res.json(cached.payload);
     }
 
@@ -59,6 +60,7 @@ function handleGetHomeData(req, res, next) {
         topCoins: topCoinsRes.tokens,
         promoted,
         banners: getActiveBanners(),
+        spotlight: getActiveSpotlight(),
         pagination: {
           page,
           limit,

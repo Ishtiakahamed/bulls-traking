@@ -581,42 +581,41 @@ async function renderBannerStrip() {
 }
 window.renderBannerStrip = renderBannerStrip;
 
-function renderBannerAd(banner, slotPlacement = 'top_banner') {
-  if (!banner) {
-    const isHeader = slotPlacement === 'top_banner';
-    const fallbackPrice = isHeader ? '$199/7D' : '$299/7D';
-    const title = isHeader ? '🚀 Bulls Traking Header Leaderboard — Reach 100K+ Active Traders' : '⚡ Bulls Traking In-Feed Spotlight — High-Converting Sponsor Placement';
-    const desc = isHeader 
-      ? 'Dominate top-of-page visibility across all crypto traders and investors. Guaranteed impressions.' 
-      : 'Showcase your Web3 project, token, launchpad or DEX to thousands of daily crypto traders.';
-    return `
-      <div class="banner-ad-wrapper ${slotPlacement}">
-        <div class="banner-ad-card banner-ad-placeholder">
-          <div class="banner-ad-badge">ADVERTISEMENT</div>
-          <div class="banner-ad-left">
-            <div class="banner-ad-icon">📢</div>
-            <div class="banner-ad-info">
-              <div class="banner-ad-title">${escapeHtml(title)}</div>
-              <div class="banner-ad-desc">${escapeHtml(desc)}</div>
-            </div>
-          </div>
-          <a href="#/promote?type=banner" class="banner-ad-cta">Advertise Here (${fallbackPrice}) →</a>
-        </div>
-      </div>
-    `;
+async function renderSpotlightBanner() {
+  const container = document.getElementById('homeSpotlightWrapper');
+  if (!container) return;
+  try {
+    const res = await fetchApi('/promotion/spotlight/active');
+    const spotlight = res?.data || null;
+    if (spotlight && !spotlight.is_placeholder && spotlight.id) {
+      container.innerHTML = renderBannerAd(spotlight, 'homepage_banner');
+      container.style.display = 'block';
+    } else {
+      container.innerHTML = '';
+      container.style.display = 'none';
+    }
+  } catch (err) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+  }
+}
+window.renderSpotlightBanner = renderSpotlightBanner;
+
+function renderBannerAd(banner, slotPlacement = 'homepage_banner') {
+  if (!banner || banner.is_placeholder || !banner.id || !banner.title) {
+    return '';
   }
 
-  const isPlaceholder = !!banner.is_placeholder;
-  const targetUrl = banner.target_url || '#/promote?type=banner';
-  const ctaText = banner.cta_text || (isPlaceholder ? `Advertise Here ($${banner.price || 199}/7D) →` : 'Learn More →');
-  const title = banner.title || (isPlaceholder ? 'Promote Your Web3 Project' : 'Sponsored Partner');
-  const desc = banner.description || (isPlaceholder ? 'Guaranteed prime placement viewed by multi-chain traders across Solana, BSC, Base & ETH.' : '');
-  const bannerImg = banner.banner_image || banner.image_url;
+  const targetUrl = banner.target_url || '#/promote';
+  const ctaText = banner.cta_text || 'Learn More →';
+  const title = banner.title;
+  const desc = banner.description || '';
+  const bannerImg = banner.banner_image || banner.image_url || banner.logo_url;
   const clickHandler = banner.id ? `onclick="trackBannerClick(${banner.id})"` : '';
   const isExternal = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
   const targetAttr = isExternal ? 'target="_blank" rel="noopener sponsored"' : '';
 
-  // If full banner image without text is uploaded
+  // If full banner graphic without text is uploaded
   if (bannerImg && !banner.title && !banner.description) {
     return `
       <div class="banner-ad-wrapper ${slotPlacement}">
@@ -630,10 +629,10 @@ function renderBannerAd(banner, slotPlacement = 'top_banner') {
 
   return `
     <div class="banner-ad-wrapper ${slotPlacement}">
-      <div class="banner-ad-card ${isPlaceholder ? 'banner-ad-placeholder' : ''}">
-        <div class="banner-ad-badge">${isPlaceholder ? 'ADVERTISEMENT' : 'SPONSORED'}</div>
+      <div class="banner-ad-card">
+        <div class="banner-ad-badge">SPONSORED</div>
         <div class="banner-ad-left">
-          ${bannerImg ? `<img src="${escapeHtml(bannerImg)}" alt="${escapeHtml(title)}" class="banner-ad-icon-img" onerror="this.style.display='none'" />` : `<div class="banner-ad-icon">${isPlaceholder ? '📢' : '⚡'}</div>`}
+          ${bannerImg ? `<img src="${escapeHtml(bannerImg)}" alt="${escapeHtml(title)}" class="banner-ad-icon-img" onerror="this.style.display='none'" />` : `<div class="banner-ad-icon">⚡</div>`}
           <div class="banner-ad-info">
             <div class="banner-ad-title">${escapeHtml(title)}</div>
             ${desc ? `<div class="banner-ad-desc">${escapeHtml(desc)}</div>` : ''}
@@ -698,7 +697,14 @@ function buildHomeUI(data) {
   }
 
   const promotedCards = (data.promoted || []).map(renderPromotedCard).join('');
-  const homeBannerHtml = renderBannerAd(data.banners?.homepage_banner, 'homepage_banner');
+  const spotlightOrder = data.spotlight || null;
+  const homeBannerHtml = spotlightOrder ? renderBannerAd(spotlightOrder, 'homepage_banner') : '';
+
+  if (spotlightOrder?.id && !spotlightOrder.is_placeholder) {
+    fetchApi('/promotion/banners/' + spotlightOrder.id + '/impression', { method: 'POST' }).catch(() => {
+      fetchApi('/banners/impression/' + spotlightOrder.id, { method: 'POST' }).catch(() => {});
+    });
+  }
 
   const initialBanners = data.banners || {};
   const initialSlots = [
@@ -725,8 +731,8 @@ function buildHomeUI(data) {
       </section>
     ` : ''}
 
-    <!-- HOMEPAGE IN-FEED BANNER -->
-    ${homeBannerHtml}
+    <!-- HOMEPAGE IN-FEED TOKEN SPOTLIGHT -->
+    ${homeBannerHtml ? `<div id="homeSpotlightWrapper">${homeBannerHtml}</div>` : `<div id="homeSpotlightWrapper" style="display:none;"></div>`}
 
     <!-- TABS & CHAIN CONTROLS -->
     <div class="controls-bar">

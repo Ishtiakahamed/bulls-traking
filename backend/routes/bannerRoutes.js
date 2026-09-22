@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getActiveBanners,
+  getActiveSpotlight,
   recordBannerClick,
   recordBannerImpression,
   createBannerOrder,
@@ -15,6 +16,16 @@ router.get(['/banners/active', '/promotion/banners/active'], (req, res) => {
   try {
     const banners = getActiveBanners();
     res.json({ success: true, data: banners });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Public: Get currently active Token Spotlight order (returns null if no active paid order)
+router.get(['/spotlight/active', '/promotion/spotlight/active', '/banners/spotlight/active'], (req, res) => {
+  try {
+    const spotlight = getActiveSpotlight();
+    res.json({ success: true, data: spotlight });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

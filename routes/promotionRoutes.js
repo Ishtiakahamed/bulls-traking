@@ -4,6 +4,7 @@ const {
   getActivePromotedTokens, 
   getCurrentAdBoard, 
   getActiveBanners, 
+  getActiveSpotlight,
   createPromotionOrder,
   recordBannerClick,
   recordBannerImpression
@@ -31,6 +32,15 @@ router.get('/banners/active', (req, res) => {
   try {
     const banners = getActiveBanners();
     res.json({ success: true, data: banners });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get(['/spotlight/active', '/promotion/spotlight/active'], (req, res) => {
+  try {
+    const spotlight = getActiveSpotlight();
+    res.json({ success: true, data: spotlight });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

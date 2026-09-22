@@ -285,9 +285,111 @@ function getOrderById(orderId) {
   return queryOne('SELECT * FROM promotion_orders WHERE id = ?', [orderId]);
 }
 
+/**
+ * Get active approved and paid Token Spotlight order
+ * Returns the current active, paid, non-expired Token Spotlight order if one exists, or null.
+ */
+function getActiveSpotlight() {
+  // 1. Check promotion_orders table for an active, paid spotlight order
+  try {
+    const promoSql = `
+      SELECT 
+        po.id,
+        po.token_id,
+        COALESCE(po.token_name, t.name, 'Sponsored Token') AS title,
+        po.package_name,
+        po.duration_days,
+        COALESCE(po.logo_url, t.logo_url, 'assets/logo-transparent.png') AS banner_image,
+        COALESCE(po.website_url, po.auto_trading_url, t.website_url, ('#/token/' || po.token_id)) AS target_url,
+        po.price,
+        po.start_at,
+        po.end_at,
+        po.payment_status,
+        po.order_status
+      FROM promotion_orders po
+      LEFT JOIN tokens t ON po.token_id = t.id
+      WHERE po.order_status = 'active'
+        AND po.payment_status IN ('paid', 'completed')
+        AND datetime(po.start_at) <= datetime('now')
+        AND datetime(po.end_at) >= datetime('now')
+        AND (
+          po.package_name LIKE '%Spotlight%' 
+          OR po.promotion_type LIKE '%SPOTLIGHT%' 
+          OR po.promotion_type = 'TOKEN_SPOTLIGHT'
+          OR po.package_name LIKE '%spotlight%'
+        )
+      ORDER BY po.id DESC
+      LIMIT 1
+    `;
+    const activePromo = queryOne(promoSql);
+    if (activePromo) {
+      return {
+        id: activePromo.id,
+        token_id: activePromo.token_id,
+        title: activePromo.title,
+        description: 'Verified Token Spotlight Partner',
+        banner_image: activePromo.banner_image,
+        image_url: activePromo.banner_image,
+        target_url: activePromo.target_url,
+        cta_text: 'Learn More →',
+        placement: 'homepage_banner',
+        price: activePromo.price,
+        is_placeholder: false,
+        source: 'promotion_orders'
+      };
+    }
+  } catch (err) {
+    console.warn('[PromotionService] Active spotlight promo_orders query notice:', err.message);
+  }
+
+  // 2. Check banner_orders table for an active paid spotlight / in-feed order
+  try {
+    const bannerSql = `
+      SELECT bo.*, t.name AS token_name, t.symbol AS token_symbol, t.logo_url AS token_logo
+      FROM banner_orders bo
+      LEFT JOIN tokens t ON bo.token_id = t.id
+      WHERE bo.placement IN ('homepage_banner', 'spotlight', 'token_spotlight')
+        AND bo.approval_status = 'approved'
+        AND bo.payment_status IN ('paid', 'completed')
+        AND datetime(bo.start_at) <= datetime('now')
+        AND datetime(bo.end_at) >= datetime('now')
+      ORDER BY bo.id DESC
+      LIMIT 1
+    `;
+    const activeBanner = queryOne(bannerSql);
+    if (activeBanner) {
+      const isDemo = activeBanner.target_url === '#/promote' || 
+                     activeBanner.title?.startsWith('Promote Your Token') || 
+                     activeBanner.title?.startsWith('Automated Test DEX');
+      if (!isDemo) {
+        const img = activeBanner.banner_image || activeBanner.banner_url || activeBanner.token_logo || 'assets/logo-transparent.png';
+        return {
+          id: activeBanner.id,
+          token_id: activeBanner.token_id,
+          title: activeBanner.title || activeBanner.token_name || 'Sponsored Partner',
+          description: activeBanner.description || '',
+          banner_image: img,
+          image_url: img,
+          target_url: activeBanner.target_url || '#/promote',
+          cta_text: activeBanner.cta_text || 'Learn More →',
+          placement: activeBanner.placement,
+          price: activeBanner.price,
+          is_placeholder: false,
+          source: 'banner_orders'
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[PromotionService] Active spotlight banner_orders query notice:', err.message);
+  }
+
+  return null;
+}
+
 module.exports = {
   getActivePromotions,
   createPromotionOrder,
   activatePromotionFromOrder,
-  getOrderById
+  getOrderById,
+  getActiveSpotlight
 };

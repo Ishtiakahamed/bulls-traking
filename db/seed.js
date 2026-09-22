@@ -403,18 +403,6 @@ function runSeed() {
       350.00,
       'completed',
       'approved'
-    ),
-    (
-      ${wifToken ? wifToken.id : 'NULL'},
-      'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1400&auto=format&fit=crop',
-      'https://dogwifcoin.org',
-      'homepage_banner',
-      15,
-      datetime('now', '-2 days'),
-      datetime('now', '+13 days'),
-      600.00,
-      'completed',
-      'approved'
     );`);
 
     // 7. Presales (PinkSale, PancakeSwap, DxSale, Gempad)
