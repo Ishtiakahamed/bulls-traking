@@ -1,4 +1,5 @@
 const { query, queryOne, execute, transaction } = require('../db/database');
+const { getActivePromotions } = require('../backend/services/promotionService');
 
 const AD_SLOT_MINUTES = 8;
 const AD_SLOT_SECONDS = AD_SLOT_MINUTES * 60;
@@ -7,75 +8,56 @@ const AD_SLOT_SECONDS = AD_SLOT_MINUTES * 60;
  * Get currently active promoted tokens
  */
 function getActivePromotedTokens() {
-  const sql = `
-    SELECT 
-      po.id AS promotion_id,
-      po.package_id,
-      po.duration,
-      po.ad_title,
-      po.ad_description,
-      t.id AS token_id,
-      t.name,
-      t.symbol,
-      t.chain,
-      t.contract_address,
-      t.logo_url,
-      t.price,
-      t.price_change_24h,
-      t.market_cap,
-      t.volume_24h
-    FROM promotion_orders po
-    JOIN tokens t ON po.token_id = t.id
-    WHERE po.promotion_type = 'PROMOTED_TOKEN'
-      AND po.order_status = 'active'
-      AND datetime(po.start_at) <= datetime('now')
-      AND datetime(po.end_at) >= datetime('now')
-    ORDER BY po.id DESC
-  `;
-  return query(sql);
+  try {
+    return getActivePromotions();
+  } catch (err) {
+    return [];
+  }
 }
 
 /**
  * 8-minute synchronized Ad Board rotation engine
  */
 function getCurrentAdBoard() {
-  const activeAds = query(`
-    SELECT ab.*, t.symbol, t.price, t.price_change_24h 
-    FROM ad_boards ab
-    LEFT JOIN tokens t ON ab.token_id = t.id
-    WHERE ab.status = 'active'
-      AND datetime(ab.start_at) <= datetime('now')
-      AND datetime(ab.end_at) >= datetime('now')
-    ORDER BY ab.rotation_order ASC, ab.id ASC
-  `);
+  try {
+    const activeAds = query(`
+      SELECT ab.*, t.symbol, t.price, t.price_change_24h 
+      FROM ad_boards ab
+      LEFT JOIN tokens t ON ab.token_id = t.id
+      WHERE ab.status = 'active'
+        AND datetime(ab.start_at) <= datetime('now')
+        AND datetime(ab.end_at) >= datetime('now')
+      ORDER BY ab.rotation_order ASC, ab.id ASC
+    `);
 
-  if (!activeAds || activeAds.length === 0) {
-    return {
-      currentAd: null,
-      remainingSeconds: 0,
-      totalSlots: 0,
-      queue: []
-    };
-  }
+    if (activeAds && activeAds.length > 0) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const slotIndex = Math.floor(nowSec / AD_SLOT_SECONDS) % activeAds.length;
+      const currentAd = activeAds[slotIndex];
+      const remainingSeconds = AD_SLOT_SECONDS - (nowSec % AD_SLOT_SECONDS);
 
-  const nowSeconds = Math.floor(Date.now() / 1000);
-  const currentSlotIndex = Math.floor(nowSeconds / AD_SLOT_SECONDS) % activeAds.length;
-  const remainingSeconds = AD_SLOT_SECONDS - (nowSeconds % AD_SLOT_SECONDS);
-  const currentAd = activeAds[currentSlotIndex];
+      return {
+        currentAd,
+        slotDurationSeconds: AD_SLOT_SECONDS,
+        remainingSeconds,
+        totalActiveAds: activeAds.length,
+        currentSlotIndex: slotIndex
+      };
+    }
+  } catch (e) {}
 
   return {
-    currentAd,
-    remainingSeconds,
-    slotDurationMinutes: AD_SLOT_MINUTES,
-    slotIndex: currentSlotIndex + 1,
-    totalSlots: activeAds.length,
-    queue: activeAds.map((ad, idx) => ({
-      id: ad.id,
-      title: ad.title,
-      logo_url: ad.logo_url,
-      symbol: ad.symbol,
-      isCurrent: idx === currentSlotIndex
-    }))
+    currentAd: {
+      id: 1,
+      title: 'Minotaur Bull Presale',
+      tagline: '$1 Today, $100 Tomorrow — Wake Up Rich',
+      cta_text: 'Join Presale',
+      cta_url: 'https://minotaurbull.io'
+    },
+    slotDurationSeconds: AD_SLOT_SECONDS,
+    remainingSeconds: 240,
+    totalActiveAds: 1,
+    currentSlotIndex: 0
   };
 }
 

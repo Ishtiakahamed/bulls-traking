@@ -3,7 +3,7 @@ async function runFullTest() {
 
   // 1. Static frontend checks
   const html = await (await fetch('http://localhost:5000/')).text();
-  console.log('1. Static HTML Delivery:', html.includes('BULL <span class="accent">STRAKING</span>') ? 'PASS' : 'FAIL');
+  console.log('1. Static HTML Delivery:', (html.includes('BULLS <span class="accent">TRAKING</span>') || html.includes('BULL <span class="accent">STRAKING</span>')) ? 'PASS' : 'FAIL');
 
   // 2. Health check
   const health = await (await fetch('http://localhost:5000/api/health')).json();
@@ -39,7 +39,7 @@ async function runFullTest() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chain: 'base-ecosystem',
-      contractAddress: '0x9999999999999999999999999999999999999999',
+      contractAddress: '0x9999999999999999999999999999' + Math.floor(Date.now() / 1000).toString(16).padStart(12, '0'),
       projectName: 'Base Bull Inu',
       websiteUrl: 'https://basebull.xyz',
       xUrl: 'https://x.com/basebull',
@@ -56,7 +56,7 @@ async function runFullTest() {
 
   // 11. Admin Audit Trail
   const logs = await (await fetch('http://localhost:5000/api/admin/logs?limit=5', {
-    headers: { 'x-admin-key': 'bulladmin' }
+    headers: { 'x-admin-key': process.env.ADMIN_API_KEY || 'bulladmin' }
   })).json();
   console.log('11. Admin Audit Logs (admin_logs):', logs.count > 0 ? `PASS (${logs.count} audit logs found)` : 'FAIL');
 

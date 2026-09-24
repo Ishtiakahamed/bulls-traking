@@ -23,6 +23,8 @@ const { initWebSocketServer } = require('./backend/websocket/wsServer');
 const { startLivePriceStreamer } = require('./backend/websocket/livePriceStreamer');
 const apiRoutes = require('./backend/routes');
 const errorHandler = require('./backend/middleware/errorHandler');
+const helmet = require('helmet');
+const { standardLimiter } = require('./backend/middleware/rateLimiters');
 
 const app = express();
 const PORT = process.env.PORT || config.port || 5000;
@@ -36,6 +38,10 @@ try {
 
 // Middlewares
 app.use(cors());
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+app.use(standardLimiter);
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 

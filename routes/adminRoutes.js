@@ -10,11 +10,21 @@ const {
 } = require('../services/adminService');
 const { syncMarketData } = require('../services/marketWorker');
 
+const crypto = require('crypto');
+
+function verifyAdminSecret(providedKey) {
+  const secret = process.env.ADMIN_API_KEY;
+  if (!secret || !providedKey || typeof providedKey !== 'string') return false;
+  const a = Buffer.from(providedKey);
+  const b = Buffer.from(secret);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
 // Admin auth middleware check (x-admin-key required for /admin routes)
 router.use('/admin', (req, res, next) => {
   const adminKey = req.headers['x-admin-key'] || req.query.admin_key || req.query.key;
-  const validKey = process.env.ADMIN_API_KEY || 'bulls_admin_secret_key';
-  if (!adminKey || (adminKey !== validKey && adminKey !== 'Ishtiak734@' && adminKey !== 'bulladmin' && adminKey !== 'bulltrack2026' && adminKey !== 'bulls_admin_secret_key')) {
+  if (!verifyAdminSecret(adminKey)) {
     return res.status(401).json({ success: false, error: 'Unauthorized: valid x-admin-key header required' });
   }
   next();

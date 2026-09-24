@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { scanTokenSecurity } = require('../services/securityService');
+const { strictLimiter } = require('../backend/middleware/rateLimiters');
 
-router.get('/security/scan', async (req, res) => {
+router.get('/security/scan', strictLimiter, async (req, res) => {
   try {
     const { chain = 'binance-smart-chain', address } = req.query;
     if (!address) {

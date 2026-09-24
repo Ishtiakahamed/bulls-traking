@@ -124,10 +124,10 @@ function getTokenDetail(idOrAddress) {
  */
 function getTickerMovers() {
   return query(`
-    SELECT symbol, name, price, price_change_24h 
+    SELECT symbol, name, price, change_24h AS price_change_24h 
     FROM tokens 
-    WHERE status = 'active'
-    ORDER BY ABS(price_change_24h) DESC 
+    WHERE is_active = 1
+    ORDER BY ABS(change_24h) DESC 
     LIMIT 16
   `);
 }

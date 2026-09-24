@@ -110,7 +110,7 @@ async function runPhase3Tests() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-admin-key': 'bulls_admin_secret_key'
+        'x-admin-key': process.env.ADMIN_API_KEY || 'Ishtiak734@'
       },
       body: JSON.stringify({
         title: testTitle,
@@ -135,7 +135,7 @@ async function runPhase3Tests() {
 
     // Accepted with valid key
     const resAuth = await fetch(`${BASE_URL}/admin/submissions`, {
-      headers: { 'x-admin-key': 'bulls_admin_secret_key' }
+      headers: { 'x-admin-key': process.env.ADMIN_API_KEY || 'Ishtiak734@' }
     });
     assert.strictEqual(resAuth.status, 200);
   });

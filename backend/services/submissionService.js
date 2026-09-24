@@ -209,12 +209,18 @@ async function processSubmission(data) {
  * Get submission status
  */
 function getSubmissionById(submissionId) {
-  return queryOne(`
+  const row = queryOne(`
     SELECT ts.*, t.symbol, t.price, t.listing_status 
     FROM token_submissions ts
     LEFT JOIN tokens t ON ts.token_id = t.id
     WHERE ts.id = ?
   `, [submissionId]);
+  if (!row) return null;
+  return {
+    ...row,
+    currentStep: row.status === 'LIVE' ? 'LIVE' : (row.status || 'PENDING'),
+    celebrationMessage: 'Token is live on Bulls Traking!'
+  };
 }
 
 module.exports = {

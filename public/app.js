@@ -50,6 +50,24 @@ const escapeHtml = (s) => (s || '').toString().replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
 
+const sanitizeUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return parsed.href;
+    }
+    return '';
+  } catch (e) {
+    if (trimmed.startsWith('#/') || (trimmed.startsWith('/') && !trimmed.startsWith('//')) || trimmed.startsWith('assets/')) {
+      return trimmed;
+    }
+    return '';
+  }
+};
+
 const debounce = (fn, ms) => {
   let t;
   return (...a) => {
@@ -291,33 +309,37 @@ function renderSourceBadge(t) {
 function renderSocialLinks(t) {
   const links = [];
 
-  if (t.website_url) {
+  const safeWeb = sanitizeUrl(t.website_url);
+  if (safeWeb) {
     links.push(`
-      <a href="${escapeHtml(t.website_url)}" target="_blank" rel="noopener noreferrer" class="social-btn web" title="Website" onclick="event.stopPropagation();">
+      <a href="${escapeHtml(safeWeb)}" target="_blank" rel="noopener noreferrer sponsored" class="social-btn web" title="Website" onclick="event.stopPropagation();">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       </a>
     `);
   }
 
-  if (t.x_url) {
+  const safeX = sanitizeUrl(t.x_url);
+  if (safeX) {
     links.push(`
-      <a href="${escapeHtml(t.x_url)}" target="_blank" rel="noopener noreferrer" class="social-btn x" title="X / Twitter" onclick="event.stopPropagation();">
+      <a href="${escapeHtml(safeX)}" target="_blank" rel="noopener noreferrer sponsored" class="social-btn x" title="X / Twitter" onclick="event.stopPropagation();">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
       </a>
     `);
   }
 
-  if (t.telegram_url) {
+  const safeTg = sanitizeUrl(t.telegram_url);
+  if (safeTg) {
     links.push(`
-      <a href="${escapeHtml(t.telegram_url)}" target="_blank" rel="noopener noreferrer" class="social-btn tg" title="Telegram Community" onclick="event.stopPropagation();">
+      <a href="${escapeHtml(safeTg)}" target="_blank" rel="noopener noreferrer sponsored" class="social-btn tg" title="Telegram Community" onclick="event.stopPropagation();">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
       </a>
     `);
   }
 
-  if (t.reddit_url) {
+  const safeReddit = sanitizeUrl(t.reddit_url);
+  if (safeReddit) {
     links.push(`
-      <a href="${escapeHtml(t.reddit_url)}" target="_blank" rel="noopener noreferrer" class="social-btn reddit" title="Reddit Community" onclick="event.stopPropagation();">
+      <a href="${escapeHtml(safeReddit)}" target="_blank" rel="noopener noreferrer sponsored" class="social-btn reddit" title="Reddit Community" onclick="event.stopPropagation();">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.56 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.702zM9.25 12C8.56 12 8 12.56 8 13.25c0 .687.56 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
       </a>
     `);
@@ -351,11 +373,11 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
 
     return `
       <tr data-token-symbol="${escapeHtml(t.symbol)}" data-token-id="${t.id}" onclick="location.hash='#/token/${t.id}'">
-        <td class="cell-star" onclick="event.stopPropagation();">
+        <td class="col-star cell-star" onclick="event.stopPropagation();">
           <button class="watch-star ${starred ? 'is-active' : ''}" data-token-id="${t.id}" title="${starred ? 'Remove from Watchlist' : 'Add to Watchlist'}" onclick="event.stopPropagation(); toggleWatchlist('${t.id}', this)">★</button>
         </td>
-        <td>${t.market_cap_rank || idx + 1}</td>
-        <td>
+        <td class="col-rank">${t.market_cap_rank || idx + 1}</td>
+        <td class="col-token">
           <div class="token-cell">
             <img src="${escapeHtml(normalizeTokenLogo(t.logo_url, t.symbol, t.name))}" alt="${escapeHtml(t.symbol)}" class="token-avatar" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(t.symbol)}', '${escapeHtml(t.name)}');">
             <div class="token-meta">
@@ -373,9 +395,9 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
             </div>
           </div>
         </td>
-        <td class="cell-price"><b>${fmtPrice(t.price)}</b></td>
+        <td class="col-price cell-price"><b>${fmtPrice(t.price)}</b></td>
         <td class="col-1h">${fmtChg(t.change_1h)}</td>
-        <td class="cell-change">${fmtChg(t.change_24h)}</td>
+        <td class="col-24h cell-change">${fmtChg(t.change_24h)}</td>
         <td class="col-7d">${fmtChg(t.change_7d)}</td>
         <td class="col-6h">${chg6h}</td>
         <td class="col-txn">${txnCount}</td>
@@ -485,12 +507,12 @@ function renderHomeSkeleton() {
       <table>
         <thead>
           <tr>
-            <th style="width:32px;"></th>
-            <th>#</th>
-            <th>Token</th>
-            <th>Price</th>
+            <th class="col-star" style="width:32px;"></th>
+            <th class="col-rank">#</th>
+            <th class="col-token">Token</th>
+            <th class="col-price">Price</th>
             <th class="col-1h">1h</th>
-            <th>24h</th>
+            <th class="col-24h">24h</th>
             <th class="col-7d">7d</th>
             <th class="col-6h">6h</th>
             <th class="col-txn">TXN</th>
@@ -529,11 +551,12 @@ function getBannerSlotHtml(banner, slotNum) {
   const defaultPrice = slotNum === 2 ? '$199/7D' : '$149/7D';
 
   if (hasBanner) {
-    const targetUrl = banner.target_url || '#/promote';
+    const rawTarget = banner.target_url || '#/promote';
+    const targetUrl = sanitizeUrl(rawTarget) || '#/promote';
     const title = banner.title || 'Sponsored Partner';
     const clickAttr = banner.id ? `onclick="handleBannerClick(event, ${banner.id})"` : '';
     return `
-      <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener sponsored" class="banner-strip-item banner-strip-link" data-banner-id="${banner.id || ''}" ${clickAttr} title="${escapeHtml(title)}">
+      <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="banner-strip-item banner-strip-link" data-banner-id="${banner.id || ''}" ${clickAttr} title="${escapeHtml(title)}">
         <img src="${escapeHtml(bannerImg)}" alt="${escapeHtml(title)}" class="banner-strip-img" onerror="this.onerror=null; this.parentElement.className='banner-strip-item banner-strip-placeholder'; this.parentElement.removeAttribute('target'); this.parentElement.href='#/promote?type=banner&slot=${slotNum}'; this.parentElement.innerHTML='<div class=\\'banner-placeholder-text\\'><span class=\\'banner-placeholder-title\\'>Advertise in this spot</span><span class=\\'banner-placeholder-sub\\'>Book Slot #${slotNum} &bull; ${defaultPrice} &rarr;</span></div>';" />
       </a>
     `;
@@ -606,14 +629,15 @@ function renderBannerAd(banner, slotPlacement = 'homepage_banner') {
     return '';
   }
 
-  const targetUrl = banner.target_url || '#/promote';
+  const rawTarget = banner.target_url || '#/promote';
+  const targetUrl = sanitizeUrl(rawTarget) || '#/promote';
   const ctaText = banner.cta_text || 'Learn More →';
   const title = banner.title;
   const desc = banner.description || '';
   const bannerImg = banner.banner_image || banner.image_url || banner.logo_url;
   const clickHandler = banner.id ? `onclick="trackBannerClick(${banner.id})"` : '';
   const isExternal = targetUrl.startsWith('http://') || targetUrl.startsWith('https://');
-  const targetAttr = isExternal ? 'target="_blank" rel="noopener sponsored"' : '';
+  const targetAttr = isExternal ? 'target="_blank" rel="noopener noreferrer sponsored"' : '';
 
   // If full banner graphic without text is uploaded
   if (bannerImg && !banner.title && !banner.description) {
@@ -669,7 +693,8 @@ function buildHomeUI(data) {
 
   function renderPromotedCard(p) {
     const chainName = formatChainLabel(p.chain);
-    const tradeUrl = p.auto_trading_url || (p.contract_address ? `https://dexscreener.com/search?q=${encodeURIComponent(p.contract_address)}` : null);
+    const rawTrade = p.auto_trading_url || (p.contract_address ? `https://dexscreener.com/search?q=${encodeURIComponent(p.contract_address)}` : null);
+    const tradeUrl = rawTrade ? sanitizeUrl(rawTrade) : null;
 
     return `
       <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
@@ -681,7 +706,7 @@ function buildHomeUI(data) {
             </div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
               <span style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(chainName)}</span>
-              ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">Trade ↗</a>` : ''}
+              ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">Trade ↗</a>` : ''}
             </div>
           </div>
         </div>
@@ -749,12 +774,12 @@ function buildHomeUI(data) {
       <table>
         <thead>
           <tr>
-            <th style="width:32px;"></th>
-            <th>#</th>
-            <th>Token</th>
-            <th>Price</th>
+            <th class="col-star" style="width:32px;"></th>
+            <th class="col-rank">#</th>
+            <th class="col-token">Token</th>
+            <th class="col-price">Price</th>
             <th class="col-1h">1h</th>
-            <th>24h</th>
+            <th class="col-24h">24h</th>
             <th class="col-7d">7d</th>
             <th class="col-6h">6h</th>
             <th class="col-txn">TXN</th>
@@ -946,8 +971,8 @@ async function renderTopCoins() {
       <table>
         <thead>
           <tr>
-            <th style="width:32px;"></th>
-            <th>Rank</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-star" style="width:32px;"></th>
+            <th class="col-rank">Rank</th><th class="col-token">Token</th><th class="col-price">Price</th><th class="col-1h">1h</th><th class="col-24h">24h</th><th class="col-7d">7d</th>
             <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
             <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
@@ -1015,8 +1040,8 @@ async function renderNewCoins() {
       <table>
         <thead>
           <tr>
-            <th style="width:32px;"></th>
-            <th>#</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-star" style="width:32px;"></th>
+            <th class="col-rank">#</th><th class="col-token">Token</th><th class="col-price">Price</th><th class="col-1h">1h</th><th class="col-24h">24h</th><th class="col-7d">7d</th>
             <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
             <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
@@ -1084,8 +1109,8 @@ async function renderHotCoins() {
       <table>
         <thead>
           <tr>
-            <th style="width:32px;"></th>
-            <th>#</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-star" style="width:32px;"></th>
+            <th class="col-rank">#</th><th class="col-token">Token</th><th class="col-price">Price</th><th class="col-1h">1h</th><th class="col-24h">24h</th><th class="col-7d">7d</th>
             <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
             <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
@@ -1153,8 +1178,8 @@ async function renderGainers() {
       <table>
         <thead>
           <tr>
-            <th style="width:32px;"></th>
-            <th>#</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-star" style="width:32px;"></th>
+            <th class="col-rank">#</th><th class="col-token">Token</th><th class="col-price">Price</th><th class="col-1h">1h</th><th class="col-24h">24h</th><th class="col-7d">7d</th>
             <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
             <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
@@ -1246,8 +1271,8 @@ async function renderPromotedPage() {
       <table>
         <thead>
           <tr>
-            <th style="width:32px;"></th>
-            <th>#</th><th>Token</th><th>Price</th><th class="col-1h">1h</th><th>24h</th><th class="col-7d">7d</th>
+            <th class="col-star" style="width:32px;"></th>
+            <th class="col-rank">#</th><th class="col-token">Token</th><th class="col-price">Price</th><th class="col-1h">1h</th><th class="col-24h">24h</th><th class="col-7d">7d</th>
             <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
             <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
           </tr>
@@ -3055,9 +3080,12 @@ async function renderTokenDetail(idOrAddress) {
     }
 
     const socials = [];
-    if (t.website_url) socials.push(`<a href="${escapeHtml(t.website_url)}" target="_blank" rel="noopener">Website</a>`);
-    if (t.x_url) socials.push(`<a href="${escapeHtml(t.x_url)}" target="_blank" rel="noopener">X (Twitter)</a>`);
-    if (t.telegram_url) socials.push(`<a href="${escapeHtml(t.telegram_url)}" target="_blank" rel="noopener">Telegram</a>`);
+    const safeWeb = sanitizeUrl(t.website_url);
+    if (safeWeb) socials.push(`<a href="${escapeHtml(safeWeb)}" target="_blank" rel="noopener noreferrer sponsored">Website</a>`);
+    const safeX = sanitizeUrl(t.x_url);
+    if (safeX) socials.push(`<a href="${escapeHtml(safeX)}" target="_blank" rel="noopener noreferrer sponsored">X (Twitter)</a>`);
+    const safeTg = sanitizeUrl(t.telegram_url);
+    if (safeTg) socials.push(`<a href="${escapeHtml(safeTg)}" target="_blank" rel="noopener noreferrer sponsored">Telegram</a>`);
 
     // Dynamic SEO
     document.title = `${t.name} ($${t.symbol}) Price, Market Cap & Data | Bulls Traking`;
@@ -3180,6 +3208,7 @@ let newPairsState = {
 };
 
 let radarAutoRefreshTimer = null;
+const seenRadarPairIds = new Set();
 
 async function renderNewPairs() {
   document.title = 'New Pairs Radar | Bulls Traking';
@@ -3199,18 +3228,18 @@ async function renderNewPairs() {
 
     <!-- PAIRS TABLE -->
     <div class="table-wrap">
-      <table>
+      <table class="radar-table" id="radarTable">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Token / Pool</th>
-            <th>Price</th>
-            <th>Liquidity</th>
-            <th>24h Volume</th>
+            <th class="col-radar-rank col-rank">#</th>
+            <th class="col-radar-token col-token">Token / Pool</th>
+            <th class="col-radar-price col-price">Price</th>
+            <th class="col-radar-liq col-lp">Liquidity</th>
+            <th class="col-radar-vol col-vol">24h Volume</th>
             <th class="col-radar-txn">24h TXN</th>
-            <th>Pair Age</th>
+            <th class="col-radar-age">Pair Age</th>
             <th class="col-radar-eco">Ecosystem</th>
-            <th>Actions</th>
+            <th class="col-radar-actions col-actions">Actions</th>
           </tr>
         </thead>
         <tbody id="radarTableBody">
@@ -3229,6 +3258,7 @@ async function renderNewPairs() {
     if (!tabEl) return;
     newPairsState.tab = tabEl.dataset.tab;
     newPairsState.page = 1;
+    seenRadarPairIds.clear();
     renderNewPairs();
   });
 
@@ -3236,6 +3266,7 @@ async function renderNewPairs() {
   if (btnRefresh) {
     btnRefresh.addEventListener('click', () => {
       newPairsState.page = 1;
+      seenRadarPairIds.clear();
       loadRadarPairs(false, true);
     });
   }
@@ -3297,10 +3328,15 @@ function renderSingleRadarRow(p, idx = 0, isNew = false) {
   const rowClass = isNew ? 'row-new-pair' : '';
   const pairId = p.pair_address || p.token_address;
 
+  const safePoolUrl = sanitizeUrl(poolUrl);
+  const safeTwitter = sanitizeUrl(p.twitter_url);
+  const safeTg = sanitizeUrl(p.telegram_url);
+  const safeWeb = sanitizeUrl(p.website_url);
+
   return `
     <tr data-pair-id="${escapeHtml(pairId)}" class="${rowClass}">
-      <td>${idx + 1}</td>
-      <td>
+      <td class="col-radar-rank col-rank">${idx + 1}</td>
+      <td class="col-radar-token col-token">
         <div class="token-cell">
           <img src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
           <div>
@@ -3310,23 +3346,24 @@ function renderSingleRadarRow(p, idx = 0, isNew = false) {
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
               <span class="token-sym">${escapeHtml(p.symbol)}</span>
-              ${p.twitter_url ? `<a href="${escapeHtml(p.twitter_url)}" target="_blank" rel="noopener" class="token-social-link" title="Twitter / X"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>` : ''}
-              ${p.telegram_url ? `<a href="${escapeHtml(p.telegram_url)}" target="_blank" rel="noopener" class="token-social-link" title="Telegram"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg></a>` : ''}
-              ${p.website_url ? `<a href="${escapeHtml(p.website_url)}" target="_blank" rel="noopener" class="token-social-link" title="Website"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>` : ''}
+              ${safeTwitter ? `<a href="${escapeHtml(safeTwitter)}" target="_blank" rel="noopener noreferrer sponsored" class="token-social-link" title="Twitter / X"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>` : ''}
+              ${safeTg ? `<a href="${escapeHtml(safeTg)}" target="_blank" rel="noopener noreferrer sponsored" class="token-social-link" title="Telegram"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg></a>` : ''}
+              ${safeWeb ? `<a href="${escapeHtml(safeWeb)}" target="_blank" rel="noopener noreferrer sponsored" class="token-social-link" title="Website"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>` : ''}
             </div>
+            <div class="radar-mobile-subinfo"><span class="pair-age-pill">${age}</span>${freshBadge}</div>
           </div>
         </div>
       </td>
-      <td><b>${fmtPrice(p.price)}</b></td>
-      <td>${fmtUsd(p.liquidity)}</td>
-      <td>${fmtUsd(p.volume_24h)}</td>
+      <td class="col-radar-price col-price"><b>${fmtPrice(p.price)}</b></td>
+      <td class="col-radar-liq col-lp">${fmtUsd(p.liquidity)}</td>
+      <td class="col-radar-vol col-vol">${fmtUsd(p.volume_24h)}</td>
       <td class="col-radar-txn">${txns}</td>
-      <td><span class="pair-age-pill">${age}</span>${freshBadge}</td>
+      <td class="col-radar-age"><span class="pair-age-pill">${age}</span>${freshBadge}</td>
       <td class="col-radar-eco"><span class="chain-badge chain-${escapeHtml(p.chain || '')}">${chainLabel}</span></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost" style="padding:2px 8px;font-size:11px;">Scan</a>
-          <a href="${poolUrl}" target="_blank" rel="noopener" class="btn-ghost" style="padding:3px 8px;font-size:11px;text-decoration:none;">View Pool</a>
+      <td class="col-radar-actions col-actions">
+        <div>
+          <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost">Scan</a>
+          ${safePoolUrl ? `<a href="${escapeHtml(safePoolUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="btn-ghost">View Pool</a>` : ''}
           <button class="btn-copy-address" data-address="${escapeHtml(p.token_address || p.pair_address)}" title="Copy Contract Address" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:2px 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
       </td>
@@ -3368,13 +3405,18 @@ async function loadRadarPairs(silent = false, isManual = false) {
       const newFirstId = pairs[0].pair_address || pairs[0].token_address;
 
       if (currentFirstId && currentFirstId !== newFirstId) {
-        // Collect existing IDs to identify truly new pairs
-        const existingIds = new Set(Array.from(tbody.querySelectorAll('tr[data-pair-id]')).map(r => r.dataset.pairId));
         tbody.innerHTML = pairs.map((p, idx) => {
           const id = p.pair_address || p.token_address;
-          const isFresh = !existingIds.has(id);
+          const isFresh = id && !seenRadarPairIds.has(id);
+          if (id) seenRadarPairIds.add(id);
           return renderSingleRadarRow(p, idx, isFresh);
         }).join('');
+
+        setTimeout(() => {
+          if (tbody) {
+            tbody.querySelectorAll('.row-new-pair').forEach(el => el.classList.remove('row-new-pair'));
+          }
+        }, 3000);
 
         const feedbackEl = document.getElementById('radarLiveFeedback');
         if (feedbackEl) {
@@ -3387,6 +3429,10 @@ async function loadRadarPairs(silent = false, isManual = false) {
         tbody.innerHTML = renderRadarRows(pairs, 0);
       }
     } else {
+      pairs.forEach(p => {
+        const id = p.pair_address || p.token_address;
+        if (id) seenRadarPairIds.add(id);
+      });
       tbody.innerHTML = renderRadarRows(pairs, 0);
     }
 
@@ -3404,6 +3450,10 @@ async function loadRadarPairs(silent = false, isManual = false) {
             const nextPairs = nextRes.pairs || [];
             if (nextPairs.length > 0) {
               const startIdx = (newPairsState.page - 1) * newPairsState.limit;
+              nextPairs.forEach(p => {
+                const id = p.pair_address || p.token_address;
+                if (id) seenRadarPairIds.add(id);
+              });
               tbody.insertAdjacentHTML('beforeend', nextPairs.map((p, idx) => renderSingleRadarRow(p, startIdx + idx, false)).join(''));
             }
             if (nextPairs.length < newPairsState.limit) {
@@ -3453,8 +3503,15 @@ function handleLiveNewPair(p) {
   if (emptyRow) tbody.innerHTML = '';
 
   // Render and prepend new row with glowing animation
+  seenRadarPairIds.add(pairId);
   const rowHtml = renderSingleRadarRow(p, 0, true);
   tbody.insertAdjacentHTML('afterbegin', rowHtml);
+
+  // Auto-remove green glow animation after 3 seconds
+  setTimeout(() => {
+    const newRow = tbody.querySelector(`tr[data-pair-id="${pairId}"]`);
+    if (newRow) newRow.classList.remove('row-new-pair');
+  }, 3000);
 
   // Keep table rows limited
   while (tbody.children.length > (newPairsState.limit || 25)) {
@@ -3514,12 +3571,12 @@ async function renderWatchlistPage() {
       <table>
         <thead>
           <tr>
-            <th style="width:32px;"></th>
-            <th>Rank</th>
-            <th>Token</th>
-            <th>Price</th>
+            <th class="col-star" style="width:32px;"></th>
+            <th class="col-rank">Rank</th>
+            <th class="col-token">Token</th>
+            <th class="col-price">Price</th>
             <th class="col-1h">1h</th>
-            <th>24h</th>
+            <th class="col-24h">24h</th>
             <th class="col-7d">7d</th>
             <th class="col-6h">6h</th>
             <th class="col-txn">TXN</th>
@@ -4011,9 +4068,10 @@ function initWebSocket() {
 function handleLivePriceUpdate(data) {
   const { symbol, price, change24h, direction } = data;
   if (!symbol) return;
+  const safeSym = (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(symbol) : symbol.replace(/["\\]/g, '\\$&');
 
   // 1. Update Table Rows with visual flash
-  const rows = document.querySelectorAll(`tr[data-token-symbol="${symbol}"]`);
+  const rows = document.querySelectorAll(`tr[data-token-symbol="${safeSym}"]`);
   rows.forEach(row => {
     const priceCell = row.querySelector('.cell-price');
     const changeCell = row.querySelector('.cell-change');
@@ -4033,7 +4091,7 @@ function handleLivePriceUpdate(data) {
   });
 
   // 2. Update Ticker Tape items in real-time
-  const tickers = document.querySelectorAll(`.tape-item[data-ticker-symbol="${symbol}"]`);
+  const tickers = document.querySelectorAll(`.tape-item[data-ticker-symbol="${safeSym}"]`);
   tickers.forEach(item => {
     const priceSpan = item.querySelector('.ticker-price');
     if (priceSpan) {

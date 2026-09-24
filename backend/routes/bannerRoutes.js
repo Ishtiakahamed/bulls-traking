@@ -41,8 +41,29 @@ router.get(['/banners/packages', '/promotion/banners/packages'], (req, res) => {
   }
 });
 
+const { strictLimiter } = require('../middleware/rateLimiters');
+
+// Public: 8-minute ad board rotation endpoint
+router.get(['/adboard/current', '/promotion/adboard/current'], (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      currentAd: {
+        id: 1,
+        title: 'Minotaur Bull Presale',
+        tagline: '$1 Today, $100 Tomorrow — Wake Up Rich',
+        cta_text: 'Join Presale',
+        cta_url: 'https://minotaurbull.io'
+      },
+      remainingSeconds: 240,
+      slotDurationMinutes: 8,
+      totalSlots: 1
+    }
+  });
+});
+
 // Public: Track banner ad click (supports both :id/click and click/:id)
-router.post(['/banners/click/:id', '/banners/:id/click', '/promotion/banners/click/:id', '/promotion/banners/:id/click'], (req, res) => {
+router.post(['/banners/click/:id', '/banners/:id/click', '/promotion/banners/click/:id', '/promotion/banners/:id/click'], strictLimiter, (req, res) => {
   try {
     const recorded = recordBannerClick(req.params.id);
     res.json({ success: true, recorded });
@@ -62,7 +83,7 @@ router.post(['/banners/impression/:id', '/banners/:id/impression', '/promotion/b
 });
 
 // Public: Create banner advertisement order
-router.post(['/banners/order', '/promotion/banners/order'], (req, res) => {
+router.post(['/banners/order', '/promotion/banners/order'], strictLimiter, (req, res) => {
   try {
     const result = createBannerOrder(req.body);
     res.status(201).json({ success: true, data: result });

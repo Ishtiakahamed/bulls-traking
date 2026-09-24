@@ -49,14 +49,19 @@ router.get('/health', (req, res) => {
 router.get('/home', handleGetHomeData);
 
 const legacyPromotionRoutes = require('../../routes/promotionRoutes');
+const presaleRoutes = require('../../routes/presaleRoutes');
+const legacyTokenRoutes = require('../../routes/tokenRoutes');
 
 // Sub-routes
 router.use('/', tokenRoutes);
 router.use('/', submissionRoutes);
 router.use('/', promotionRoutes);
 router.use('/', bannerRoutes);
+router.use('/', legacyPromotionRoutes);
 router.use('/promotion', legacyPromotionRoutes);
 router.use('/promotions', legacyPromotionRoutes);
+router.use('/', presaleRoutes);
+router.use('/', legacyTokenRoutes);
 router.use('/', securityRoutes);
 router.use('/', newPairsRoutes);
 router.use('/', signalsRoutes);

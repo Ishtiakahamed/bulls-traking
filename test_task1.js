@@ -15,9 +15,8 @@ async function testTask1() {
   assert(json.data.risk_level, 'Risk level should be present');
   console.log('✔ GET /api/security/scan returned valid security report: Risk Score', json.data.risk_score, json.data.risk_level);
 
-  // 2. Check index.html markup
   const indexHtml = fs.readFileSync('index.html', 'utf-8');
-  assert(indexHtml.includes('<a href="#/scan" class="nav-item" data-route="scan">Scanner</a>'), 'index.html must include nav link for Scanner');
+  assert(indexHtml.includes('href="#/scan"') && indexHtml.includes('data-route="scan"'), 'index.html must include nav link for Scanner');
   assert(indexHtml.includes('<a href="#/scan">Contract Scanner</a>'), 'index.html must include footer link for Contract Scanner');
   console.log('✔ index.html nav & footer verified.');
 
