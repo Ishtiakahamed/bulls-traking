@@ -817,7 +817,10 @@ function renderBannerTrioGrid(topBanners) {
 }
 
 function buildHomeUI(data) {
-  updateMarketStatus(data.marketStats);
+  if (!data || typeof data !== 'object') return;
+  if (data.marketStats) {
+    updateMarketStatus(data.marketStats);
+  }
   if (data.trending && data.trending.length > 0) {
     populateTape(data.trending.slice(0, 12));
   }
@@ -1083,12 +1086,14 @@ async function renderHome() {
 
   try {
     const res = await fetchApi(`/home?chain=${homeState.chain}&limit=20&page=1`);
-    const data = res.data;
-    state.homeData = data;
-    try {
-      sessionStorage.setItem('bulls_home_cache', JSON.stringify(data));
-    } catch (_) {}
-    buildHomeUI(data);
+    const data = res?.data || res;
+    if (data && (data.topCoins || data.trending)) {
+      state.homeData = data;
+      try {
+        sessionStorage.setItem('bulls_home_cache', JSON.stringify(data));
+      } catch (_) {}
+      buildHomeUI(data);
+    }
   } catch (err) {
     if (!cached) {
       app.innerHTML = `<div class="state-msg">Unable to load market data: ${escapeHtml(err.message)}</div>`;

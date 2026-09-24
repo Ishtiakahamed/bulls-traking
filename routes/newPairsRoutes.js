@@ -6,7 +6,7 @@ const { pollNewLaunches } = require('../services/stonkfunService');
 router.get('/new-pairs', async (req, res) => {
   try {
     const { chain, source, limit, offset, page, refresh } = req.query;
-    if (refresh === '1' || refresh === 'true' || process.env.VERCEL) {
+    if (refresh === '1' || refresh === 'true') {
       try {
         await Promise.allSettled([
           Promise.race([
