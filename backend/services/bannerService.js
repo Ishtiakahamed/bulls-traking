@@ -1,11 +1,12 @@
 const { query, queryOne, execute } = require('../../database/db');
 const { validateHttpsUrl, validateTextLength } = require('../utils/validators');
+const { getRotationSlot } = require('../utils/rotationScheduler');
 
 /**
- * Get active approved banners for each placement slot
+ * Get active approved banners for each placement slot with deterministic UTC rotation
  * Fallback to an elegant placeholder if no sponsor is currently active
  */
-function getActiveBanners() {
+function getActiveBanners(nowUtc = new Date()) {
   const sql = `
     SELECT bo.*, t.name AS token_name, t.symbol AS token_symbol, t.logo_url AS token_logo
     FROM banner_orders bo
@@ -29,23 +30,36 @@ function getActiveBanners() {
     const found = activeList.find(b => b.placement === placement);
     if (found) {
       const img = found.banner_image || found.banner_url || null;
+      const target = found.target_url || '#/promote';
       return {
         ...found,
+        orderId: found.id,
+        imageUrl: img,
         banner_url: img,
         banner_image: img,
-        is_placeholder: false
+        targetUrl: target,
+        target_url: target,
+        startAt: found.start_at,
+        endAt: found.end_at,
+        activatedAt: found.start_at || found.created_at,
+        is_placeholder: false,
+        isActive: true
       };
     }
     // High-converting placeholder slot
     return {
       id: null,
+      orderId: null,
       title: defaultTitle,
+      imageUrl: null,
       banner_url: null,
       banner_image: null,
+      targetUrl: '#/promote',
       target_url: '#/promote',
       placement,
       price: defaultPrice,
       is_placeholder: true,
+      isActive: false,
       cta_text: defaultCta
     };
   };
@@ -54,8 +68,54 @@ function getActiveBanners() {
   const slot2 = findSlot('top_banner_2', '🔥 Center Prime Presale Spotlight', 'Book Slot 2 ($199/7D) →', 199);
   const slot3 = findSlot('top_banner_3', '⚡ Alpha Calls & Live Signals', 'Book Slot 3 ($149/7D) →', 149);
   const homeBanner = findSlot('homepage_banner', '⚡ Verified Token Promotion — 1-Click DEX Volume', 'Book In-Feed Banner ($299/7D) →', 299);
+  const radarBanner = findSlot('radar_banner', '📡 New Pairs Radar Sponsorship', 'Book Radar Banner ($149/7D) →', 149);
+
+  // Filter paid & approved top banners for deterministic 24h rotation
+  const activeTopBanners = activeList.filter(b => 
+    ['top_banner_1', 'top_banner_2', 'top_banner_3', 'top_banner'].includes(b.placement)
+  );
+
+  // Deterministic sort: priority DESC, id ASC
+  activeTopBanners.sort((a, b) => (b.priority || 0) - (a.priority || 0) || a.id - b.id);
+
+  const rotationItems = activeTopBanners.length > 0
+    ? activeTopBanners.map((b, idx) => ({
+        ...b,
+        orderId: b.id,
+        imageUrl: b.banner_image || b.banner_url,
+        banner_url: b.banner_image || b.banner_url,
+        banner_image: b.banner_image || b.banner_url,
+        targetUrl: b.target_url,
+        target_url: b.target_url,
+        startAt: b.start_at,
+        endAt: b.end_at,
+        scheduleIndex: idx,
+        is_placeholder: false,
+        isActive: true
+      }))
+    : [slot1];
+
+  const rotation = getRotationSlot({
+    items: rotationItems,
+    nowUtc,
+    cycleHours: 24,
+    minSlotMinutes: 0
+  });
+
+  const activeMobileBanner = rotation.activeItem || slot1;
 
   return {
+    desktop: [slot1, slot2, slot3],
+    mobile: activeMobileBanner,
+    rotation: {
+      timezone: 'UTC',
+      cycleHours: 24,
+      activeSlotIndex: rotation.activeSlotIndex,
+      slotStart: rotation.slotStart,
+      slotEnd: rotation.slotEnd,
+      slotDurationHours: rotation.slotDurationHours,
+      totalActiveCount: activeTopBanners.length
+    },
     top_banners: [slot1, slot2, slot3],
     top_banner_1: slot1,
     top_banner_2: slot2,
@@ -64,7 +124,7 @@ function getActiveBanners() {
     homepage_banner: slot2,
     presale_banner: slot3,
     in_feed_banner: homeBanner,
-    radar_banner: findSlot('radar_banner', '📡 New Pairs Radar Sponsorship', 'Book Radar Banner ($149/7D) →', 149)
+    radar_banner: radarBanner
   };
 }
 

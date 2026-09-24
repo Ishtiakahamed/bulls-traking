@@ -1,5 +1,6 @@
 const {
   getActivePromotions,
+  getActivePromotedTokens,
   createPromotionOrder,
   activatePromotionFromOrder,
   getOrderById
@@ -12,8 +13,15 @@ const {
 
 function handleGetPromotions(req, res, next) {
   try {
-    const promotions = getActivePromotions();
-    res.json({ success: true, count: promotions.length, data: promotions });
+    const rot = getActivePromotedTokens();
+    res.json({
+      success: true,
+      count: rot.promotions.length,
+      data: rot.promotions,
+      mobile: rot.mobile,
+      desktop: rot.desktop,
+      rotation: rot.rotation
+    });
   } catch (err) {
     next(err);
   }

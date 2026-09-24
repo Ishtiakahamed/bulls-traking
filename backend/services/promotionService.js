@@ -2,6 +2,7 @@ const { query, queryOne, execute, transaction } = require('../../database/db');
 const { generateAutoTradeLinks } = require('../utils/tradeLinks');
 const { PROMOTION_PACKAGES, getTreasuryAddresses, createGatewayInvoice } = require('./cryptoPaymentService');
 const { validateHttpsUrl, validateContractAddress, validateTextLength } = require('../utils/validators');
+const { getRotationSlot } = require('../utils/rotationScheduler');
 
 /**
  * Get active promoted tokens (Section 15, 46)
@@ -13,6 +14,9 @@ function getActivePromotions() {
       p.id AS promotion_id,
       p.package_name,
       p.priority,
+      p.start_at,
+      p.end_at,
+      p.created_at,
       p.auto_trading_url,
       COALESCE(p.reddit_url, t.reddit_url) AS reddit_url,
       t.id AS token_id,
@@ -40,8 +44,65 @@ function getActivePromotions() {
 }
 
 /**
- * Create a new promotion order (Section 40)
+ * Deterministic UTC Promoted Token equal-share rotation service
+ * Nominal share = 24 / N hours. Minimum slot duration = minSlotMinutes (default 30).
  */
+function getActivePromotedTokens(options = {}) {
+  const {
+    nowUtc = new Date(),
+    cycleHours = 24,
+    minSlotMinutes = 30
+  } = options;
+
+  const rawPromotions = getActivePromotions();
+  // Deterministic sorting: priority DESC, start_at ASC, id ASC
+  const sortedTokens = rawPromotions.slice().sort((a, b) => {
+    if ((b.priority || 0) !== (a.priority || 0)) {
+      return (b.priority || 0) - (a.priority || 0);
+    }
+    const aTime = new Date(a.start_at || a.created_at || 0).getTime();
+    const bTime = new Date(b.start_at || b.created_at || 0).getTime();
+    if (aTime !== bTime) return aTime - bTime;
+    return (a.promotion_id || a.token_id || 0) - (b.promotion_id || b.token_id || 0);
+  });
+
+  const rotation = getRotationSlot({
+    items: sortedTokens,
+    nowUtc,
+    cycleHours,
+    minSlotMinutes
+  });
+
+  const activeMobileToken = rotation.activeItem ? {
+    token: rotation.activeItem,
+    visibleFrom: rotation.slotStart,
+    visibleUntil: rotation.slotEnd,
+    slotDurationMinutes: rotation.slotDurationMinutes
+  } : null;
+
+  const desktopTokens = sortedTokens.map((t, idx) => ({
+    ...t,
+    scheduleIndex: idx,
+    visibleFrom: rotation.slotStart,
+    visibleUntil: rotation.slotEnd
+  }));
+
+  return {
+    promotions: sortedTokens,
+    mobile: activeMobileToken,
+    desktop: desktopTokens,
+    rotation: {
+      timezone: 'UTC',
+      cycleHours,
+      activeCount: sortedTokens.length,
+      activeSlotIndex: rotation.activeSlotIndex,
+      slotDurationMinutes: rotation.slotDurationMinutes,
+      slotDurationHours: rotation.slotDurationHours,
+      slotStart: rotation.slotStart,
+      slotEnd: rotation.slotEnd
+    }
+  };
+}
 async function createPromotionOrder(data) {
   const {
     tokenId,
@@ -424,6 +485,7 @@ function getActiveSpotlight() {
 
 module.exports = {
   getActivePromotions,
+  getActivePromotedTokens,
   createPromotionOrder,
   activatePromotionFromOrder,
   getOrderById,

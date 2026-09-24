@@ -15,7 +15,9 @@ const {
 // Public: Get currently active banner slots (supports both /banners/active and /promotion/banners/active)
 router.get(['/banners/active', '/promotion/banners/active'], (req, res) => {
   try {
-    const banners = getActiveBanners();
+    const timeParam = req.query.time || req.query.timestamp;
+    const nowUtc = timeParam ? new Date(timeParam) : new Date();
+    const banners = getActiveBanners(nowUtc);
     res.json({ success: true, data: banners });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

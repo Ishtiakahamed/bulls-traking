@@ -613,10 +613,11 @@ function trackBannerClick(bannerId) {
   handleBannerClick(null, bannerId);
 }
 
-function getBannerSlotHtml(banner, slotNum) {
+function getBannerSlotHtml(banner, slotNum, isMobileActive = false) {
   const bannerImg = banner?.banner_url || banner?.banner_image;
   const hasBanner = banner && bannerImg && !banner.is_placeholder;
   const defaultPrice = slotNum === 2 ? '$199/7D' : '$149/7D';
+  const mobileClass = isMobileActive ? ' is-mobile-active' : '';
 
   if (hasBanner) {
     const rawTarget = banner.target_url || '#/promote';
@@ -624,14 +625,14 @@ function getBannerSlotHtml(banner, slotNum) {
     const title = banner.title || 'Sponsored Partner';
     const clickAttr = banner.id ? `onclick="handleBannerClick(event, ${banner.id})"` : '';
     return `
-      <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="banner-strip-item banner-strip-link" data-banner-id="${banner.id || ''}" ${clickAttr} title="${escapeHtml(title)}">
-        <img src="${escapeHtml(bannerImg)}" alt="${escapeHtml(title)}" class="banner-strip-img" onerror="this.onerror=null; this.parentElement.className='banner-strip-item banner-strip-placeholder'; this.parentElement.removeAttribute('target'); this.parentElement.href='#/promote?type=banner&slot=${slotNum}'; this.parentElement.innerHTML='<div class=\\'banner-placeholder-text\\'><span class=\\'banner-placeholder-title\\'>Advertise in this spot</span><span class=\\'banner-placeholder-sub\\'>Book Slot #${slotNum} &bull; ${defaultPrice} &rarr;</span></div>';" />
+      <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="banner-strip-item banner-strip-link${mobileClass}" data-banner-id="${banner.id || ''}" ${clickAttr} title="${escapeHtml(title)}">
+        <img src="${escapeHtml(bannerImg)}" alt="${escapeHtml(title)}" class="banner-strip-img" onerror="this.onerror=null; this.parentElement.className='banner-strip-item banner-strip-placeholder${mobileClass}'; this.parentElement.removeAttribute('target'); this.parentElement.href='#/promote?type=banner&slot=${slotNum}'; this.parentElement.innerHTML='<div class=\\'banner-placeholder-text\\'><span class=\\'banner-placeholder-title\\'>Advertise in this spot</span><span class=\\'banner-placeholder-sub\\'>Book Slot #${slotNum} &bull; ${defaultPrice} &rarr;</span></div>';" />
       </a>
     `;
   }
 
   return `
-    <a href="#/promote?type=banner&slot=${slotNum}" class="banner-strip-item banner-strip-placeholder" title="Advertise in this spot">
+    <a href="#/promote?type=banner&slot=${slotNum}" class="banner-strip-item banner-strip-placeholder${mobileClass}" title="Advertise in this spot">
       <div class="banner-placeholder-text">
         <span class="banner-placeholder-title">Advertise in this spot</span>
         <span class="banner-placeholder-sub">Book Slot #${slotNum} &bull; ${defaultPrice} &rarr;</span>
@@ -668,19 +669,34 @@ async function renderSiteWideBanner(containerId, placementType = 'top_leaderboar
     const activeData = res?.data || res || {};
 
     if (placementType === 'top_leaderboard') {
+      const rot = activeData.rotation || {};
+      const activeSlotIndex = typeof rot.activeSlotIndex === 'number' && rot.activeSlotIndex >= 0 ? rot.activeSlotIndex : 0;
+
       const slots = [
-        { slotNum: 1, banner: activeData.top_banner_1 || activeData.top_banner },
-        { slotNum: 2, banner: activeData.top_banner_2 || activeData.homepage_banner },
-        { slotNum: 3, banner: activeData.top_banner_3 || activeData.presale_banner }
+        { slotNum: 1, banner: activeData.top_banner_1 || (activeData.top_banners && activeData.top_banners[0]) || activeData.top_banner },
+        { slotNum: 2, banner: activeData.top_banner_2 || (activeData.top_banners && activeData.top_banners[1]) || activeData.homepage_banner },
+        { slotNum: 3, banner: activeData.top_banner_3 || (activeData.top_banners && activeData.top_banners[2]) || activeData.presale_banner }
       ];
-      slots.forEach(({ banner }) => {
-        if (banner?.id && !banner.is_placeholder) {
-          trackBannerImpressionOnce(banner.id);
+
+      // Track impressions: On mobile viewport, track ONLY the active mobile banner
+      // On desktop, track visible banners
+      const isMobileViewport = typeof window !== 'undefined' && window.innerWidth <= 767;
+      if (isMobileViewport) {
+        const activeMobileBanner = activeData.mobile || slots[activeSlotIndex]?.banner;
+        if (activeMobileBanner?.id && !activeMobileBanner.is_placeholder) {
+          trackBannerImpressionOnce(activeMobileBanner.id);
         }
-      });
+      } else {
+        slots.forEach(({ banner }) => {
+          if (banner?.id && !banner.is_placeholder) {
+            trackBannerImpressionOnce(banner.id);
+          }
+        });
+      }
+
       container.innerHTML = `
         <div class="banner-strip banner-trio-grid" aria-label="Sponsored Banners">
-          ${slots.map(({ slotNum, banner }) => getBannerSlotHtml(banner, slotNum)).join('')}
+          ${slots.map(({ slotNum, banner }, idx) => getBannerSlotHtml(banner, slotNum, idx === activeSlotIndex)).join('')}
         </div>
       `;
       container.style.display = 'block';
@@ -809,13 +825,14 @@ function buildHomeUI(data) {
   const initialKey = homeState.tab === 'top' ? 'topCoins' : homeState.tab;
   const initialTokens = initialKey === 'new' ? mergeLocalSubmissions(data[initialKey] || []) : (data[initialKey] || []);
 
-  function renderPromotedCard(p) {
+  function renderPromotedCard(p, idx = 0) {
     const chainName = formatChainLabel(p.chain);
     const rawTrade = p.auto_trading_url || (p.contract_address ? `https://dexscreener.com/search?q=${encodeURIComponent(p.contract_address)}` : null);
     const tradeUrl = rawTrade ? sanitizeUrl(rawTrade) : null;
+    const isMobileActive = idx === (data.promotedRotation?.activeSlotIndex || data.rotation?.activeSlotIndex || 0);
 
     return `
-      <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
+      <article class="promoted-card ${isMobileActive ? 'is-mobile-active' : ''}" onclick="location.hash='#/token/${p.token_id}'">
         <div class="promoted-card-main">
           <img class="promoted-logo" src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
           <div class="promoted-card-identity">
@@ -827,6 +844,9 @@ function buildHomeUI(data) {
               <span class="chain-tag" style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(chainName)}</span>
               ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">Trade ↗</a>` : ''}
             </div>
+            <div class="promoted-socials-mobile">
+              ${renderSocialLinks(p)}
+            </div>
           </div>
         </div>
         <div class="promoted-card-metrics">
@@ -836,11 +856,11 @@ function buildHomeUI(data) {
             ${renderSocialLinks(p)}
           </div>
         </div>
-      </div>
+      </article>
     `;
   }
 
-  const promotedCards = (data.promoted || []).map(renderPromotedCard).join('');
+  const promotedCards = (data.promoted || []).map((p, idx) => renderPromotedCard(p, idx)).join('');
   const spotlightOrder = data.spotlight || null;
   const homeBannerHtml = spotlightOrder ? renderBannerAd(spotlightOrder, 'homepage_banner') : '';
 
@@ -851,10 +871,11 @@ function buildHomeUI(data) {
   }
 
   const initialBanners = data.banners || {};
+  const initialActiveIndex = initialBanners.rotation?.activeSlotIndex || 0;
   const initialSlots = [
-    getBannerSlotHtml(initialBanners.top_banner || (initialBanners.top_banners && initialBanners.top_banners[0]), 1),
-    getBannerSlotHtml(initialBanners.homepage_banner || (initialBanners.top_banners && initialBanners.top_banners[1]), 2),
-    getBannerSlotHtml(initialBanners.presale_banner || (initialBanners.top_banners && initialBanners.top_banners[2]), 3)
+    getBannerSlotHtml(initialBanners.top_banner || (initialBanners.top_banners && initialBanners.top_banners[0]), 1, initialActiveIndex === 0),
+    getBannerSlotHtml(initialBanners.homepage_banner || (initialBanners.top_banners && initialBanners.top_banners[1]), 2, initialActiveIndex === 1),
+    getBannerSlotHtml(initialBanners.presale_banner || (initialBanners.top_banners && initialBanners.top_banners[2]), 3, initialActiveIndex === 2)
   ].join('');
 
   const trioGridHtml = `
