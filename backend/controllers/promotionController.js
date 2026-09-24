@@ -104,24 +104,51 @@ async function handleVerifyTransaction(req, res, next) {
   }
 }
 
+const crypto = require('crypto');
+
 /**
  * Turnkey Gateway Webhook (NOWPayments / Cryptomus IPN callback)
+ * In this release, manual Telegram settlement is the primary operational payment workflow.
+ * Direct webhook activation is deferred and strictly protected by provider signature.
  */
 async function handleGatewayWebhook(req, res, next) {
   try {
-    const payload = req.body;
+    const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET;
+    const signature = req.headers['x-nowpayments-sig'] || req.headers['x-webhook-signature'];
+
+    // Strict signature check: if secret or signature is missing, reject
+    if (!webhookSecret || !signature) {
+      return res.status(403).json({
+        success: false,
+        error: 'Automatic webhook activation is deferred. Manual Telegram settlement with admin approval is required.'
+      });
+    }
+
+    // Verify HMAC-SHA512 signature
+    const hmac = crypto.createHmac('sha512', webhookSecret);
+    hmac.update(JSON.stringify(req.body));
+    const expectedSig = hmac.digest('hex');
+
+    if (signature !== expectedSig) {
+      return res.status(401).json({ success: false, error: 'Invalid webhook signature.' });
+    }
+
+    const payload = req.body || {};
     const orderId = payload.order_id || payload.orderId;
     const paymentStatus = (payload.payment_status || payload.status || '').toLowerCase();
     const txHash = payload.payin_hash || payload.tx_hash || null;
 
     if (!orderId) {
-      return res.status(400).json({ error: 'Missing order_id' });
+      return res.status(400).json({ success: false, error: 'Missing order_id' });
     }
 
-    console.log(`[Promotion Webhook] Received payment update for Order #${orderId}, status: ${paymentStatus}`);
+    console.log(`[Promotion Webhook] Verified payment update for Order #${orderId}, status: ${paymentStatus}`);
 
-    // If payment status is confirmed, finished, or sending
     if (paymentStatus === 'confirmed' || paymentStatus === 'finished' || paymentStatus === 'sending' || paymentStatus === 'paid') {
+      const order = getOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ success: false, error: `Order #${orderId} not found` });
+      }
       activatePromotionFromOrder(parseInt(orderId, 10), txHash);
       return res.json({ success: true, activated: true });
     }
@@ -129,7 +156,7 @@ async function handleGatewayWebhook(req, res, next) {
     res.json({ success: true, status: paymentStatus });
   } catch (err) {
     console.warn('[Promotion Webhook Error]', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
   }
 }
 

@@ -10,25 +10,10 @@ const {
 } = require('../services/adminService');
 const { syncMarketData } = require('../services/marketWorker');
 
-const crypto = require('crypto');
-
-function verifyAdminSecret(providedKey) {
-  const secret = process.env.ADMIN_API_KEY;
-  if (!secret || !providedKey || typeof providedKey !== 'string') return false;
-  const a = Buffer.from(providedKey);
-  const b = Buffer.from(secret);
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
-}
+const { verifyAdminSecret, requireAdminAuth } = require('../backend/middleware/adminAuth');
 
 // Admin auth middleware check (x-admin-key required for /admin routes)
-router.use('/admin', (req, res, next) => {
-  const adminKey = req.headers['x-admin-key'] || req.query.admin_key || req.query.key;
-  if (!verifyAdminSecret(adminKey)) {
-    return res.status(401).json({ success: false, error: 'Unauthorized: valid x-admin-key header required' });
-  }
-  next();
-});
+router.use('/admin', requireAdminAuth);
 
 router.get('/admin/submissions', (req, res) => {
   try {

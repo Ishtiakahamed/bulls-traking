@@ -1,4 +1,5 @@
 const { query, queryOne, execute } = require('../../database/db');
+const { validateHttpsUrl, validateTextLength } = require('../utils/validators');
 
 /**
  * Get active approved banners for each placement slot
@@ -10,6 +11,8 @@ function getActiveBanners() {
     FROM banner_orders bo
     LEFT JOIN tokens t ON bo.token_id = t.id
     WHERE bo.approval_status = 'approved'
+      AND bo.payment_status IN ('paid', 'completed')
+      AND bo.start_at IS NOT NULL
       AND datetime(bo.start_at) <= datetime('now')
       AND datetime(bo.end_at) >= datetime('now')
     ORDER BY bo.id DESC
@@ -25,10 +28,6 @@ function getActiveBanners() {
   const findSlot = (placement, defaultTitle, defaultCta, defaultPrice) => {
     const found = activeList.find(b => b.placement === placement);
     if (found) {
-      // Async increment impression counter
-      try {
-        execute('UPDATE banner_orders SET impression_count = COALESCE(impression_count, 0) + 1 WHERE id = ?', [found.id]);
-      } catch (_) {}
       const img = found.banner_image || found.banner_url || null;
       return {
         ...found,
@@ -105,6 +104,8 @@ function recordBannerImpression(id) {
 
 /**
  * Create a new banner advertisement order
+ * Server-authoritative: package ID dictates duration and price.
+ * Orders start in pending state (start_at and end_at are NULL) until admin activation.
  */
 function createBannerOrder(data) {
   const {
@@ -117,52 +118,75 @@ function createBannerOrder(data) {
     targetUrl,
     target_url,
     placement = 'top_banner_2',
-    durationDays,
-    duration,
-    price = 199.00
+    packageId,
+    package_id,
+    packageKey,
+    package_key,
+    ctaText,
+    cta_text,
+    description,
+    desc
   } = data || {};
 
-  const finalBannerImage = bannerImage || banner_image || bannerUrl || banner_url;
-  const finalTargetUrl = targetUrl || target_url;
-  const finalDuration = durationDays || duration || 7;
+  const rawBannerImage = bannerImage || banner_image || bannerUrl || banner_url;
+  const rawTargetUrl = targetUrl || target_url;
 
-  if (!finalBannerImage || !finalTargetUrl) {
-    throw new Error('Both bannerImage and targetUrl are required');
+  if (!rawBannerImage || !rawTargetUrl) {
+    throw new Error('Both bannerImage and targetUrl are required.');
   }
 
-  const validPlacements = ['top_banner_1', 'top_banner_2', 'top_banner_3', 'top_banner', 'homepage_banner', 'presale_banner', 'radar_banner'];
-  const safePlacement = validPlacements.includes(placement) ? placement : 'top_banner_2';
+  // Validate URLs & text inputs
+  const safeTargetUrl = validateHttpsUrl(rawTargetUrl, { allowInternal: true });
+  const safeTitle = validateTextLength(title, 120, 'Title') || 'Banner Advertisement';
+  const safeCta = validateTextLength(ctaText || cta_text, 50, 'CTA Text') || 'Learn More →';
+  const safeDesc = validateTextLength(description || desc, 500, 'Description') || '';
+
+  // Server-authoritative package resolution
+  const packages = getBannerPackages();
+  const requestedPkgId = packageId || package_id || packageKey || package_key;
+  let pkg = packages.find(p => p.id === requestedPkgId);
+  if (!pkg) {
+    pkg = packages.find(p => p.placement === placement) || packages.find(p => p.id === 'banner_slot_2');
+  }
+
+  const finalPlacement = pkg.placement;
+  const finalDurationDays = pkg.durationDays;
+  const finalPrice = pkg.price;
 
   const insertSql = `
     INSERT INTO banner_orders (
       token_id, title, banner_image, target_url, placement, duration,
-      start_at, end_at, price, payment_status, approval_status
+      start_at, end_at, price, payment_status, approval_status,
+      cta_text, description
     ) VALUES (
       ?, ?, ?, ?, ?, ?,
-      datetime('now'),
-      datetime('now', '+' || ? || ' days'),
-      ?, 'completed', 'approved'
+      NULL, NULL, ?, 'pending', 'pending',
+      ?, ?
     )
   `;
 
   const result = execute(insertSql, [
     tokenId || null,
-    title,
-    finalBannerImage,
-    finalTargetUrl,
-    safePlacement,
-    finalDuration,
-    finalDuration,
-    price
+    safeTitle,
+    rawBannerImage,
+    safeTargetUrl,
+    finalPlacement,
+    finalDurationDays,
+    finalPrice,
+    safeCta,
+    safeDesc
   ]);
 
   return {
-    id: result.lastInsertRowid,
-    title,
-    placement: safePlacement,
-    durationDays,
-    price,
-    status: 'approved'
+    id: Number(result.lastInsertRowid),
+    title: safeTitle,
+    placement: finalPlacement,
+    durationDays: finalDurationDays,
+    duration: finalDurationDays,
+    price: finalPrice,
+    payment_status: 'pending',
+    approval_status: 'pending',
+    status: 'pending'
   };
 }
 
@@ -335,6 +359,68 @@ function getActiveSpotlight() {
   return null;
 }
 
+/**
+ * Admin action: activate a banner order upon verified payment clearance
+ * Idempotent: activating an already active order preserves duration without resetting dates.
+ */
+function activateBannerOrder(orderId, adminId = 'admin', note = '', ipAddress = '127.0.0.1') {
+  const numId = parseInt(orderId, 10);
+  if (isNaN(numId) || numId <= 0) {
+    throw new Error('Invalid banner order ID');
+  }
+
+  const existing = queryOne('SELECT * FROM banner_orders WHERE id = ?', [numId]);
+  if (!existing) {
+    throw new Error(`Banner order #${numId} not found`);
+  }
+
+  // Idempotency: if already paid and approved, return current active order without modifying duration or resetting timestamps
+  if (existing.approval_status === 'approved' && (existing.payment_status === 'paid' || existing.payment_status === 'completed') && existing.start_at) {
+    return {
+      success: true,
+      alreadyActive: true,
+      order: existing
+    };
+  }
+
+  const durationDays = existing.duration || 7;
+  const startAt = new Date().toISOString();
+  const endAt = new Date(Date.now() + durationDays * 86400000).toISOString();
+
+  execute(`
+    UPDATE banner_orders
+    SET approval_status = 'approved',
+        payment_status = 'paid',
+        start_at = ?,
+        end_at = ?
+    WHERE id = ?
+  `, [startAt, endAt, numId]);
+
+  try {
+    execute(`
+      INSERT INTO admin_logs (admin_id, action, entity_type, entity_id, old_value, new_value, ip_address)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [
+      adminId,
+      'ACTIVATE_BANNER_ORDER',
+      'banner_order',
+      numId,
+      JSON.stringify({ approval_status: existing.approval_status, payment_status: existing.payment_status }),
+      JSON.stringify({ approval_status: 'approved', payment_status: 'paid', note, start_at: startAt, end_at: endAt }),
+      ipAddress
+    ]);
+  } catch (logErr) {
+    console.warn('[BannerService] Admin log notice:', logErr.message);
+  }
+
+  const updated = queryOne('SELECT * FROM banner_orders WHERE id = ?', [numId]);
+  return {
+    success: true,
+    alreadyActive: false,
+    order: updated
+  };
+}
+
 module.exports = {
   getActiveBanners,
   getActiveSpotlight,
@@ -343,5 +429,7 @@ module.exports = {
   createBannerOrder,
   getBannerPackages,
   getAllBannersAdmin,
-  updateBannerApproval
+  updateBannerApproval,
+  activateBannerOrder
 };
+

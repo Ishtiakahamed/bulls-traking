@@ -55,6 +55,11 @@ async function runSpotlightTests() {
 
   const BASE_URL = 'http://localhost:5000';
 
+  // Ensure clean initial state for zero-state verification
+  execute("DELETE FROM promotion_orders WHERE token_name IN ('Audit Test Token', 'Activation Test Token', 'Test Spotlight Token')");
+  execute("DELETE FROM promotions WHERE package_name = 'Spotlight 7D' AND auto_trading_url IS NULL");
+  invalidateHomeCache();
+
   // Test 1: Zero State Backend Query
   console.log('[Test 1] Zero State: getActiveSpotlight() returns null when no active paid order exists');
   const initialSpotlight = getActiveSpotlight();

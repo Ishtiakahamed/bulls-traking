@@ -249,13 +249,19 @@ function initDatabase() {
       db.exec(bannerSql);
     }
 
-    // Migration 007: ensure click_count and impression_count columns exist
+    // Migration 007: ensure click_count, impression_count, cta_text, description columns exist
     const bannerOrderCols = db.prepare('PRAGMA table_info(banner_orders)').all().map(c => c.name);
     if (!bannerOrderCols.includes('click_count')) {
       db.exec('ALTER TABLE banner_orders ADD COLUMN click_count INTEGER DEFAULT 0;');
     }
     if (!bannerOrderCols.includes('impression_count')) {
       db.exec('ALTER TABLE banner_orders ADD COLUMN impression_count INTEGER DEFAULT 0;');
+    }
+    if (!bannerOrderCols.includes('cta_text')) {
+      db.exec('ALTER TABLE banner_orders ADD COLUMN cta_text VARCHAR(100);');
+    }
+    if (!bannerOrderCols.includes('description')) {
+      db.exec('ALTER TABLE banner_orders ADD COLUMN description TEXT;');
     }
 
     // Ensure default banner slots exist

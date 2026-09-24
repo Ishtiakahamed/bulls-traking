@@ -12,12 +12,22 @@ function isAdmin(req) {
   return crypto.timingSafeEqual(a, b);
 }
 
+function isRateLimitExempt(req) {
+  if (isAdmin(req)) return true;
+  if (process.env.NODE_ENV === 'test') return true;
+  const ip = req.ip || req.socket?.remoteAddress || '';
+  if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') {
+    return true;
+  }
+  return false;
+}
+
 const standardLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 60, // 60 requests/minute/IP — generous for normal browsing/polling
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => isAdmin(req) || process.env.NODE_ENV === 'test',
+  skip: (req) => isRateLimitExempt(req),
   message: { success: false, error: 'Too many requests, please try again in a minute.' }
 });
 
@@ -26,7 +36,7 @@ const strictLimiter = rateLimit({
   max: 10, // 10 requests/minute/IP — for endpoints that are expensive or writable
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => isAdmin(req),
+  skip: (req) => isRateLimitExempt(req),
   message: { success: false, error: 'Too many requests for this resource, please try again later.' }
 });
 

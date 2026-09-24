@@ -1,6 +1,7 @@
 const { query, queryOne, execute, transaction } = require('../../database/db');
 const { generateAutoTradeLinks } = require('../utils/tradeLinks');
 const { PROMOTION_PACKAGES, getTreasuryAddresses, createGatewayInvoice } = require('./cryptoPaymentService');
+const { validateHttpsUrl, validateContractAddress, validateTextLength } = require('../utils/validators');
 
 /**
  * Get active promoted tokens (Section 15, 46)
@@ -64,18 +65,32 @@ async function createPromotionOrder(data) {
     paymentMethod = 'direct_bsc'
   } = data;
 
-  // Resolve Package & Pricing
-  const pkgConfig = PROMOTION_PACKAGES[packageKey] || PROMOTION_PACKAGES['7D'];
-  const finalPackageName = packageName || pkgConfig.name;
-  const finalDurationDays = durationDays || pkgConfig.days;
-  const finalPrice = price != null ? Number(price) : pkgConfig.price;
+  // Validate inputs
+  const safeTokenName = validateTextLength(tokenName, 80, 'Token name');
+  const safeTokenSymbol = validateTextLength(tokenSymbol, 20, 'Token symbol');
+  const safeCustomerName = validateTextLength(customerName, 100, 'Customer name') || 'Partner Developer';
+  const safeCustomerEmail = validateTextLength(customerEmail, 120, 'Customer email');
+  const safeTelegramUsername = validateTextLength(telegramUsername, 60, 'Telegram username');
+
+  if (contractAddress) {
+    validateContractAddress(contractAddress, chain);
+  }
+
+  const safeWebsiteUrl = websiteUrl ? validateHttpsUrl(websiteUrl, { allowInternal: false }) : '';
+  const safeXUrl = xUrl ? validateHttpsUrl(xUrl, { allowInternal: false }) : '';
+  const safeTelegramUrl = telegramUrl ? validateHttpsUrl(telegramUrl, { allowInternal: false }) : '';
+  const safeRedditUrl = redditUrl ? validateHttpsUrl(redditUrl, { allowInternal: false }) : '';
+
+  // Server-authoritative Package & Pricing resolution (client cannot override price/duration)
+  const cleanKey = (packageKey || '7D').toUpperCase();
+  const pkgConfig = PROMOTION_PACKAGES[cleanKey] || PROMOTION_PACKAGES['7D'];
+  const finalPackageName = pkgConfig.name;
+  const finalDurationDays = pkgConfig.days;
+  const finalPrice = pkgConfig.price;
 
   // Generate automated DEX trading URL
   const tradeLinkObj = generateAutoTradeLinks(chain, contractAddress);
   const autoTradingUrl = tradeLinkObj ? tradeLinkObj.primarySwapUrl : null;
-
-  const startAt = new Date().toISOString();
-  const endAt = new Date(Date.now() + finalDurationDays * 86400000).toISOString();
 
   const res = execute(`
     INSERT INTO promotion_orders (
@@ -89,18 +104,17 @@ async function createPromotionOrder(data) {
     ) VALUES (
       ?, ?, ?, ?,
       ?, ?, ?, ?, 'USDT',
-      ?, ?, 'pending', 'pending',
+      NULL, NULL, 'pending', 'pending',
       ?, ?, ?, ?,
       ?, ?, ?, ?, ?,
       ?, ?,
       CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
     )
   `, [
-    tokenId || null, customerName, customerEmail, telegramUsername,
+    tokenId || null, safeCustomerName, safeCustomerEmail, safeTelegramUsername,
     promotionType, finalPackageName, finalDurationDays, finalPrice,
-    startAt, endAt,
-    chain, contractAddress, tokenName, tokenSymbol,
-    logoUrl, websiteUrl, xUrl, telegramUrl, redditUrl,
+    chain, contractAddress, safeTokenName, safeTokenSymbol,
+    logoUrl, safeWebsiteUrl, safeXUrl, safeTelegramUrl, safeRedditUrl,
     paymentMethod, autoTradingUrl
   ]);
 
@@ -137,7 +151,7 @@ async function createPromotionOrder(data) {
 /**
  * Activate a promotion order upon verified payment (On-chain RPC or Webhook)
  */
-function activatePromotionFromOrder(orderId, txHash = null) {
+function activatePromotionFromOrder(orderId, txHash = null, { adminId = 'admin', note = '', ipAddress = '127.0.0.1' } = {}) {
   const order = queryOne('SELECT * FROM promotion_orders WHERE id = ?', [orderId]);
   if (!order) {
     throw new Error(`Promotion order #${orderId} not found.`);
@@ -145,11 +159,11 @@ function activatePromotionFromOrder(orderId, txHash = null) {
 
   if (order.payment_status === 'paid' && order.order_status === 'active' && order.token_id) {
     const existingPromo = queryOne(
-      'SELECT id FROM promotions WHERE token_id = ? AND is_active = 1 AND datetime(end_at) >= datetime("now") LIMIT 1',
+      "SELECT id FROM promotions WHERE token_id = ? AND is_active = 1 AND datetime(end_at) >= datetime('now') LIMIT 1",
       [order.token_id]
     );
     if (existingPromo) {
-      return { success: true, orderId: order.id, status: 'already_active' };
+      return { success: true, alreadyActive: true, orderId: order.id, status: 'already_active' };
     }
   }
 
@@ -252,6 +266,10 @@ function activatePromotionFromOrder(orderId, txHash = null) {
       order.reddit_url || null
     ]);
 
+    const safeTxHash = txHash
+      ? (txHash.startsWith('MANUAL_') && !txHash.includes(String(order.id)) ? `${txHash}_${order.id}` : txHash)
+      : null;
+
     // 3. Mark promotion order as paid & active
     execute(`
       UPDATE promotion_orders SET
@@ -265,15 +283,33 @@ function activatePromotionFromOrder(orderId, txHash = null) {
       WHERE id = ?
     `, [
       finalTokenId,
-      txHash || null,
+      safeTxHash,
       startAt,
       endAt,
       order.id
     ]);
+
+    try {
+      execute(`
+        INSERT INTO admin_logs (admin_id, action, entity_type, entity_id, old_value, new_value, ip_address)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [
+        adminId || 'admin',
+        'ACTIVATE_PROMOTION_ORDER',
+        'promotion_order',
+        order.id,
+        JSON.stringify({ payment_status: order.payment_status, order_status: order.order_status }),
+        JSON.stringify({ payment_status: 'paid', order_status: 'active', tx_hash: safeTxHash, note }),
+        ipAddress || '127.0.0.1'
+      ]);
+    } catch (logErr) {
+      console.warn('[PromotionService] Admin log notice:', logErr.message);
+    }
   });
 
   return {
     success: true,
+    alreadyActive: false,
     orderId: order.id,
     tokenId: finalTokenId,
     status: 'active',

@@ -8,7 +8,8 @@ const {
   createBannerOrder,
   getBannerPackages,
   getAllBannersAdmin,
-  updateBannerApproval
+  updateBannerApproval,
+  activateBannerOrder
 } = require('../services/bannerService');
 
 // Public: Get currently active banner slots (supports both /banners/active and /promotion/banners/active)
@@ -92,8 +93,31 @@ router.post(['/banners/order', '/promotion/banners/order'], strictLimiter, (req,
   }
 });
 
-// Admin: Retrieve all banner orders with analytics
-router.get('/admin/banners', (req, res) => {
+const { requireAdminAuth } = require('../middleware/adminAuth');
+const { queryOne } = require('../../database/db');
+
+// Public: Check banner order status
+router.get(['/banners/order/:id', '/banners/order/:id/status', '/promotion/banners/order/:id'], (req, res) => {
+  try {
+    const numId = parseInt(req.params.id, 10);
+    if (isNaN(numId) || numId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid banner order ID' });
+    }
+    const order = queryOne(`
+      SELECT id, token_id, title, placement, duration, price, payment_status, approval_status, start_at, end_at, created_at
+      FROM banner_orders WHERE id = ?
+    `, [numId]);
+    if (!order) {
+      return res.status(404).json({ success: false, error: 'Banner order not found' });
+    }
+    res.json({ success: true, data: order });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin: Retrieve all banner orders with analytics (strictly protected)
+router.get('/admin/banners', requireAdminAuth, (req, res) => {
   try {
     const banners = getAllBannersAdmin();
     res.json({ success: true, count: banners.length, data: banners });
@@ -102,8 +126,8 @@ router.get('/admin/banners', (req, res) => {
   }
 });
 
-// Admin: Update banner approval status
-router.post('/admin/banners/:id/status', (req, res) => {
+// Admin: Update banner approval status (strictly protected)
+router.post('/admin/banners/:id/status', requireAdminAuth, (req, res) => {
   try {
     const { status } = req.body || {};
     if (!status) {
@@ -113,6 +137,19 @@ router.post('/admin/banners/:id/status', (req, res) => {
     res.json({ success: true, data: updated });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin: Activate banner order upon verified payment clearance (strictly protected)
+router.post('/admin/banners/:id/activate', requireAdminAuth, (req, res) => {
+  try {
+    const adminId = req.headers['x-admin-id'] || 'admin';
+    const note = req.body?.note || 'Manual Telegram settlement verified';
+    const ipAddress = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+    const result = activateBannerOrder(req.params.id, adminId, note, ipAddress);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 

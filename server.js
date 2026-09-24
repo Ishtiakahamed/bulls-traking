@@ -50,12 +50,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(express.static(path.join(__dirname)));
 
+const { validateAndDecodeImage } = require('./backend/utils/imageSecurity');
+
 // Upload endpoint for token logos and banner images
 app.post(['/api/upload-logo', '/upload-logo', '/api/upload-banner', '/upload-banner', '/api/upload'], (req, res) => {
   try {
     const { imageBase64, filename } = req.body || {};
     if (!imageBase64) {
       return res.status(400).json({ success: false, error: 'No image data provided' });
+    }
+
+    const isBanner = req.path.includes('banner') || (filename && filename.toLowerCase().includes('banner'));
+
+    // Strict raster format, magic byte, and size enforcement
+    let validated;
+    try {
+      validated = validateAndDecodeImage(imageBase64, { isBanner });
+    } catch (valErr) {
+      return res.status(400).json({ success: false, error: valErr.message });
     }
 
     const uploadsDir = path.join(__dirname, 'public', 'uploads');
@@ -65,25 +77,22 @@ app.post(['/api/upload-logo', '/upload-logo', '/api/upload-banner', '/upload-ban
       if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true });
       }
-      const extMatch = imageBase64.match(/^data:image\/([a-zA-Z0-9+]+);base64,/);
-      const ext = extMatch ? extMatch[1].replace('+xml', 'svg') : 'png';
-      const safeExt = ext === 'jpeg' ? 'jpg' : ext;
-      const isBanner = req.path.includes('banner') || (filename && filename.toLowerCase().includes('banner'));
       const prefix = isBanner ? 'banner' : 'logo';
-      const cleanName = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+      const cleanName = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${validated.ext}`;
       const filePath = path.join(uploadsDir, cleanName);
 
-      const base64Data = imageBase64.replace(/^data:image\/[a-zA-Z0-9+]+;base64,/, '');
-      fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+      fs.writeFileSync(filePath, validated.buffer);
       publicUrl = `/uploads/${cleanName}`;
     } catch (fsErr) {
-      console.warn('[Upload Notice] File system write fallback to base64:', fsErr.message);
-      publicUrl = imageBase64;
+      console.warn('[Upload Notice] File system write fallback to verified data URL:', fsErr.message);
+      publicUrl = `data:${validated.mimeType};base64,${validated.buffer.toString('base64')}`;
     }
 
     res.json({
       success: true,
-      url: publicUrl || imageBase64,
+      url: publicUrl,
+      format: validated.format,
+      size: validated.size,
       message: 'Image uploaded successfully'
     });
   } catch (err) {

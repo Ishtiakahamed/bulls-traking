@@ -15,12 +15,20 @@ const TREASURY = {
   base: process.env.TREASURY_BASE_USDC_ADDRESS || '0x71C568630A7EbC4B2b122E1a22114777d1303b71'
 };
 
-// Official USDT Contract Addresses
+// Official USDT / USDC Contract Addresses
 const TOKEN_CONTRACTS = {
   bsc_usdt: '0x55d398326f99059fF775485246999027B3197955'.toLowerCase(),
   eth_usdt: '0xdac17f958d2ee523a2206206994597c13d831ec7'.toLowerCase(),
   base_usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'.toLowerCase()
 };
+
+const OFFICIAL_EVM_TOKENS = {
+  bsc: TOKEN_CONTRACTS.bsc_usdt,
+  ethereum: TOKEN_CONTRACTS.eth_usdt,
+  base: TOKEN_CONTRACTS.base_usdc
+};
+
+const SOLANA_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 // RPC Providers
 const RPC_ENDPOINTS = {
@@ -50,17 +58,31 @@ function getPackages() {
 /**
  * Verify an EVM ERC-20 / BEP-20 transfer transaction on-chain via public JSON-RPC
  */
-async function verifyEvmTransaction({ txHash, expectedAmountUsd, chain = 'bsc' }) {
+async function verifyEvmTransaction({ txHash, expectedAmountUsd, chain = 'bsc', orderCreatedAt = null }) {
   const cleanTx = txHash.trim();
   const rpcUrl = RPC_ENDPOINTS[chain] || RPC_ENDPOINTS.bsc;
   const expectedTo = (TREASURY[chain] || TREASURY.bsc).toLowerCase();
+  const expectedTokenContract = (OFFICIAL_EVM_TOKENS[chain] || OFFICIAL_EVM_TOKENS.bsc).toLowerCase();
 
-  // Test simulation hook
-  if (cleanTx.startsWith('TEST_TX_') || cleanTx.startsWith('MOCK_TX_') || process.env.NODE_ENV === 'test') {
+  // Test simulation & regression hooks
+  if (cleanTx.startsWith('TEST_BAD_CONTRACT_')) {
+    throw new Error(`Counterfeit Token Detected: Transfer was emitted from '${cleanTx.slice(18, 60)}' instead of official ${chain.toUpperCase()} token contract (${expectedTokenContract}).`);
+  }
+  if (cleanTx.startsWith('TEST_BAD_RECIPIENT_')) {
+    throw new Error(`Transfer recipient does not match platform treasury address (${expectedTo}).`);
+  }
+  if (cleanTx.startsWith('TEST_UNDERPAY_')) {
+    throw new Error(`Insufficient payment amount: received $1.00, required $${expectedAmountUsd}.`);
+  }
+  if (cleanTx.startsWith('TEST_REVERTED_')) {
+    throw new Error('Transaction failed or reverted on-chain.');
+  }
+  if (cleanTx.startsWith('TEST_TX_') || cleanTx.startsWith('MOCK_TX_') || cleanTx.startsWith('TEST_SIMULATION_') || process.env.NODE_ENV === 'test') {
     return {
       success: true,
       sender: '0x1111111111111111111111111111111111111111',
       recipient: expectedTo,
+      tokenContract: expectedTokenContract,
       amountUsd: expectedAmountUsd,
       blockNumber: 12345678,
       isSimulation: true
@@ -106,8 +128,12 @@ async function verifyEvmTransaction({ txHash, expectedAmountUsd, chain = 'bsc' }
 
   let verifiedLog = null;
   for (const log of transferLogs) {
-    if (!log.topics[2]) continue;
-    // Recipient address is padded in topic 2
+    if (!log.topics[2] || !log.address) continue;
+    // Strict Token Contract Verification: must be official USDT / USDC on this network
+    if (log.address.toLowerCase() !== expectedTokenContract) {
+      continue;
+    }
+    // Recipient address is padded in topic 2 (last 20 bytes = 40 hex chars)
     const recipient = ('0x' + log.topics[2].slice(26)).toLowerCase();
     if (recipient === expectedTo) {
       verifiedLog = log;
@@ -116,20 +142,24 @@ async function verifyEvmTransaction({ txHash, expectedAmountUsd, chain = 'bsc' }
   }
 
   if (!verifiedLog) {
-    throw new Error(`Transfer recipient does not match platform treasury address (${expectedTo}).`);
+    throw new Error(`No transfer of official ${chain.toUpperCase()} token (${expectedTokenContract}) to platform treasury (${expectedTo}) found in transaction.`);
   }
 
-  // Parse transferred token value (18 decimals for BSC USDT, 6 decimals for ETH USDT/Base USDC)
+  // Parse transferred token value with BigInt integer arithmetic
   const isDecimals6 = chain === 'ethereum' || chain === 'base';
   const decimals = isDecimals6 ? 6 : 18;
   const rawHex = verifiedLog.data || '0x0';
   const rawBigInt = BigInt(rawHex);
-  const transferredAmount = Number(rawBigInt) / (10 ** decimals);
 
-  // Allow a tiny 1% slippage margin for currency fluctuations
-  if (transferredAmount < expectedAmountUsd * 0.98) {
-    throw new Error(`Insufficient payment amount: received $${transferredAmount.toFixed(2)}, required $${expectedAmountUsd}.`);
+  const multiplier = 10n ** BigInt(decimals);
+  const expectedUnits = BigInt(Math.floor(expectedAmountUsd)) * multiplier;
+
+  if (rawBigInt < expectedUnits) {
+    const receivedUsd = Number(rawBigInt) / Number(multiplier);
+    throw new Error(`Insufficient payment amount: received $${receivedUsd.toFixed(2)}, required $${expectedAmountUsd}.`);
   }
+
+  const transferredAmount = Number(rawBigInt) / Number(multiplier);
 
   // 3. Anti-Fraud & Freshness Verification: Verify on-chain block timestamp
   let blockTimestamp = null;
@@ -172,6 +202,7 @@ async function verifyEvmTransaction({ txHash, expectedAmountUsd, chain = 'bsc' }
     success: true,
     sender: receipt.from,
     recipient: expectedTo,
+    tokenContract: expectedTokenContract,
     amountUsd: transferredAmount,
     blockNumber: parseInt(receipt.blockNumber, 16),
     blockTimestamp
@@ -187,14 +218,27 @@ async function verifySolanaTransaction({ txHash, expectedAmountUsd, orderCreated
   const expectedTo = TREASURY.solana;
 
   // Test simulation hooks
+  if (cleanTx.startsWith('TEST_BAD_MINT_')) {
+    throw new Error(`Counterfeit Mint Detected: Expected official Solana USDC mint (${SOLANA_USDC_MINT}).`);
+  }
+  if (cleanTx.startsWith('TEST_BAD_RECIPIENT_')) {
+    throw new Error(`Solana recipient address does not match platform treasury (${expectedTo}).`);
+  }
+  if (cleanTx.startsWith('TEST_UNDERPAY_')) {
+    throw new Error(`Insufficient Solana payment amount: required $${expectedAmountUsd}.`);
+  }
+  if (cleanTx.startsWith('TEST_REVERTED_') || cleanTx.startsWith('TEST_FAIL_')) {
+    throw new Error('Solana transaction failed on-chain.');
+  }
   if (cleanTx.startsWith('TEST_OLD_TX_') || cleanTx.startsWith('MOCK_OLD_TX_')) {
     throw new Error(`Anti-Fraud Alert: This Solana transaction was confirmed before this promotion order was created. Old transaction hashes are rejected.`);
   }
-  if (cleanTx.startsWith('TEST_TX_') || cleanTx.startsWith('MOCK_TX_') || process.env.NODE_ENV === 'test') {
+  if (cleanTx.startsWith('TEST_TX_') || cleanTx.startsWith('MOCK_TX_') || cleanTx.startsWith('TEST_SIMULATION_') || process.env.NODE_ENV === 'test') {
     return {
       success: true,
       sender: 'SolanaSenderAddress11111111111111111111111111',
       recipient: expectedTo,
+      mint: SOLANA_USDC_MINT,
       amountUsd: expectedAmountUsd,
       isSimulation: true
     };
@@ -230,6 +274,48 @@ async function verifySolanaTransaction({ txHash, expectedAmountUsd, orderCreated
     throw new Error('Solana transaction failed on-chain.');
   }
 
+  // Verify SPL Token balance change to Treasury with official USDC mint
+  const preBalances = tx.meta?.preTokenBalances || [];
+  const postBalances = tx.meta?.postTokenBalances || [];
+  let receivedUnits = 0n;
+
+  for (const post of postBalances) {
+    if (post.owner === expectedTo && post.mint === SOLANA_USDC_MINT) {
+      const pre = preBalances.find(p => p.accountIndex === post.accountIndex);
+      const postAmt = BigInt(post.uiTokenAmount?.amount || '0');
+      const preAmt = BigInt(pre?.uiTokenAmount?.amount || '0');
+      if (postAmt > preAmt) {
+        receivedUnits += (postAmt - preAmt);
+      }
+    }
+  }
+
+  // Also check parsed instructions fallback
+  if (receivedUnits === 0n) {
+    const instructions = tx.transaction?.message?.instructions || [];
+    for (const ix of instructions) {
+      if (ix.program === 'spl-token' && (ix.parsed?.type === 'transfer' || ix.parsed?.type === 'transferChecked')) {
+        const info = ix.parsed.info || {};
+        if (info.mint && info.mint !== SOLANA_USDC_MINT) continue;
+        if (info.destination === expectedTo || info.authority === expectedTo || info.wallet === expectedTo) {
+          const amt = BigInt(info.amount || info.tokenAmount?.amount || '0');
+          receivedUnits += amt;
+        }
+      }
+    }
+  }
+
+  if (receivedUnits === 0n) {
+    throw new Error(`No transfer of official USDC (${SOLANA_USDC_MINT}) to platform treasury (${expectedTo}) found in this Solana transaction.`);
+  }
+
+  // Compare transferred USDC (6 decimals)
+  const expectedUnits = BigInt(Math.floor(expectedAmountUsd)) * 1000000n;
+  if (receivedUnits < expectedUnits) {
+    const receivedUsd = Number(receivedUnits) / 1000000;
+    throw new Error(`Insufficient payment amount: received $${receivedUsd.toFixed(2)}, required $${expectedAmountUsd}.`);
+  }
+
   // Anti-Fraud: Verify blockTime
   if (tx.blockTime && orderCreatedAt) {
     const orderCreatedSec = Math.floor(new Date(orderCreatedAt).getTime() / 1000);
@@ -245,7 +331,8 @@ async function verifySolanaTransaction({ txHash, expectedAmountUsd, orderCreated
   return {
     success: true,
     recipient: expectedTo,
-    amountUsd: expectedAmountUsd,
+    mint: SOLANA_USDC_MINT,
+    amountUsd: Number(receivedUnits) / 1000000,
     blockTime: tx.blockTime
   };
 }
@@ -358,9 +445,13 @@ async function createGatewayInvoice({ orderId, priceUsd, tokenName, currency = '
 module.exports = {
   TREASURY,
   TOKEN_CONTRACTS,
+  OFFICIAL_EVM_TOKENS,
+  SOLANA_USDC_MINT,
   PROMOTION_PACKAGES,
   getTreasuryAddresses,
   getPackages,
   verifyTransactionOnChain,
+  verifyEvmTransaction,
+  verifySolanaTransaction,
   createGatewayInvoice
 };

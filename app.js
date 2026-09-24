@@ -356,6 +356,50 @@ function renderSocialLinks(t) {
   `;
 }
 
+function renderMobileSocialLinks(t) {
+  if (!t) return '';
+  const links = [];
+
+  const safeWeb = sanitizeUrl(t.website_url);
+  if (safeWeb) {
+    links.push(`
+      <a href="${escapeHtml(safeWeb)}" target="_blank" rel="noopener noreferrer sponsored" class="social-btn web" title="Website" aria-label="Website" onclick="event.stopPropagation();">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </a>
+    `);
+  }
+
+  const safeX = sanitizeUrl(t.x_url);
+  if (safeX) {
+    links.push(`
+      <a href="${escapeHtml(safeX)}" target="_blank" rel="noopener noreferrer sponsored" class="social-btn x" title="X / Twitter" aria-label="X / Twitter" onclick="event.stopPropagation();">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+    `);
+  }
+
+  const safeTg = sanitizeUrl(t.telegram_url);
+  if (safeTg) {
+    links.push(`
+      <a href="${escapeHtml(safeTg)}" target="_blank" rel="noopener noreferrer sponsored" class="social-btn tg" title="Telegram Community" aria-label="Telegram" onclick="event.stopPropagation();">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+      </a>
+    `);
+  }
+
+  const safeReddit = sanitizeUrl(t.reddit_url);
+  if (safeReddit) {
+    links.push(`
+      <a href="${escapeHtml(safeReddit)}" target="_blank" rel="noopener noreferrer sponsored" class="social-btn reddit" title="Reddit Community" aria-label="Reddit" onclick="event.stopPropagation();">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.56 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.702zM9.25 12C8.56 12 8 12.56 8 13.25c0 .687.56 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+      </a>
+    `);
+  }
+
+  if (links.length === 0) return '';
+  return links.join('');
+}
+
 function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
   if (!tokens || tokens.length === 0) {
     return `<tr><td colspan="14" class="state-msg">No tokens found matching this view.</td></tr>`;
@@ -370,6 +414,7 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
     const lpVal = (t.liquidity != null && t.liquidity > 0) ? fmtUsd(t.liquidity) : '—';
     const chg6h = t.price_change_6h != null ? fmtChg(t.price_change_6h) : '—';
     const starred = isWatchlisted(t.id);
+    const mobileSocials = renderMobileSocialLinks(t);
 
     return `
       <tr data-token-symbol="${escapeHtml(t.symbol)}" data-token-id="${t.id}" onclick="location.hash='#/token/${t.id}'">
@@ -391,6 +436,7 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
               </div>
               <div class="token-chain-row">
                 <span class="chain-tag">${escapeHtml(formatChainLabel(t.chain))}</span>
+                ${mobileSocials ? `<div class="social-links-mobile" onclick="event.stopPropagation();">${mobileSocials}</div>` : ''}
               </div>
             </div>
           </div>
@@ -531,7 +577,29 @@ function renderHomeSkeleton() {
   `;
 }
 
-/* ---------------- Banner Ads helpers ---------------- */
+/* ---------------- Banner Ads helpers & Site-Wide Placement System ---------------- */
+
+const pageViewImpressionSet = new Set();
+let lastTrackedPageHash = null;
+
+function checkPageImpression(bannerId) {
+  const currentHash = window.location.hash || '#/';
+  if (currentHash !== lastTrackedPageHash) {
+    pageViewImpressionSet.clear();
+    lastTrackedPageHash = currentHash;
+  }
+  if (!bannerId) return false;
+  if (pageViewImpressionSet.has(bannerId)) return false;
+  pageViewImpressionSet.add(bannerId);
+  return true;
+}
+
+function trackBannerImpressionOnce(bannerId) {
+  if (!bannerId || !checkPageImpression(bannerId)) return;
+  fetchApi('/promotion/banners/' + bannerId + '/impression', { method: 'POST' }).catch(() => {
+    fetchApi('/banners/impression/' + bannerId, { method: 'POST' }).catch(() => {});
+  });
+}
 
 function handleBannerClick(event, bannerId) {
   if (!bannerId) return;
@@ -572,36 +640,86 @@ function getBannerSlotHtml(banner, slotNum) {
   `;
 }
 
-async function renderBannerStrip() {
-  const container = document.getElementById('homeBannerStrip');
+/**
+ * Site-wide banner placement renderer
+ * Centralized, deduplicated impression tracking per page view, excluded from legal & admin views.
+ */
+async function renderSiteWideBanner(containerId, placementType = 'top_leaderboard') {
+  const container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
+  if (!container) return;
+
+  const currentHash = (window.location.hash || '').toLowerCase();
+  // Exclude from admin, legal, privacy, terms, disclaimer, cookie, about views
+  if (
+    currentHash.includes('/admin') ||
+    currentHash.includes('/terms') ||
+    currentHash.includes('/privacy') ||
+    currentHash.includes('/disclaimer') ||
+    currentHash.includes('/cookies') ||
+    currentHash.includes('/about')
+  ) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    return;
+  }
+
   try {
     const res = await fetchApi('/promotion/banners/active');
     const activeData = res?.data || res || {};
-    const slots = [
-      { slotNum: 1, banner: activeData.top_banner },
-      { slotNum: 2, banner: activeData.homepage_banner },
-      { slotNum: 3, banner: activeData.presale_banner }
-    ];
 
-    // Fire impression tracking call for active banners (fire-and-forget)
-    slots.forEach(({ banner }) => {
-      if (banner?.id && !banner.is_placeholder) {
-        fetchApi('/promotion/banners/' + banner.id + '/impression', { method: 'POST' }).catch(() => {
-          fetchApi('/banners/impression/' + banner.id, { method: 'POST' }).catch(() => {});
-        });
-      }
-    });
+    if (placementType === 'top_leaderboard') {
+      const slots = [
+        { slotNum: 1, banner: activeData.top_banner_1 || activeData.top_banner },
+        { slotNum: 2, banner: activeData.top_banner_2 || activeData.homepage_banner },
+        { slotNum: 3, banner: activeData.top_banner_3 || activeData.presale_banner }
+      ];
+      slots.forEach(({ banner }) => {
+        if (banner?.id && !banner.is_placeholder) {
+          trackBannerImpressionOnce(banner.id);
+        }
+      });
+      container.innerHTML = `
+        <div class="banner-strip banner-trio-grid" aria-label="Sponsored Banners">
+          ${slots.map(({ slotNum, banner }) => getBannerSlotHtml(banner, slotNum)).join('')}
+        </div>
+      `;
+      container.style.display = 'block';
+      return;
+    }
 
-    if (container) {
-      container.innerHTML = slots.map(({ slotNum, banner }) => getBannerSlotHtml(banner, slotNum)).join('');
+    let bannerObj = null;
+    if (placementType === 'homepage_in_feed') {
+      bannerObj = activeData.in_feed_banner || activeData.homepage_banner;
+    } else if (placementType === 'radar' || placementType === 'new_pairs') {
+      bannerObj = activeData.radar_banner || activeData.top_banner_1;
+    } else if (placementType === 'presale') {
+      bannerObj = activeData.presale_banner || activeData.top_banner_2;
+    } else if (placementType === 'token_detail' || placementType === 'signals') {
+      bannerObj = activeData.top_banner_3 || activeData.top_banner;
+    } else {
+      bannerObj = activeData[placementType] || null;
+    }
+
+    if (bannerObj && !bannerObj.is_placeholder && bannerObj.id) {
+      trackBannerImpressionOnce(bannerObj.id);
+      container.innerHTML = renderBannerAd(bannerObj, placementType);
+      container.style.display = 'block';
+    } else {
+      container.innerHTML = '';
+      container.style.display = 'none';
     }
   } catch (err) {
-    console.warn('[BannerStrip] Failed to load active banners:', err);
-    if (container && !container.children.length) {
-      container.innerHTML = [1, 2, 3].map(slotNum => getBannerSlotHtml(null, slotNum)).join('');
-    }
+    console.warn('[SiteWideBanner] Failed to load banner for ' + placementType, err.message);
+    container.innerHTML = '';
+    container.style.display = 'none';
   }
 }
+window.renderSiteWideBanner = renderSiteWideBanner;
+
+async function renderBannerStrip() {
+  await renderSiteWideBanner('homeBannerStrip', 'top_leaderboard');
+}
+window.renderBannerStrip = renderBannerStrip;
 window.renderBannerStrip = renderBannerStrip;
 
 async function renderSpotlightBanner() {
@@ -698,22 +816,23 @@ function buildHomeUI(data) {
 
     return `
       <div class="promoted-card" onclick="location.hash='#/token/${p.token_id}'">
-        <div class="promoted-meta">
+        <div class="promoted-card-main">
           <img class="promoted-logo" src="${escapeHtml(normalizeTokenLogo(p.logo_url, p.symbol, p.name))}" alt="${escapeHtml(p.symbol)}" onerror="this.onerror=null; this.src=getTokenFallbackAvatar('${escapeHtml(p.symbol)}', '${escapeHtml(p.name)}');">
-          <div>
-            <div class="promoted-name">
-              ${escapeHtml(p.name)} <span class="badge-promoted">PROMOTED</span>
+          <div class="promoted-card-identity">
+            <div class="promoted-name-row">
+              <span class="promoted-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+              <span class="badge-promoted">PROMOTED</span>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
-              <span style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(chainName)}</span>
+            <div class="promoted-card-actions">
+              <span class="chain-tag" style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">${escapeHtml(chainName)}</span>
               ${tradeUrl ? `<a href="${escapeHtml(tradeUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="btn-promoted-trade" onclick="event.stopPropagation();" title="Trade on DEX">Trade ↗</a>` : ''}
             </div>
           </div>
         </div>
-        <div style="text-align:right;">
+        <div class="promoted-card-metrics">
           <div class="promoted-price">${fmtPrice(p.price)}</div>
-          <div>${fmtChg(p.change_24h)}</div>
-          <div style="margin-top:4px;">
+          <div class="promoted-change">${fmtChg(p.change_24h)}</div>
+          <div class="promoted-socials">
             ${renderSocialLinks(p)}
           </div>
         </div>
@@ -1247,10 +1366,13 @@ async function renderPromotedPage() {
         </a>
       </div>
     </div>
+    <div id="promotedBannerWrap" style="margin-bottom:1.5rem;"></div>
     <div id="promotedGrid" class="promoted-grid">
       <div class="state-msg">Loading promoted tokens…</div>
     </div>
   `;
+
+  renderSiteWideBanner('promotedBannerWrap', 'top_leaderboard');
 
   try {
     const res = await fetchApi('/promoted');
@@ -1582,22 +1704,23 @@ async function renderPromotePage(initialType = 'token', initialSlot = null) {
               
               <div id="previewCardWrap">
                 <div class="promoted-card" style="border:1px solid var(--gold);box-shadow:0 0 15px rgba(245,166,35,0.15);">
-                  <div class="promoted-meta">
+                  <div class="promoted-card-main">
                     <img id="prevLogo" class="promoted-logo" src="assets/logo-transparent.png" alt="Preview Logo" onerror="this.onerror=null; this.src='assets/logo-transparent.png';">
-                    <div>
-                      <div class="promoted-name">
-                        <span id="prevName">Token Name</span> <span class="badge-promoted">PROMOTED</span>
+                    <div class="promoted-card-identity">
+                      <div class="promoted-name-row">
+                        <span id="prevName" class="promoted-name" title="Token Name">Token Name</span>
+                        <span class="badge-promoted">PROMOTED</span>
                       </div>
-                      <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                      <div class="promoted-card-actions">
                         <span id="prevChain" style="font-size:11px;color:var(--text-faint);text-transform:uppercase;">BSC</span>
                         <a id="prevTradeBtn" href="#" target="_blank" class="btn-promoted-trade" title="Trade directly on DEX">Trade ↗</a>
                       </div>
                     </div>
                   </div>
-                  <div style="text-align:right;">
+                  <div class="promoted-card-metrics">
                     <div class="promoted-price">$0.000100</div>
                     <div style="color:var(--up);">+12.4%</div>
-                    <div id="prevSocials" style="margin-top:4px;display:flex;justify-content:flex-end;gap:3px;">
+                    <div id="prevSocials" class="promoted-socials">
                       <span style="color:var(--text-faint);font-size:11px;">—</span>
                     </div>
                   </div>
@@ -1765,15 +1888,44 @@ async function renderPromotePage(initialType = 'token', initialSlot = null) {
               <p style="font-size:12px;color:var(--ink-dim);margin:0 0 1rem;">This is how your banner appears in the top 3-column leaderboard above Promoted Tokens.</p>
 
               <div id="prevBannerWrap" style="margin-bottom:1.5rem;">
-                <div class="banner-trio-grid" style="grid-template-columns: 1fr; gap: 10px;">
-                  <div id="prevBannerSlotCard" class="banner-trio-item" style="display:block;border-color:var(--gold);box-shadow:0 0 16px rgba(242,169,59,0.25);">
-                    <img id="prevBannerImg" src="assets/banners/banner_minotaur_presale.svg" alt="Banner preview" class="banner-trio-img" style="display:block;" />
+                <div class="banner-preview-trio" id="bannerPreviewTrio">
+                  <!-- Slot 1 (Left) -->
+                  <div class="banner-preview-slot ${bannerOrderState.placement === 'top_banner_1' ? 'is-selected' : ''}" id="prevSlot1">
+                    <img class="banner-preview-slot-img" id="prevSlot1Img" src="${bannerOrderState.placement === 'top_banner_1' && bannerOrderState.bannerImage ? bannerOrderState.bannerImage : 'assets/banners/banner_meme_launch.svg'}" alt="Slot 1 preview" />
+                    <div class="banner-preview-slot-content">
+                      <span class="banner-preview-slot-badge" id="badgeSlot1">${bannerOrderState.placement === 'top_banner_1' ? 'SLOT 1 (SELECTED)' : 'SLOT 1 (LEFT)'}</span>
+                      <div class="banner-preview-slot-title" id="titleSlot1">${bannerOrderState.placement === 'top_banner_1' ? 'Bulls Meme Launchpad' : 'Meme Launchpad'}</div>
+                      <div class="banner-preview-slot-cta" id="ctaSlot1">${bannerOrderState.placement === 'top_banner_1' ? 'Target: https://yourdomain.com' : 'Book Slot 1 ($149/7D)'}</div>
+                    </div>
                   </div>
-                  <div class="banner-trio-placeholder" style="padding:10px 12px;min-height:50px;">
-                    <span class="banner-trio-ph-badge" id="prevSlotIndicatorBadge">SLOT 2 (CENTER PRIME) SELECTED</span>
-                    <div class="banner-trio-ph-title" id="prevBannerTitle" style="font-size:12px;margin:2px 0;">Minotaur Bull Presale</div>
-                    <div class="banner-trio-ph-cta" id="prevBannerCta" style="font-size:11px;">Target: https://yourdomain.com</div>
+
+                  <!-- Slot 2 (Center Prime) -->
+                  <div class="banner-preview-slot ${bannerOrderState.placement === 'top_banner_2' ? 'is-selected' : ''}" id="prevSlot2">
+                    <img class="banner-preview-slot-img" id="prevSlot2Img" src="${bannerOrderState.placement === 'top_banner_2' && bannerOrderState.bannerImage ? bannerOrderState.bannerImage : 'assets/banners/banner_minotaur_presale.svg'}" alt="Slot 2 preview" />
+                    <div class="banner-preview-slot-content">
+                      <span class="banner-preview-slot-badge" id="badgeSlot2">${bannerOrderState.placement === 'top_banner_2' ? 'SLOT 2 (SELECTED)' : 'SLOT 2 (CENTER)'}</span>
+                      <div class="banner-preview-slot-title" id="titleSlot2">${bannerOrderState.placement === 'top_banner_2' ? 'Minotaur Bull Presale' : 'Center Prime Presale'}</div>
+                      <div class="banner-preview-slot-cta" id="ctaSlot2">${bannerOrderState.placement === 'top_banner_2' ? 'Target: https://yourdomain.com' : 'Book Slot 2 ($199/7D)'}</div>
+                    </div>
                   </div>
+
+                  <!-- Slot 3 (Right) -->
+                  <div class="banner-preview-slot ${bannerOrderState.placement === 'top_banner_3' ? 'is-selected' : ''}" id="prevSlot3">
+                    <img class="banner-preview-slot-img" id="prevSlot3Img" src="${bannerOrderState.placement === 'top_banner_3' && bannerOrderState.bannerImage ? bannerOrderState.bannerImage : 'assets/banners/banner_solana_calls.svg'}" alt="Slot 3 preview" />
+                    <div class="banner-preview-slot-content">
+                      <span class="banner-preview-slot-badge" id="badgeSlot3">${bannerOrderState.placement === 'top_banner_3' ? 'SLOT 3 (SELECTED)' : 'SLOT 3 (RIGHT)'}</span>
+                      <div class="banner-preview-slot-title" id="titleSlot3">${bannerOrderState.placement === 'top_banner_3' ? 'Solana Alpha Calls' : 'Alpha Calls & Signals'}</div>
+                      <div class="banner-preview-slot-cta" id="ctaSlot3">${bannerOrderState.placement === 'top_banner_3' ? 'Target: https://yourdomain.com' : 'Book Slot 3 ($149/7D)'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Hidden backward-compatibility elements -->
+                <div style="display:none;" aria-hidden="true">
+                  <span id="prevSlotIndicatorBadge">SLOT 2 (CENTER PRIME) SELECTED</span>
+                  <div id="prevBannerTitle">Minotaur Bull Presale</div>
+                  <div id="prevBannerCta">Target: https://yourdomain.com</div>
+                  <img id="prevBannerImg" src="assets/banners/banner_minotaur_presale.svg" alt="Banner preview" />
                 </div>
               </div>
 
@@ -2067,6 +2219,8 @@ function initBannerHandlers() {
   const bDesc = document.getElementById('bDesc');
   const bImageUrl = document.getElementById('bImageUrl');
 
+  const prevSlotIndicatorBadge = document.getElementById('prevSlotIndicatorBadge');
+  const btnCreateBannerOrder = document.getElementById('btnCreateBannerOrder');
   const prevBannerTitle = document.getElementById('prevBannerTitle');
   const prevBannerDesc = document.getElementById('prevBannerDesc');
   const prevBannerCta = document.getElementById('prevBannerCta');
@@ -2086,27 +2240,61 @@ function initBannerHandlers() {
   };
 
   function updateBannerPreview() {
+    const titleVal = bTitle && bTitle.value.trim() ? bTitle.value.trim() : '';
+    const targetVal = bTargetUrl && bTargetUrl.value.trim() ? bTargetUrl.value.trim() : 'https://yourdomain.com';
+    const imgVal = (bImageUrl && bImageUrl.value.trim()) ? bImageUrl.value.trim() : (bannerOrderState.bannerImage || '');
+    const activePlacement = bannerOrderState.placement || 'top_banner_2';
+
     if (prevSlotIndicatorBadge) {
       prevSlotIndicatorBadge.textContent = slotBadgeLabels[bannerOrderState.selectedPkg] || 'SPONSORED BANNER';
     }
     if (prevBannerTitle) {
-      prevBannerTitle.textContent = bTitle && bTitle.value.trim() ? bTitle.value.trim() : (bannerOrderState.selectedPkg === 'banner_slot_1' ? 'Bulls Meme Launchpad' : (bannerOrderState.selectedPkg === 'banner_slot_3' ? 'Solana Alpha Calls' : 'Minotaur Bull Presale'));
+      prevBannerTitle.textContent = titleVal || (bannerOrderState.selectedPkg === 'banner_slot_1' ? 'Bulls Meme Launchpad' : (bannerOrderState.selectedPkg === 'banner_slot_3' ? 'Solana Alpha Calls' : 'Minotaur Bull Presale'));
     }
     if (prevBannerCta) {
-      prevBannerCta.textContent = `Target: ${bTargetUrl && bTargetUrl.value.trim() ? bTargetUrl.value.trim() : 'https://yourdomain.com'}`;
+      prevBannerCta.textContent = `Target: ${targetVal}`;
     }
-    if (bImageUrl && bImageUrl.value.trim()) {
-      if (prevBannerImg) {
-        prevBannerImg.src = bImageUrl.value.trim();
-        prevBannerImg.style.display = 'block';
-      }
-    } else {
-      if (prevBannerImg) {
-        const defaultImg = slotGraphicDefaults[bannerOrderState.placement] || 'assets/banners/banner_minotaur_presale.svg';
-        prevBannerImg.src = defaultImg;
-        prevBannerImg.style.display = 'block';
-      }
+    if (prevBannerImg) {
+      const defaultImg = slotGraphicDefaults[activePlacement] || 'assets/banners/banner_minotaur_presale.svg';
+      prevBannerImg.src = imgVal || defaultImg;
+      prevBannerImg.style.display = 'block';
     }
+
+    // Update 3-Slot Trio Grid slots in the preview column
+    const previewSlots = [
+      { slotNum: 1, placement: 'top_banner_1', defTitle: 'Bulls Meme Launchpad', defCta: 'Book Slot 1 ($149/7D)', defImg: 'assets/banners/banner_meme_launch.svg' },
+      { slotNum: 2, placement: 'top_banner_2', defTitle: 'Minotaur Bull Presale', defCta: 'Book Slot 2 ($199/7D)', defImg: 'assets/banners/banner_minotaur_presale.svg' },
+      { slotNum: 3, placement: 'top_banner_3', defTitle: 'Solana Alpha Calls', defCta: 'Book Slot 3 ($149/7D)', defImg: 'assets/banners/banner_solana_calls.svg' }
+    ];
+
+    previewSlots.forEach(({ slotNum, placement, defTitle, defCta, defImg }) => {
+      const slotEl = document.getElementById(`prevSlot${slotNum}`);
+      const imgEl = document.getElementById(`prevSlot${slotNum}Img`);
+      const badgeEl = document.getElementById(`badgeSlot${slotNum}`);
+      const titleEl = document.getElementById(`titleSlot${slotNum}`);
+      const ctaEl = document.getElementById(`ctaSlot${slotNum}`);
+
+      const isSelected = (activePlacement === placement);
+      if (slotEl) {
+        if (isSelected) {
+          slotEl.classList.add('is-selected');
+        } else {
+          slotEl.classList.remove('is-selected');
+        }
+      }
+      if (badgeEl) {
+        badgeEl.textContent = isSelected ? `SLOT ${slotNum} (SELECTED)` : `SLOT ${slotNum} (${slotNum === 1 ? 'LEFT' : slotNum === 2 ? 'CENTER' : 'RIGHT'})`;
+      }
+      if (titleEl) {
+        titleEl.textContent = isSelected ? (titleVal || defTitle) : defTitle;
+      }
+      if (ctaEl) {
+        ctaEl.textContent = isSelected ? `Target: ${targetVal}` : defCta;
+      }
+      if (imgEl) {
+        imgEl.src = isSelected ? (imgVal || defImg) : defImg;
+      }
+    });
   }
 
   [bTitle, bTargetUrl, bCtaText, bDesc, bImageUrl].forEach(el => {
@@ -2261,8 +2449,8 @@ async function submitBannerOrder() {
       bannerImage: imageUrl,
       banner_url: imageUrl,
       placement: bannerOrderState.placement,
-      durationDays: bannerOrderState.days,
-      price: bannerOrderState.price
+      packageId: bannerOrderState.selectedPkg,
+      ctaText
     };
 
     const res = await fetchApi('/banners/order', {
@@ -2281,18 +2469,21 @@ async function submitBannerOrder() {
     const dispOrderId = document.getElementById('dispBannerOrderId');
     if (dispOrderId) dispOrderId.textContent = orderNum;
 
+    const serverPrice = res.data.price || bannerOrderState.price;
+    const serverDuration = res.data.durationDays || res.data.duration || bannerOrderState.days;
+
     const dispAmount = document.getElementById('dispBannerAmount');
-    if (dispAmount) dispAmount.textContent = `$${res.data.price} USDT`;
+    if (dispAmount) dispAmount.textContent = `$${serverPrice} USDT`;
 
     const slotLabels = {
       'top_banner_1': 'Top Leaderboard Slot 1 (Left - $149/7D)',
-      'top_banner_2': bannerOrderState.days === 30 ? 'Top Leaderboard Slot 2 (Center VIP - $499/30D)' : 'Top Leaderboard Slot 2 (Center Prime - $199/7D)',
+      'top_banner_2': serverDuration === 30 ? 'Top Leaderboard Slot 2 (Center VIP - $499/30D)' : 'Top Leaderboard Slot 2 (Center Prime - $199/7D)',
       'top_banner_3': 'Top Leaderboard Slot 3 (Right - $149/7D)',
       'homepage_banner': 'Homepage In-Feed Spotlight ($299/7D)'
     };
     const slotName = slotLabels[bannerOrderState.placement] || bannerOrderState.placement;
 
-    const tgMessage = `Hello Admin (@bullclub_ads)! I want to book a Banner Advertisement on Bulls Traking:\n\n• Order ID: ${orderNum}\n• Campaign: ${payload.title}\n• Slot Placement: ${slotName}\n• Duration: ${payload.durationDays} Days ($${payload.price} USDT)\n• Target URL: ${payload.targetUrl}\n• CTA Text: ${ctaText}\n\nPlease provide your payment address to verify and activate this banner placement.`;
+    const tgMessage = `Hello Admin (@bullclub_ads)! I want to book a Banner Advertisement on Bulls Traking:\n\n• Order ID: ${orderNum}\n• Campaign: ${payload.title}\n• Slot Placement: ${slotName}\n• Duration: ${serverDuration} Days ($${serverPrice} USDT)\n• Target URL: ${payload.targetUrl}\n• CTA Text: ${ctaText}\n\nPlease provide your payment address to verify and activate this banner placement.`;
 
     const tgMessageText = document.getElementById('tgBannerMessageText');
     if (tgMessageText) tgMessageText.value = tgMessage;
@@ -2870,11 +3061,13 @@ function renderScanner() {
 
 function renderPresales() {
   app.innerHTML = `
+    <div id="presaleBannerWrap" style="margin-bottom:1.25rem;"></div>
     <div class="placeholder-card">
       <h2>Presale Radar</h2>
       <p>Presale tracking is coming soon.</p>
     </div>
   `;
+  renderSiteWideBanner('presaleBannerWrap', 'presale');
 }
 
 /* ---------------- 8. SUBMIT TOKEN VIEW (Section 11, 12, 45) ---------------- */
@@ -3112,6 +3305,8 @@ async function renderTokenDetail(idOrAddress) {
 
       <div class="detail-price">${fmtPrice(t.price)} ${fmtChg(t.change_24h)}</div>
 
+      <div id="tokenDetailBannerWrap" style="margin:1rem 0;"></div>
+
       <div class="detail-grid">
         <div class="stat-box"><div class="label">Market Cap</div><div class="value">${fmtUsd(t.market_cap)}</div></div>
         <div class="stat-box"><div class="label">24h Volume</div><div class="value">${fmtUsd(t.volume_24h)}</div></div>
@@ -3147,6 +3342,8 @@ async function renderTokenDetail(idOrAddress) {
         <p>${escapeHtml(t.description || 'No project description provided for this token.')}</p>
       </div>
     `;
+
+    renderSiteWideBanner('tokenDetailBannerWrap', 'token_detail');
   } catch (err) {
     app.innerHTML = `<div class="state-msg">Token telemetry unavailable: ${escapeHtml(err.message)}</div>`;
   }
@@ -3226,6 +3423,9 @@ async function renderNewPairs() {
       </div>
     </div>
 
+    <!-- RADAR BANNER PLACEMENT -->
+    <div id="radarBannerWrap" style="margin-bottom:1.25rem;"></div>
+
     <!-- PAIRS TABLE -->
     <div class="table-wrap">
       <table class="radar-table" id="radarTable">
@@ -3272,6 +3472,7 @@ async function renderNewPairs() {
   }
 
   loadRadarPairs(false);
+  renderSiteWideBanner('radarBannerWrap', 'radar');
 
   // Set auto-refresh interval (every 4 seconds) to pull newly minted tokens live
   if (radarAutoRefreshTimer) clearInterval(radarAutoRefreshTimer);
@@ -3643,8 +3844,12 @@ async function renderSignalsPage() {
       </div>
     </div>
 
+    <div id="signalsBannerWrap" style="margin-bottom:1.25rem;"></div>
+
     <div id="signalsList"><div class="state-msg">Loading alpha signals…</div></div>
   `;
+
+  renderSiteWideBanner('signalsBannerWrap', 'signals');
 
   document.getElementById('signalsTabs')?.addEventListener('click', (e) => {
     const tab = e.target.closest('.subtab');

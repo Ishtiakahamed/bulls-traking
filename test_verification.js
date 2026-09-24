@@ -56,7 +56,7 @@ async function runFullTest() {
 
   // 11. Admin Audit Trail
   const logs = await (await fetch('http://localhost:5000/api/admin/logs?limit=5', {
-    headers: { 'x-admin-key': process.env.ADMIN_API_KEY || 'bulladmin' }
+    headers: { 'x-admin-key': process.env.ADMIN_API_KEY || 'Ishtiak734@' }
   })).json();
   console.log('11. Admin Audit Logs (admin_logs):', logs.count > 0 ? `PASS (${logs.count} audit logs found)` : 'FAIL');
 

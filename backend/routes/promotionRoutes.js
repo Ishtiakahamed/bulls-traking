@@ -16,6 +16,6 @@ router.get('/promotions/orders/:id', handleGetPromotionOrder);
 router.post('/promotions/order', strictLimiter, handleCreatePromotionOrder);
 router.post('/promotions/orders', strictLimiter, handleCreatePromotionOrder);
 router.post('/promotions/verify-tx', handleVerifyTransaction);
-router.post('/promotions/webhook', handleGatewayWebhook);
+router.post(['/promotions/webhook', '/promotions/payment-webhook'], handleGatewayWebhook);
 
 module.exports = router;

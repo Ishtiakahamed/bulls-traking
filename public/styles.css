@@ -835,6 +835,9 @@ select option {
   gap: 0.85rem;
   transition: border-color 0.15s ease, background-color 0.15s ease;
   cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .promoted-card:hover {
@@ -842,10 +845,60 @@ select option {
   background: var(--bg-panel-raised);
 }
 
+.promoted-card-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.promoted-card-identity {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.promoted-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
 .promoted-meta {
   display: flex;
   align-items: center;
   gap: 9px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.promoted-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.promoted-card-metrics {
+  flex: 0 0 auto;
+  min-width: 75px;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.promoted-socials {
+  margin-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
 }
 
 .promoted-logo {
@@ -855,6 +908,7 @@ select option {
   object-fit: cover;
   background: var(--bg-panel-raised);
   border: 1px solid var(--line-soft);
+  flex-shrink: 0;
 }
 
 .promoted-name {
@@ -862,6 +916,9 @@ select option {
   font-weight: 600;
   font-size: 13.5px;
   color: var(--ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .badge-promoted {
@@ -879,6 +936,7 @@ select option {
   display: inline-flex;
   align-items: center;
   box-shadow: 0 0 8px rgba(242, 169, 59, 0.12);
+  flex-shrink: 0;
 }
 
 .promoted-price {
@@ -886,6 +944,121 @@ select option {
   font-weight: 600;
   font-size: 13.5px;
   color: var(--ink);
+  white-space: nowrap;
+}
+
+/* Responsive 3-Slot Trio Grid Preview in Banner Purchase Section */
+.banner-preview-trio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.banner-preview-slot {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg-panel);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.2s ease;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.banner-preview-slot.is-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 16px rgba(242, 169, 59, 0.28);
+}
+
+.banner-preview-slot-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  object-fit: cover;
+  display: block;
+}
+
+.banner-preview-slot-content {
+  padding: 8px 10px;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.banner-preview-slot-badge {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 2px;
+  width: fit-content;
+}
+
+.banner-preview-slot.is-selected .banner-preview-slot-badge {
+  background: var(--gold);
+  color: #15130E;
+}
+
+.banner-preview-slot:not(.is-selected) .banner-preview-slot-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink-dim);
+}
+
+.banner-preview-slot-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.banner-preview-slot-cta {
+  font-size: 10px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile Social Links Presentation in Token Table */
+.social-links-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .banner-preview-trio {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .social-links-mobile {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 6px;
+  }
+  .social-links-mobile .social-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 5px;
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+  }
+  .social-links-mobile .social-btn svg {
+    width: 13px;
+    height: 13px;
+  }
 }
 
 /* ==========================================================================

@@ -132,7 +132,9 @@ async function runBannerTests() {
 
   // Test 6: Admin Banner Retrieval
   console.log('[Test 6] GET /api/admin/banners');
-  const adminRes = await fetchJson(`${BASE_URL}/api/admin/banners`);
+  const adminRes = await fetchJson(`${BASE_URL}/api/admin/banners`, {
+    headers: { 'x-admin-key': process.env.ADMIN_API_KEY || 'Ishtiak734@' }
+  });
   assert.strictEqual(adminRes.status, 200, 'Expected status 200');
   assert.strictEqual(adminRes.data.success, true);
   assert.ok(Array.isArray(adminRes.data.data), 'Expected array of orders');
