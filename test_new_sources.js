@@ -104,7 +104,7 @@ async function runTests() {
   const stonkRows = query('SELECT * FROM new_pairs WHERE source = ? LIMIT 5', ['stonkfun']);
   assert(stonkRows.length > 0, 'StonkFun rows must exist in new_pairs');
   assert.strictEqual(stonkRows[0].source, 'stonkfun');
-  assert.strictEqual(stonkRows[0].chain, 'solana');
+  assert.strictEqual(stonkRows[0].chain, 'solana-ecosystem');
   console.log(`✅ Test 5: PASSED (StonkFun polled and indexed ${stonkRows.length}+ tokens with source='stonkfun')`);
 
   // Test 6: four.meme On-Chain BSC Log Processing & Enrichment
@@ -112,7 +112,7 @@ async function runTests() {
   const fourRows = query('SELECT * FROM new_pairs WHERE source = ? LIMIT 5', ['fourmeme']);
   assert(fourRows.length > 0, 'four.meme rows must exist in new_pairs');
   assert.strictEqual(fourRows[0].source, 'fourmeme');
-  assert.strictEqual(fourRows[0].chain, 'bsc');
+  assert.strictEqual(fourRows[0].chain, 'binance-smart-chain');
   console.log(`✅ Test 6: PASSED (four.meme decoded and indexed ${fourRows.length}+ tokens with source='fourmeme')`);
 
   // Test 7: GET /api/new-pairs API Filtering & Fields

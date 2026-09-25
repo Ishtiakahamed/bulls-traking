@@ -1,7 +1,6 @@
 const {
   getTopCoins,
   getNewCoins,
-  getHotCoins,
   getTopGainers,
   getTrendingCoins,
   getTokenDetail,
@@ -25,18 +24,6 @@ function handleGetNewCoins(req, res, next) {
     res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
     const { chain, limit, page } = req.query;
     const result = getNewCoins({ chain, limit, page });
-    res.json({ success: true, ...result });
-  } catch (err) {
-    next(err);
-  }
-}
-
-function handleGetHotCoins(req, res, next) {
-  try {
-    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
-    const { chain, limit, page, include_stables } = req.query;
-    const excludeStablecoins = include_stables !== 'true';
-    const result = getHotCoins({ chain, limit, page, excludeStablecoins });
     res.json({ success: true, ...result });
   } catch (err) {
     next(err);
@@ -92,26 +79,11 @@ function handleSearchTokens(req, res, next) {
   }
 }
 
-function handleGetTokensByIds(req, res, next) {
-  try {
-    const rawIds = req.query.ids;
-    if (!rawIds) return res.json({ success: true, tokens: [] });
-    const ids = rawIds.toString().split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id) && id > 0);
-    const { getTokensByIds } = require('../services/tokenService');
-    const tokens = getTokensByIds(ids);
-    res.json({ success: true, count: tokens.length, tokens });
-  } catch (err) {
-    next(err);
-  }
-}
-
 module.exports = {
   handleGetTopCoins,
   handleGetNewCoins,
-  handleGetHotCoins,
   handleGetTopGainers,
   handleGetTrendingCoins,
   handleGetTokenDetail,
-  handleSearchTokens,
-  handleGetTokensByIds
+  handleSearchTokens
 };

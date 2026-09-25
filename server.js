@@ -113,9 +113,8 @@ app.get(['/api', '/api/'], (req, res) => {
       home: '/api/home',
       tokens: '/api/tokens',
       newPairs: '/api/new-pairs',
-      signals: '/api/signals',
       marketStats: '/api/market-stats',
-      security: '/api/security/scan'
+      telegram: '/api/telegram/status'
     }
   });
 });
@@ -142,7 +141,7 @@ app.use('/api', apiRoutes);
 if (process.env.VERCEL) {
   app.use((req, res, next) => {
     if (req.path.startsWith('/api')) return next();
-    const apiEndpoints = ['/tokens', '/health', '/home', '/new-pairs', '/signals', '/market-stats', '/submit', '/promotions', '/security', '/admin'];
+    const apiEndpoints = ['/tokens', '/health', '/home', '/new-pairs', '/market-stats', '/submit', '/promotions', '/telegram', '/admin'];
     if (apiEndpoints.some(p => req.path.startsWith(p))) {
       return apiRoutes(req, res, next);
     }

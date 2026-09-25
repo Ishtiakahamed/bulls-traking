@@ -323,6 +323,36 @@ function initDatabase() {
     console.warn('[DB Banner Migration Notice]', bannerMigErr.message);
   }
 
+  // Telegram-primary immutable audit ledger migration. Telegram is the
+  // operational source of truth for new order records; local columns retain
+  // only the message reference and sync state needed for reconciliation.
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS telegram_primary_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        record_kind VARCHAR(40) NOT NULL,
+        entity_id INTEGER NOT NULL,
+        telegram_chat_id VARCHAR(100),
+        telegram_message_id INTEGER,
+        record_hash VARCHAR(128) NOT NULL UNIQUE,
+        payload_json TEXT NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_telegram_primary_entity
+        ON telegram_primary_records(record_kind, entity_id);
+    `);
+    for (const table of ['promotion_orders', 'banner_orders']) {
+      const cols = db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name);
+      if (!cols.includes('telegram_chat_id')) db.exec(`ALTER TABLE ${table} ADD COLUMN telegram_chat_id VARCHAR(100);`);
+      if (!cols.includes('telegram_message_id')) db.exec(`ALTER TABLE ${table} ADD COLUMN telegram_message_id INTEGER;`);
+      if (!cols.includes('telegram_record_hash')) db.exec(`ALTER TABLE ${table} ADD COLUMN telegram_record_hash VARCHAR(128);`);
+      if (!cols.includes('telegram_sync_status')) db.exec(`ALTER TABLE ${table} ADD COLUMN telegram_sync_status VARCHAR(30) DEFAULT 'pending';`);
+    }
+  } catch (telegramMigErr) {
+    console.warn('[DB Telegram Primary Migration Notice]', telegramMigErr.message);
+  }
+
   // Auto-seed initial tokens if table is empty (e.g. on clean serverless start)
   if (!isSeeding) {
     try {

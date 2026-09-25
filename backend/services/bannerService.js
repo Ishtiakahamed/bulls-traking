@@ -1,6 +1,7 @@
 const { query, queryOne, execute } = require('../../database/db');
 const { validateHttpsUrl, validateTextLength } = require('../utils/validators');
 const { getRotationSlot } = require('../utils/rotationScheduler');
+const { appendRecord, saveOrderTelegramReference } = require('./telegramPrimaryStore');
 
 /**
  * Get active approved banners for each placement slot with deterministic UTC rotation
@@ -167,7 +168,7 @@ function recordBannerImpression(id) {
  * Server-authoritative: package ID dictates duration and price.
  * Orders start in pending state (start_at and end_at are NULL) until admin activation.
  */
-function createBannerOrder(data) {
+async function createBannerOrder(data) {
   const {
     tokenId = null,
     title = 'Banner Advertisement',
@@ -237,8 +238,31 @@ function createBannerOrder(data) {
     safeDesc
   ]);
 
+  const orderId = Number(result.lastInsertRowid);
+  const telegramRecord = await appendRecord('banner_order', {
+    orderId,
+    status: 'pending',
+    paymentStatus: 'pending',
+    title: safeTitle,
+    targetUrl: safeTargetUrl,
+    placement: finalPlacement,
+    durationDays: finalDurationDays,
+    price: finalPrice,
+    ctaText: safeCta,
+    description: safeDesc
+  });
+  if (telegramRecord.configured) {
+    saveOrderTelegramReference('banner_orders', orderId, telegramRecord);
+    execute(`INSERT OR IGNORE INTO telegram_primary_records
+      (record_kind, entity_id, telegram_chat_id, telegram_message_id, record_hash, payload_json, status)
+      VALUES (?, ?, ?, ?, ?, ?, 'sent')`, [
+      'banner_order', orderId, telegramRecord.chatId, telegramRecord.messageId,
+      telegramRecord.recordHash, JSON.stringify({ orderId, type: 'banner_order', status: 'pending' })
+    ]);
+  }
+
   return {
-    id: Number(result.lastInsertRowid),
+    id: orderId,
     title: safeTitle,
     placement: finalPlacement,
     durationDays: finalDurationDays,
@@ -246,7 +270,8 @@ function createBannerOrder(data) {
     price: finalPrice,
     payment_status: 'pending',
     approval_status: 'pending',
-    status: 'pending'
+    status: 'pending',
+    telegramRecord
   };
 }
 
@@ -492,4 +517,3 @@ module.exports = {
   updateBannerApproval,
   activateBannerOrder
 };
-

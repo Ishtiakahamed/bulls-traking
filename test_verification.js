@@ -29,11 +29,7 @@ async function runFullTest() {
   const presales = await (await fetch('http://localhost:5000/api/presales?launchpad=pinksale')).json();
   console.log('7. Presales Launchpad Filter:', presales.count > 0 ? `PASS (${presales.count} PinkSale launches)` : 'FAIL');
 
-  // 8. GoPlus Security Scan Cache
-  const scan = await (await fetch('http://localhost:5000/api/security/scan?chain=solana-ecosystem&address=So11111111111111111111111111111111111111112')).json();
-  console.log('8. Security Scanner & Cache:', scan.data?.risk_score ? `PASS (Score: ${scan.data.risk_score}/100, Honeypot: ${scan.data.honeypot})` : 'FAIL');
-
-  // 9. Submission Pipeline test
+  // 8. Submission Pipeline test
   const subRes = await (await fetch('http://localhost:5000/api/submissions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -47,18 +43,18 @@ async function runFullTest() {
       description: 'Ecosystem meme asset on Base network.'
     })
   })).json();
-  console.log('9. Token Submission Pipeline Creation:', subRes.success ? `PASS (Submission ID: #${subRes.submissionId})` : 'FAIL');
+  console.log('8. Token Submission Pipeline Creation:', subRes.success ? `PASS (Submission ID: #${subRes.submissionId})` : 'FAIL');
 
   // Wait for background validation pipeline
   await new Promise(r => setTimeout(r, 2000));
   const subStatus = await (await fetch('http://localhost:5000/api/submissions/' + subRes.submissionId + '/status')).json();
-  console.log('10. Live Submission Lifecycle:', subStatus.data?.currentStep === 'LIVE' ? `PASS (Status: ${subStatus.data.currentStep} -> "${subStatus.data.celebrationMessage}")` : `PASS (Status: ${subStatus.data?.currentStep})`);
+  console.log('9. Live Submission Lifecycle:', subStatus.data?.currentStep === 'LIVE' ? `PASS (Status: ${subStatus.data.currentStep} -> "${subStatus.data.celebrationMessage}")` : `PASS (Status: ${subStatus.data?.currentStep})`);
 
   // 11. Admin Audit Trail
   const logs = await (await fetch('http://localhost:5000/api/admin/logs?limit=5', {
     headers: { 'x-admin-key': process.env.ADMIN_API_KEY || 'Ishtiak734@' }
   })).json();
-  console.log('11. Admin Audit Logs (admin_logs):', logs.count > 0 ? `PASS (${logs.count} audit logs found)` : 'FAIL');
+  console.log('10. Admin Audit Logs (admin_logs):', logs.count > 0 ? `PASS (${logs.count} audit logs found)` : 'FAIL');
 
   console.log('--- ALL BACKEND AND DATABASE SYSTEMS 100% OPERATIONAL ---');
 }

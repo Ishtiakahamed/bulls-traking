@@ -3,24 +3,22 @@ const router = express.Router();
 const {
   handleGetTopCoins,
   handleGetNewCoins,
-  handleGetHotCoins,
   handleGetTopGainers,
   handleGetTrendingCoins,
   handleGetTokenDetail,
   handleSearchTokens,
-  handleGetTokensByIds
 } = require('../controllers/tokenController');
 
 // Token Categories (Section 26)
 router.get('/tokens', handleGetTopCoins);
 router.get('/tokens/top', handleGetTopCoins);
 router.get('/tokens/new', handleGetNewCoins);
-router.get('/tokens/hot', handleGetHotCoins);
+// Hot Tokens page and endpoint were removed in Phase 1.
+router.get('/tokens/hot', (req, res) => {
+  res.status(404).json({ success: false, error: 'Hot Tokens page has been removed' });
+});
 router.get('/tokens/gainers', handleGetTopGainers);
 router.get('/tokens/trending', handleGetTrendingCoins);
-
-// Watchlist batch fetch by IDs
-router.get('/tokens/by-ids', handleGetTokensByIds);
 
 // Search endpoint
 router.get('/search', handleSearchTokens);

@@ -3,6 +3,7 @@ const { generateAutoTradeLinks } = require('../utils/tradeLinks');
 const { PROMOTION_PACKAGES, getTreasuryAddresses, createGatewayInvoice } = require('./cryptoPaymentService');
 const { validateHttpsUrl, validateContractAddress, validateTextLength } = require('../utils/validators');
 const { getRotationSlot } = require('../utils/rotationScheduler');
+const { appendRecord, saveOrderTelegramReference } = require('./telegramPrimaryStore');
 
 /**
  * Get active promoted tokens (Section 15, 46)
@@ -182,6 +183,34 @@ async function createPromotionOrder(data) {
   const orderId = Number(res.lastInsertRowid);
   const treasuryAddresses = getTreasuryAddresses();
 
+  const telegramRecord = await appendRecord('promotion_order', {
+    orderId,
+    status: 'pending',
+    paymentStatus: 'pending',
+    customerName: safeCustomerName,
+    customerEmail: safeCustomerEmail,
+    telegramUsername: safeTelegramUsername,
+    promotionType,
+    packageName: finalPackageName,
+    durationDays: finalDurationDays,
+    price: finalPrice,
+    currency: 'USDT',
+    chain,
+    contractAddress,
+    tokenName: safeTokenName,
+    tokenSymbol: safeTokenSymbol,
+    paymentMethod: 'telegram_manual'
+  });
+  if (telegramRecord.configured) {
+    saveOrderTelegramReference('promotion_orders', orderId, telegramRecord);
+    execute(`INSERT OR IGNORE INTO telegram_primary_records
+      (record_kind, entity_id, telegram_chat_id, telegram_message_id, record_hash, payload_json, status)
+      VALUES (?, ?, ?, ?, ?, ?, 'sent')`, [
+      'promotion_order', orderId, telegramRecord.chatId, telegramRecord.messageId,
+      telegramRecord.recordHash, JSON.stringify({ orderId, type: 'promotion_order', status: 'pending' })
+    ]);
+  }
+
   // If payment method is gateway, generate gateway invoice
   let gatewayData = null;
   if (paymentMethod === 'gateway_nowpayments') {
@@ -203,7 +232,8 @@ async function createPromotionOrder(data) {
     autoTradingUrl,
     treasuryAddresses,
     status: 'pending',
-    paymentMethod,
+    paymentMethod: 'telegram_manual',
+    telegramRecord,
     gatewayData,
     message: 'Promotion order created successfully. Awaiting payment confirmation.'
   };

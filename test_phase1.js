@@ -108,20 +108,7 @@ async function runAcceptanceTests() {
     console.log('✖ Test 6/7/8 — Submit & New Coins Integration: FAILED', e.message);
   }
 
-  // Test 9 — Hot: Hot page is algorithmically ranked
-  try {
-    const res = await (await fetch('http://localhost:5000/api/tokens/hot')).json();
-    assert(res.tokens.length > 1, 'Hot tokens should have multiple entries');
-    for (let i = 0; i < res.tokens.length - 1; i++) {
-      assert(res.tokens[i].hot_score >= res.tokens[i + 1].hot_score, 'Must be sorted by hot_score DESC');
-    }
-    console.log(`✔ Test 9 — Hot: PASSED (Hot Coins sorted by algorithmic hot_score DESC, top: ${res.tokens[0].hot_score})`);
-    passedCount++;
-  } catch (e) {
-    console.log('✖ Test 9 — Hot: FAILED', e.message);
-  }
-
-  // Test 10 — Gainers: Gainers are sorted by positive 24h change
+  // Test 9 — Gainers: Gainers are sorted by positive 24h change
   try {
     const res = await (await fetch('http://localhost:5000/api/tokens/gainers')).json();
     assert(res.tokens.length > 0, 'Gainers should have items');

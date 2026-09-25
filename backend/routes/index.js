@@ -5,10 +5,9 @@ const tokenRoutes = require('./tokenRoutes');
 const submissionRoutes = require('./submissionRoutes');
 const promotionRoutes = require('./promotionRoutes');
 const bannerRoutes = require('./bannerRoutes');
-const securityRoutes = require('../../routes/securityRoutes');
 const newPairsRoutes = require('../../routes/newPairsRoutes');
-const signalsRoutes = require('../../routes/signalsRoutes');
 const adminRoutes = require('../../routes/adminRoutes');
+const telegramRoutes = require('./telegramRoutes');
 const { handleGetHomeData } = require('../controllers/homeController');
 const { getSyncStatus } = require('../workers/syncWorker');
 
@@ -25,9 +24,8 @@ router.get('/', (req, res) => {
       home: '/api/home',
       tokens: '/api/tokens',
       newPairs: '/api/new-pairs',
-      signals: '/api/signals',
       marketStats: '/api/market-stats',
-      security: '/api/security/scan'
+      telegram: '/api/telegram/status'
     }
   });
 });
@@ -62,9 +60,8 @@ router.use('/promotion', legacyPromotionRoutes);
 router.use('/promotions', legacyPromotionRoutes);
 router.use('/', presaleRoutes);
 router.use('/', legacyTokenRoutes);
-router.use('/', securityRoutes);
 router.use('/', newPairsRoutes);
-router.use('/', signalsRoutes);
 router.use('/', adminRoutes);
+router.use('/', telegramRoutes);
 
 module.exports = router;

@@ -14,6 +14,12 @@ router.get('/tokens', (req, res) => {
   }
 });
 
+// Hot Tokens page and endpoint were removed in Phase 1; prevent a legacy
+// /tokens/:id route from treating "hot" as a token identifier.
+router.get('/tokens/hot', (req, res) => {
+  res.status(404).json({ success: false, error: 'Hot Tokens page has been removed' });
+});
+
 router.get('/tokens/:id', (req, res) => {
   try {
     const token = getTokenDetail(req.params.id);

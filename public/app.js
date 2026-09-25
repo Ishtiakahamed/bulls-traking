@@ -141,56 +141,6 @@ const normalizeTokenLogo = (url, symbol = '', name = '') => {
   return u;
 };
 
-/* ---------------- Watchlist helpers (Phase 3 Task 2) ---------------- */
-
-const WATCHLIST_KEY = 'bt_watchlist';
-
-function getWatchlist() {
-  try {
-    const raw = localStorage.getItem(WATCHLIST_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-}
-
-function isWatchlisted(id) {
-  if (!id) return false;
-  const list = getWatchlist();
-  return list.some(item => String(item) === String(id));
-}
-
-function toggleWatchlist(id, btnElement) {
-  if (!id) return;
-  let list = getWatchlist();
-  const strId = String(id);
-  const exists = list.some(item => String(item) === strId);
-
-  if (exists) {
-    list = list.filter(item => String(item) !== strId);
-  } else {
-    list.push(strId);
-  }
-
-  try {
-    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
-  } catch (e) {}
-
-  const isNowActive = !exists;
-  document.querySelectorAll(`.watch-star[data-token-id="${strId}"]`).forEach(btn => {
-    btn.classList.toggle('is-active', isNowActive);
-    btn.title = isNowActive ? 'Remove from Watchlist' : 'Add to Watchlist';
-  });
-
-  if (btnElement) {
-    btnElement.classList.toggle('is-active', isNowActive);
-  }
-
-  if (location.hash.startsWith('#/watchlist')) {
-    renderWatchlistPage();
-  }
-}
-window.toggleWatchlist = toggleWatchlist;
 
 function sparklineSvg(prices, positive) {
   if (!prices || prices.length < 2) return '';
@@ -413,14 +363,10 @@ function renderTokenRows(tokens, { showAge = false, showHot = false } = {}) {
     const txnCount = (t.txn_count_24h != null && t.txn_count_24h > 0) ? Number(t.txn_count_24h).toLocaleString() : '—';
     const lpVal = (t.liquidity != null && t.liquidity > 0) ? fmtUsd(t.liquidity) : '—';
     const chg6h = t.price_change_6h != null ? fmtChg(t.price_change_6h) : '—';
-    const starred = isWatchlisted(t.id);
     const mobileSocials = renderMobileSocialLinks(t);
 
     return `
       <tr data-token-symbol="${escapeHtml(t.symbol)}" data-token-id="${t.id}" onclick="location.hash='#/token/${t.id}'">
-        <td class="col-star cell-star" onclick="event.stopPropagation();">
-          <button class="watch-star ${starred ? 'is-active' : ''}" data-token-id="${t.id}" title="${starred ? 'Remove from Watchlist' : 'Add to Watchlist'}" onclick="event.stopPropagation(); toggleWatchlist('${t.id}', this)">★</button>
-        </td>
         <td class="col-rank">${t.market_cap_rank || idx + 1}</td>
         <td class="col-token">
           <div class="token-cell">
@@ -545,7 +491,6 @@ function renderHomeSkeleton() {
       <div class="subtabs" id="homeTabs">
         <span class="subtab is-active" data-tab="top">Top Coins</span>
         <span class="subtab" data-tab="new">New Coins</span>
-        <span class="subtab" data-tab="hot">Hot Coins</span>
         <span class="subtab" data-tab="gainers">Top Gainers</span>
       </div>
     </div>
@@ -907,7 +852,6 @@ function buildHomeUI(data) {
       <div class="subtabs" id="homeTabs">
         <span class="subtab ${homeState.tab === 'top' ? 'is-active' : ''}" data-tab="top">Top Coins</span>
         <span class="subtab ${homeState.tab === 'new' ? 'is-active' : ''}" data-tab="new">New Coins</span>
-        <span class="subtab ${homeState.tab === 'hot' ? 'is-active' : ''}" data-tab="hot">Hot Coins</span>
         <span class="subtab ${homeState.tab === 'gainers' ? 'is-active' : ''}" data-tab="gainers">Top Gainers</span>
       </div>
     </div>
@@ -1236,75 +1180,6 @@ async function renderNewCoins() {
     }
   } catch (err) {
     document.getElementById('newTableBody').innerHTML = `<tr><td colspan="12" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
-  }
-}
-
-/* ---------------- 4. HOT COINS VIEW (/hot) ---------------- */
-
-async function renderHotCoins() {
-  state.page = 1;
-
-  app.innerHTML = `
-    <div class="page-head">
-      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Hot Coins Radar</h1>
-      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Ranked algorithmically by the Bulls Traking Hot Score (combining volume, momentum, velocity, and liquidity turnover).</p>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th class="col-star" style="width:32px;"></th>
-            <th class="col-rank">#</th><th class="col-token">Token</th><th class="col-price">Price</th><th class="col-1h">1h</th><th class="col-24h">24h</th><th class="col-7d">7d</th>
-            <th class="col-6h">6h</th><th class="col-txn">TXN</th><th class="col-lp">LP</th>
-            <th class="col-vol">24h Volume</th><th class="col-mcap">Market Cap</th><th class="col-socials">Socials</th><th class="col-spark">Last 7 Days</th>
-          </tr>
-        </thead>
-        <tbody id="hotTableBody">
-          <tr><td colspan="14" class="state-msg">Loading Hot Coins…</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="pagination-wrap" id="hotPagination" style="text-align:center;margin:1.75rem 0;">
-      <button id="btnLoadMoreHot" class="btn-ghost">Load More</button>
-    </div>
-  `;
-
-
-
-  try {
-    const res = await fetchApi(`/tokens/hot?chain=${state.chain}&page=1&limit=${state.limit}`);
-    document.getElementById('hotTableBody').innerHTML = renderTokenRows(res.tokens, { showHot: true });
-
-    const btnMore = document.getElementById('btnLoadMoreHot');
-    if (!res.tokens || res.tokens.length < state.limit) {
-      if (btnMore) btnMore.style.display = 'none';
-    }
-    if (btnMore) {
-      btnMore.onclick = async () => {
-        btnMore.disabled = true;
-        btnMore.textContent = 'Loading more…';
-        try {
-          state.page++;
-          const nextRes = await fetchApi(`/tokens/hot?chain=${state.chain}&page=${state.page}&limit=${state.limit}`);
-          const newTokens = nextRes.tokens || [];
-          if (newTokens.length > 0) {
-            document.getElementById('hotTableBody').insertAdjacentHTML('beforeend', renderTokenRows(newTokens, { showHot: true }));
-          }
-          if (newTokens.length < state.limit) {
-            btnMore.style.display = 'none';
-          } else {
-            btnMore.disabled = false;
-            btnMore.textContent = 'Load More';
-          }
-        } catch (e) {
-          btnMore.style.display = 'none';
-        }
-      };
-    }
-  } catch (err) {
-    document.getElementById('hotTableBody').innerHTML = `<tr><td colspan="12" class="state-msg">Error: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
@@ -2957,132 +2832,6 @@ window.handleLogoFileUpload = handleLogoFileUpload;
 window.toggleLogoUrlField = toggleLogoUrlField;
 window.toggleMobileMenu = toggleMobileMenu;
 
-/* ---------------- 7a. CONTRACT SCANNER VIEW (/scan) (Phase 2 Task 1) ---------------- */
-
-function renderScanner() {
-  app.innerHTML = `
-    <div class="form-card" id="scannerCard">
-      <div class="page-head" style="text-align:center;margin-bottom:1.5rem;">
-        <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.6rem;">Contract Security Scanner</h1>
-        <p style="color:var(--text-muted);font-size:13px;margin:0;">Instant on-chain security audit, honeypot detection, tax analysis, and risk scoring powered by GoPlus.</p>
-      </div>
-
-      <form id="scannerForm">
-        <div class="field">
-          <label>Blockchain Network *</label>
-          <select id="scanChain" name="chain" required>
-            <option value="binance-smart-chain" selected>BNB Smart Chain (BSC)</option>
-            <option value="ethereum-ecosystem">Ethereum (ETH)</option>
-            <option value="base-ecosystem">Base</option>
-            <option value="solana-ecosystem">Solana (SOL)</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Token Contract Address *</label>
-          <input type="text" id="scanAddress" name="address" placeholder="0x... or Solana Mint Address" required>
-        </div>
-
-        <button type="submit" class="submit-btn" id="btnScan">Scan Contract</button>
-      </form>
-
-      <div id="scanResult"></div>
-    </div>
-  `;
-
-  const form = document.getElementById('scannerForm');
-  const btn = document.getElementById('btnScan');
-  const resultContainer = document.getElementById('scanResult');
-
-  // Auto-populate from New Pairs Radar or other views
-  const storedAddr = sessionStorage.getItem('scan_address');
-  const storedChain = sessionStorage.getItem('scan_chain');
-  if (storedAddr) {
-    const inputAddr = document.getElementById('scanAddress');
-    const selectChain = document.getElementById('scanChain');
-    if (inputAddr) inputAddr.value = storedAddr;
-    if (selectChain && storedChain) selectChain.value = storedChain;
-    sessionStorage.removeItem('scan_address');
-    sessionStorage.removeItem('scan_chain');
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const chain = document.getElementById('scanChain').value;
-    const address = document.getElementById('scanAddress').value.trim();
-    if (!address) return;
-
-    btn.disabled = true;
-    btn.textContent = 'Scanning on-chain…';
-    resultContainer.innerHTML = `<div class="state-msg"><span class="live-pulse"></span> Performing deep contract audit…</div>`;
-
-    try {
-      const res = await fetchApi('/security/scan?chain=' + chain + '&address=' + encodeURIComponent(address));
-      const scan = res.data;
-
-      const isCritical = scan.honeypot === 1 || scan.risk_level === 'CRITICAL' || scan.risk_level === 'HIGH';
-      const isWarn = !isCritical && (scan.risk_level === 'MEDIUM' || scan.mintable === 1 || (scan.buy_tax || 0) > 10 || (scan.sell_tax || 0) > 10 || scan.blacklist === 1);
-      
-      const summaryClass = isCritical ? 'danger' : isWarn ? 'warn' : 'safe';
-      const summaryTitle = isCritical ? 'High / Critical Risk' : isWarn ? 'Medium Risk / Warning' : 'Safe / Low Risk';
-
-      resultContainer.innerHTML = `
-        <div class="risk-summary ${summaryClass}">
-          <div>
-            <div class="risk-badge-title">${summaryTitle}</div>
-            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">
-              ${isCritical ? 'Critical security vulnerabilities detected. Exercise extreme caution.' : isWarn ? 'Minor risk flags identified. Check taxes and ownership permissions.' : 'No critical contract risks or malicious routines detected.'}
-            </div>
-          </div>
-          <div class="risk-score-pill">
-            Score: ${scan.risk_score != null ? scan.risk_score : 95}/100
-          </div>
-        </div>
-
-        <div class="check-grid">
-          <div class="check-item ${scan.honeypot ? 'fail' : 'pass'}">
-            <div class="label">Honeypot</div>
-            <div class="val">${scan.honeypot ? 'FAIL (Honeypot)' : 'PASS (Safe)'}</div>
-          </div>
-          <div class="check-item ${(scan.buy_tax || 0) > 10 ? 'warn' : 'pass'}">
-            <div class="label">Buy Tax</div>
-            <div class="val">${(scan.buy_tax ?? 0).toFixed(1)}%</div>
-          </div>
-          <div class="check-item ${(scan.sell_tax || 0) > 10 ? 'warn' : 'pass'}">
-            <div class="label">Sell Tax</div>
-            <div class="val">${(scan.sell_tax ?? 0).toFixed(1)}%</div>
-          </div>
-          <div class="check-item ${scan.mintable ? 'warn' : 'pass'}">
-            <div class="label">Mintable</div>
-            <div class="val">${scan.mintable ? 'Yes (Can Mint)' : 'No (Capped)'}</div>
-          </div>
-          <div class="check-item ${scan.ownership === 'renounced' ? 'pass' : 'warn'}">
-            <div class="label">Ownership</div>
-            <div class="val">${scan.ownership === 'renounced' ? 'Renounced' : 'Active Owner'}</div>
-          </div>
-          <div class="check-item ${scan.blacklist ? 'fail' : 'pass'}">
-            <div class="label">Blacklist</div>
-            <div class="val">${scan.blacklist ? 'Yes (Blacklistable)' : 'No (Unrestricted)'}</div>
-          </div>
-          <div class="check-item ${scan.proxy ? 'warn' : 'pass'}">
-            <div class="label">Proxy</div>
-            <div class="val">${scan.proxy ? 'Yes (Upgradeable)' : 'No (Immutable)'}</div>
-          </div>
-          <div class="check-item pass">
-            <div class="label">Audit Status</div>
-            <div class="val">${scan.fromCache ? 'Cached (24h)' : 'Live Scan'}</div>
-          </div>
-        </div>
-      `;
-    } catch (err) {
-      resultContainer.innerHTML = `<div class="state-msg" style="color:var(--rose);">Scan Failed: ${escapeHtml(err.message)}</div>`;
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Scan Contract';
-    }
-  });
-}
-
 /* ---------------- 7. PRESALES VIEW (Section 3 Placeholder) ---------------- */
 
 function renderPresales() {
@@ -3319,7 +3068,6 @@ async function renderTokenDetail(idOrAddress) {
         <div>
           <h1>
             ${escapeHtml(t.name)} <span class="sym">$${escapeHtml(t.symbol)}</span>
-            <button class="watch-star detail-star ${isWatchlisted(t.id) ? 'is-active' : ''}" data-token-id="${t.id}" title="${isWatchlisted(t.id) ? 'Remove from Watchlist' : 'Add to Watchlist'}" onclick="toggleWatchlist('${t.id}', this)">★</button>
           </h1>
           <div style="font-size:12px;color:var(--text-faint);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span>Contract: <code style="color:var(--cyan);">${escapeHtml(t.contract_address)}</code></span>
@@ -3589,7 +3337,6 @@ function renderSingleRadarRow(p, idx = 0, isNew = false) {
       <td class="col-radar-eco"><span class="chain-badge chain-${escapeHtml(p.chain || '')}">${chainLabel}</span></td>
       <td class="col-radar-actions col-actions">
         <div>
-          <a href="#/scan" onclick="sessionStorage.setItem('scan_address', '${escapeHtml(p.token_address)}'); sessionStorage.setItem('scan_chain', '${escapeHtml(p.chain)}');" class="btn-ghost">Scan</a>
           ${safePoolUrl ? `<a href="${escapeHtml(safePoolUrl)}" target="_blank" rel="noopener noreferrer sponsored" class="btn-ghost">View Pool</a>` : ''}
           <button class="btn-copy-address" data-address="${escapeHtml(p.token_address || p.pair_address)}" title="Copy Contract Address" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:2px 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         </div>
@@ -3762,184 +3509,6 @@ function handleLiveNewPair(p) {
   }
 }
 
-/* ---------------- 3c. LOCAL WATCHLIST VIEW (/watchlist) (Phase 3 Task 2) ---------------- */
-
-async function renderWatchlistPage() {
-  document.title = 'My Watchlist | Bulls Traking';
-  const ids = getWatchlist();
-
-  app.innerHTML = `
-    <div class="page-head">
-      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">My Watchlist</h1>
-      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Real-time token watchlist stored locally in your browser. Track price moves, liquidity, and 24h volumes.</p>
-    </div>
-    <div id="watchlistContainer"></div>
-  `;
-
-  const container = document.getElementById('watchlistContainer');
-
-  if (!ids || ids.length === 0) {
-    container.innerHTML = `
-      <div class="watchlist-empty">
-        <div class="star-icon">★</div>
-        <h2>Your Watchlist is Empty</h2>
-        <p>
-          You haven't starred any tokens yet.<br>
-          Click the star icon (★) on any token row or token page to monitor it here.
-        </p>
-        <a href="#/top-coins" class="btn-solid" style="padding:.7rem 1.75rem;display:inline-block;">Explore Top Coins</a>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = `
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th class="col-star" style="width:32px;"></th>
-            <th class="col-rank">Rank</th>
-            <th class="col-token">Token</th>
-            <th class="col-price">Price</th>
-            <th class="col-1h">1h</th>
-            <th class="col-24h">24h</th>
-            <th class="col-7d">7d</th>
-            <th class="col-6h">6h</th>
-            <th class="col-txn">TXN</th>
-            <th class="col-lp">LP</th>
-            <th class="col-vol">24h Volume</th>
-            <th class="col-mcap">Market Cap</th>
-            <th class="col-socials">Socials</th>
-            <th class="col-spark">Last 7 Days</th>
-          </tr>
-        </thead>
-        <tbody id="watchlistTableBody">
-          <tr><td colspan="14" class="state-msg">Loading watchlisted tokens…</td></tr>
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  try {
-    const res = await fetchApi(`/tokens/by-ids?ids=${ids.join(',')}`);
-    const tokens = res.tokens || [];
-    if (tokens.length === 0) {
-      container.innerHTML = `
-        <div class="watchlist-empty">
-          <div class="star-icon">★</div>
-          <h2>No Active Tokens in Watchlist</h2>
-          <p>The tokens in your watchlist could not be retrieved or have been archived.</p>
-          <a href="#/top-coins" class="btn-solid">Explore Top Coins</a>
-        </div>
-      `;
-      return;
-    }
-
-    document.getElementById('watchlistTableBody').innerHTML = renderTokenRows(tokens);
-  } catch (err) {
-    document.getElementById('watchlistTableBody').innerHTML = `
-      <tr><td colspan="13" class="state-msg">Failed to load watchlist: ${escapeHtml(err.message)}</td></tr>
-    `;
-  }
-}
-
-/* ---------------- 9b. TELEGRAM & ALPHA SIGNALS VIEW (/signals) ---------------- */
-
-let signalsState = {
-  direction: 'all',
-  page: 1,
-  limit: 20
-};
-
-async function renderSignalsPage() {
-  document.title = 'Telegram & Market Alpha Signals | Bulls Traking';
-  app.innerHTML = `
-    <div class="page-head">
-      <h1 style="font-family:var(--display);margin:0 0 .4rem;font-size:1.75rem;">Telegram & Market Alpha Signals</h1>
-      <p style="color:var(--text-muted);font-size:13px;margin:0 0 1.25rem;">Curated on-chain trade setups, breakout telemetry, and risk warnings aggregated from verified Telegram alpha channels.</p>
-    </div>
-
-    <!-- DIRECTION FILTER TABS -->
-    <div class="controls-bar">
-      <div class="subtabs" id="signalsTabs">
-        <span class="subtab ${signalsState.direction === 'all' ? 'is-active' : ''}" data-dir="all">All Signals</span>
-        <span class="subtab ${signalsState.direction === 'buy' ? 'is-active' : ''}" data-dir="buy">Buy / Long</span>
-        <span class="subtab ${signalsState.direction === 'sell' ? 'is-active' : ''}" data-dir="sell">Sell / Take Profit</span>
-        <span class="subtab ${signalsState.direction === 'watch' ? 'is-active' : ''}" data-dir="watch">Watchlist / Alert</span>
-      </div>
-    </div>
-
-    <div id="signalsBannerWrap" style="margin-bottom:1.25rem;"></div>
-
-    <div id="signalsList"><div class="state-msg">Loading alpha signals…</div></div>
-  `;
-
-  renderSiteWideBanner('signalsBannerWrap', 'signals');
-
-  document.getElementById('signalsTabs')?.addEventListener('click', (e) => {
-    const tab = e.target.closest('.subtab');
-    if (!tab) return;
-    signalsState.direction = tab.dataset.dir;
-    signalsState.page = 1;
-    renderSignalsPage();
-  });
-
-  loadSignals();
-}
-
-async function loadSignals() {
-  const container = document.getElementById('signalsList');
-  if (!container) return;
-  try {
-    const queryDir = signalsState.direction === 'all' ? '' : `&direction=${signalsState.direction}`;
-    const res = await fetchApi(`/signals?page=${signalsState.page}&limit=${signalsState.limit}${queryDir}`);
-    const signals = res.signals || [];
-
-    if (signals.length === 0) {
-      container.innerHTML = `<div class="state-msg">No active signals found in this category.</div>`;
-      return;
-    }
-
-    const cards = signals.map(s => {
-      const dirCls = s.direction === 'buy' ? 'buy' : s.direction === 'sell' ? 'sell' : 'watch';
-      const dirIcon = s.direction === 'buy' ? '▲ BUY' : s.direction === 'sell' ? '▼ SELL' : '● WATCH';
-      const timeAgo = fmtAge(s.posted_at);
-
-      let tokenPill = '';
-      if (s.token_symbol) {
-        tokenPill = `
-          <div class="signal-token-pill" onclick="location.hash='#/token/${s.token_id}'">
-            <img src="${escapeHtml(s.token_logo_url || 'assets/logo-transparent.png')}" alt="${escapeHtml(s.token_symbol)}" onerror="this.src='assets/logo-transparent.png';">
-            <span>$${escapeHtml(s.token_symbol)} (${fmtPrice(s.token_price)})</span>
-          </div>
-        `;
-      }
-
-      return `
-        <div class="signal-card">
-          <div>
-            <div class="signal-header">
-              <span class="signal-badge ${dirCls}">${dirIcon}</span>
-              <span class="signal-source-badge">${escapeHtml((s.source || 'telegram').replace(/_/g, ' ').toUpperCase())}</span>
-            </div>
-            <h3 class="signal-title">${escapeHtml(s.title)}</h3>
-            <div class="signal-body">${escapeHtml(s.message)}</div>
-          </div>
-          <div class="signal-footer">
-            <div>${tokenPill || '<span style="color:var(--text-faint);">Market-wide Setup</span>'}</div>
-            <span>${timeAgo}</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    container.innerHTML = `<div class="signals-grid">${cards}</div>`;
-  } catch (err) {
-    container.innerHTML = `<div class="state-msg">Failed to load signals: ${escapeHtml(err.message)}</div>`;
-  }
-}
-
 /* ---------------- 10. LEGAL & INFO PAGES (Phase 3 Task 4) ---------------- */
 
 const LEGAL_DISCLAIMER_NOTICE = `
@@ -4009,7 +3578,6 @@ function renderPrivacy() {
       <ul>
         <li><b>Submission Contact Information:</b> Project owners submitting tokens may provide an optional contact email and social handles.</li>
         <li><b>Technical Analytics:</b> Standard web server logs, IP addresses, and user-agent strings for security mitigation and rate limiting.</li>
-        <li><b>Local Device Storage:</b> Client-side data such as your token Watchlist and theme preferences stored strictly on your local browser.</li>
       </ul>
 
       <h2>2. Third-Party Services</h2>
@@ -4034,12 +3602,9 @@ function renderCookies() {
 
       <h2>2. Specific Client Storage Items</h2>
       <ul>
-        <li><b>bt_watchlist:</b> Stores an array of token IDs you have starred for your personal Watchlist. This information never leaves your device and is not sold or shared with any third party.</li>
-        <li><b>scan_address / scan_chain:</b> Temporarily stores contract addresses when navigating between the New Pairs Radar and Contract Scanner.</li>
       </ul>
 
       <h2>3. Managing Your Storage</h2>
-      <p>You can clear your watchlist and local application storage at any time via your browser's Developer Tools or "Clear Browsing Data" settings.</p>
     </div>
   `;
 }
@@ -4122,16 +3687,8 @@ function route() {
     renderNewPairs();
   } else if (path === '/new-coins') {
     renderNewCoins();
-  } else if (path === '/hot') {
-    renderHotCoins();
   } else if (path === '/gainers') {
     renderGainers();
-  } else if (path === '/watchlist') {
-    renderWatchlistPage();
-  } else if (path === '/signals') {
-    renderSignalsPage();
-  } else if (path === '/scan') {
-    renderScanner();
   } else if (path === '/promoted') {
     renderPromotedPage();
   } else if (path === '/promote') {

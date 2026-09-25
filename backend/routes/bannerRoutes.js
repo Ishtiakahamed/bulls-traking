@@ -86,9 +86,9 @@ router.post(['/banners/impression/:id', '/banners/:id/impression', '/promotion/b
 });
 
 // Public: Create banner advertisement order
-router.post(['/banners/order', '/promotion/banners/order'], strictLimiter, (req, res) => {
+router.post(['/banners/order', '/promotion/banners/order'], strictLimiter, async (req, res) => {
   try {
-    const result = createBannerOrder(req.body);
+    const result = await createBannerOrder(req.body);
     res.status(201).json({ success: true, data: result });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
